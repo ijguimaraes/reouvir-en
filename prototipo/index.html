@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reouvir EN — protótipo</title>
+<style>
+  body{font-family:system-ui,sans-serif;max-width:640px;margin:40px auto;padding:0 20px;color:#1f2937;line-height:1.5}
+  h1{margin-bottom:0} .sub{color:#6b7280;margin-top:4px}
+  a.card{display:block;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin:12px 0;text-decoration:none;color:inherit}
+  a.card:hover{border-color:#4f46e5} a.card b{color:#4f46e5}
+  code{background:#f3f4f6;padding:2px 6px;border-radius:4px}
+  button{padding:8px 14px;border-radius:8px;border:1px solid #d1d5db;background:#fff;cursor:pointer}
+  table{border-collapse:collapse;width:100%;font-size:14px} td,th{border-bottom:1px solid #e5e7eb;padding:6px;text-align:left}
+</style>
+</head>
+<body>
+<h1>Reouvir EN</h1>
+<p class="sub"><i>Hear it again.</i> Protótipo navegável com dados fictícios.</p>
+<a class="card" href="web/"><b>App do aluno (PWA)</b><br>Entrar, escolher playlist, baixar, ouvir com a regra do silêncio e simular a rede.</a>
+<a class="card" href="admin/"><b>Backoffice</b><br>Catálogo, playlists (importar JSON, revisar, reordenar, publicar), usuários e painel.</a>
+<h3>Contas de teste</h3>
+<table>
+<tr><th>Papel</th><th>E-mail</th><th>Senha</th></tr>
+<tr><td>Administrador</td><td>admin@reouvir.en</td><td>admin123</td></tr>
+<tr><td>Aluno</td><td>aluno@teste.com</td><td>123456</td></tr>
+<tr><td>Aluno bloqueado</td><td>bloqueado@teste.com</td><td>123456</td></tr>
+</table>
+<p>O áudio usa a <b>voz do navegador</b> (Web Speech API), então a duração real varia por voz. No sistema real, o áudio vem do ElevenLabs. Os dados ficam no <code>localStorage</code>.</p>
+<p><button onclick="if(confirm('Apagar os dados do protótipo e voltar ao estado inicial?')){localStorage.removeItem('reouvir-proto-v3');location.reload()}">Restaurar dados iniciais</button></p>
+</body>
+</html>

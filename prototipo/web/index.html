@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reouvir EN — app do aluno (protótipo)</title>
+<style>
+  :root{--bg:#f6f7fb;--card:#fff;--ink:#1f2937;--mut:#6b7280;--line:#e5e7eb;--pri:#4f46e5;--btn:#4f46e5;--pri2:#eef2ff;--ok:#059669;--warn:#d97706;--bad:#dc2626;--page:#dfe3ee;--sunk:#e5e7eb;--ok-bg:#d1fae5;--warn-bg:#fef3c7;--proto-bg:#fef9c3;--proto-fg:#713f12;color-scheme:light}
+  @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1220;--card:#1a1d2e;--ink:#e5e7eb;--mut:#9ca3af;--line:#2c3047;--pri:#818cf8;--pri2:#25285a;--ok:#34d399;--warn:#fbbf24;--bad:#f87171;--page:#05060d;--sunk:#2c3047;--ok-bg:#064e3b;--warn-bg:#4a3207;--proto-bg:#3a3410;--proto-fg:#fde68a;color-scheme:dark}}
+  :root[data-theme="dark"]{--bg:#0f1220;--card:#1a1d2e;--ink:#e5e7eb;--mut:#9ca3af;--line:#2c3047;--pri:#818cf8;--pri2:#25285a;--ok:#34d399;--warn:#fbbf24;--bad:#f87171;--page:#05060d;--sunk:#2c3047;--ok-bg:#064e3b;--warn-bg:#4a3207;--proto-bg:#3a3410;--proto-fg:#fde68a;color-scheme:dark}
+  *{box-sizing:border-box} body{margin:0;background:var(--page);font-family:system-ui,-apple-system,sans-serif;color:var(--ink)}
+  .phone{max-width:430px;min-height:100vh;margin:0 auto;background:var(--bg);position:relative;display:flex;flex-direction:column}
+  @media(min-width:520px){.phone{min-height:calc(100vh - 40px);margin:20px auto;border-radius:24px;box-shadow:0 10px 40px #0003;overflow:hidden}}
+  header{display:flex;align-items:center;gap:8px;padding:12px 16px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+  header h1{font-size:18px;margin:0;flex:1} header h1 small{display:block;font-weight:400;color:var(--mut);font-size:11px}
+  .chip{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:99px;padding:5px 10px;font-size:12px;cursor:pointer}
+  .chip.off{background:var(--warn-bg);border-color:#f59e0b}
+  main{padding:16px;flex:1}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+  h2{font-size:20px;margin:4px 0 12px} h3{font-size:14px;margin:0 0 8px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
+  button,.btn{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:10px 14px}
+  button.pri{background:var(--btn);color:#fff;border-color:var(--btn)} button:disabled{opacity:.45;cursor:not-allowed}
+  button.big{width:100%;padding:14px;font-size:16px}
+  input,select{font:inherit;width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink)}
+  label{display:block;font-size:13px;color:var(--mut);margin:10px 0 4px}
+  .tabs{display:flex;background:var(--sunk);border-radius:10px;padding:3px;margin-bottom:12px}
+  .tabs button{flex:1;border:0;background:none;padding:8px} .tabs button.on{background:var(--card);font-weight:600}
+  .err{color:var(--bad);font-size:13px;margin-top:8px} .mut{color:var(--mut);font-size:13px}
+  .row{display:flex;align-items:center;gap:10px} .sp{flex:1}
+  a.item{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:10px;margin:6px 0;text-decoration:none;color:inherit;background:var(--card)}
+  .badge{font-size:11px;padding:2px 8px;border-radius:99px;background:var(--pri2);color:var(--pri);white-space:nowrap}
+  .badge.ok{background:var(--ok-bg);color:var(--ok)} .badge.warn{background:var(--warn-bg);color:var(--warn)}
+  details{margin-bottom:10px} summary{font-weight:600;cursor:pointer;padding:8px 2px}
+  .topic{font-size:12px;color:var(--mut);margin:10px 2px 2px}
+  .bar{height:8px;background:var(--sunk);border-radius:9px;overflow:hidden} .bar i{display:block;height:100%;background:var(--pri);width:0}
+  .bar.sil i{background:var(--warn)}
+  .now{font-size:24px;line-height:1.3;text-align:center;margin:14px 0;min-height:96px;display:flex;align-items:center;justify-content:center}
+  .ctl{display:flex;justify-content:center;align-items:center;gap:14px;margin:12px 0}
+  .ctl button{width:54px;height:54px;border-radius:50%;font-size:20px;padding:0} .ctl button.play{width:70px;height:70px;font-size:26px;background:var(--btn);color:#fff;border-color:var(--btn)}
+  .st{text-align:center;font-weight:600;margin:6px 0} .st.sil{color:var(--warn)} .st.pl{color:var(--pri)}
+  ol.sent{list-style:none;padding:0;margin:0;max-height:260px;overflow:auto}
+  ol.sent li{padding:8px 10px;border-radius:8px;font-size:14px;cursor:pointer;display:flex;gap:8px}
+  ol.sent li.cur{background:var(--pri2);font-weight:600} ol.sent li span{color:var(--mut);min-width:24px}
+  .kv{display:flex;justify-content:space-between;font-size:14px;padding:4px 0}
+  #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;max-width:90vw;z-index:20}
+  #toast.on{opacity:1}
+  .proto{background:var(--proto-bg);color:var(--proto-fg);font-size:11px;text-align:center;padding:4px}
+  .toggle{display:flex;justify-content:space-between;align-items:center;padding:6px 0}
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="proto">Protótipo com dados fictícios · voz do navegador no lugar do ElevenLabs</div>
+  <header id="top"></header>
+  <main id="app"></main>
+</div>
+<div id="toast"></div>
+<script src="../shared/store.js"></script>
+<script>
+const $ = (s) => document.querySelector(s);
+const db = () => Store.db;
+const me = () => db().users.find((u) => u.id === db().sessions.web);
+const key = (pid) => me().id + ':' + pid;
+let P = null;            // estado do player
+let prep = null;         // download em andamento
+
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 2600); }
+const settings = () => { const d = db(); return (d.settings[me().id] ||= { repeats: 2, speed: 1, loop: true }); };
+
+/* ---------- playlists visíveis ---------- */
+function published() {
+  return db().playlists.filter((p) => {
+    if (p.status !== 'published') return false;
+    const t = Store.topic(p.topicId), c = Store.context(p.contextId), l = Store.level(t?.levelId);
+    return t && c && l && t.active && c.active && l.active;
+  });
+}
+const isDownloaded = (pid) => !!db().offline[key(pid)];
+function getSentences(pid) {
+  const off = db().offline[key(pid)];
+  if (!db().online && off) return off.sentences;
+  return Store.sorted(pid);
+}
+function estTotalMs(list, st) {
+  return list.reduce((a, s) => { const d = Store.audioDur(s.text) / st.speed; return a + st.repeats * (d + d + SILENCE_PAD_MS); }, 0);
+}
+
+/* ---------- progresso: local + sincronização ---------- */
+function effState(pid) { const d = db(), k = key(pid); return d.local[k] || d.server[k] || null; }
+function saveProgress(pid, sentenceId, loops, seconds) {
+  const d = db(), k = key(pid);
+  const st = { sentenceId, loops, seconds: Math.round(seconds), at: Date.now() };
+  if (d.online) { d.server[k] = st; delete d.local[k]; } else { d.local[k] = { ...st, dirty: true }; }
+  Store.save();
+}
+function syncPending() {
+  const d = db(); let n = 0;
+  for (const [k, v] of Object.entries(d.local)) {
+    if (v.dirty) { const cur = d.server[k]; if (!cur || cur.at <= v.at) d.server[k] = { sentenceId: v.sentenceId, loops: v.loops, seconds: v.seconds, at: v.at }; delete d.local[k]; n++; }
+  }
+  Store.save();
+  return n;
+}
+const pendingCount = () => Object.values(db().local).filter((v) => v.dirty).length;
+
+/* ---------- topo ---------- */
+function renderTop() {
+  const u = me(), on = db().online;
+  $('#top').innerHTML = `
+    ${location.hash === '#/home' || location.hash === '' || !u ? '' : '<button class="chip" id="back">←</button>'}
+    <h1>Reouvir EN<small>Hear it again.</small></h1>
+    <button class="chip" id="theme" title="Alternar tema">${Theme.label()}</button>
+    ${u ? `<button class="chip ${on ? '' : 'off'}" id="net" title="Simula perda de rede do aparelho">${on ? '● Online' : '○ Sem rede'}${pendingCount() ? ' · ' + pendingCount() + ' pendente' : ''}</button>
+    <button class="chip" id="menu">⚙</button>` : ''}`;
+  $('#back')?.addEventListener('click', () => history.back());
+  $('#menu')?.addEventListener('click', () => (location.hash = '#/settings'));
+  $('#net')?.addEventListener('click', toggleNet);
+  $('#theme').addEventListener('click', () => { Theme.toggle(); $('#theme').textContent = Theme.label(); });
+}
+function toggleNet() {
+  const d = db(); d.online = !d.online; Store.save();
+  if (d.online) {
+    const n = syncPending();
+    toast(n ? `Rede de volta. Progresso de ${n} playlist(s) enviado ao servidor.` : 'Rede de volta.');
+  } else {
+    toast('Sem rede (simulado). Só playlists baixadas tocam.');
+    if (P && !isDownloaded(P.pid)) { const pid = P.pid; stopPlayer(); location.hash = '#/playlist/' + pid; toast('Esta playlist não foi baixada. Baixe com rede antes de ouvir offline.'); }
+  }
+  renderTop(); if (!location.hash.startsWith('#/player')) route();
+}
+
+/* ---------- roteador ---------- */
+function route() {
+  const h = location.hash || '#/home';
+  if (!h.startsWith('#/player')) stopPlayer();
+  const u = me();
+  if (u && u.status === 'blocked') { db().sessions.web = null; Store.save(); }
+  if (!me() && !h.startsWith('#/login')) return (location.hash = '#/login');
+  if (me()?.mustChange && !h.startsWith('#/change-password')) return (location.hash = '#/change-password');
+  renderTop();
+  const [, page, id, id2] = h.split('/');
+  ({ login: vLogin, home: vHome, context: () => vContext(id, id2), playlist: () => vPlaylist(id), player: () => vPlayer(id), settings: vSettings, 'change-password': vChange }[page] || vHome)();
+}
+window.addEventListener('hashchange', route);
+window.addEventListener('store-sync', () => { if (!P) route(); });
+
+/* ---------- login / cadastro ---------- */
+function vLogin() {
+  let mode = 'login';
+  const draw = (err = '') => {
+    $('#app').innerHTML = `
+      <h2>${mode === 'login' ? 'Entrar' : 'Criar conta'}</h2>
+      <div class="tabs"><button class="${mode === 'login' ? 'on' : ''}" data-m="login">Entrar</button><button class="${mode === 'reg' ? 'on' : ''}" data-m="reg">Criar conta</button></div>
+      <form class="card" id="f">
+        ${mode === 'reg' ? '<label>Nome</label><input name="name" required>' : ''}
+        <label>E-mail</label><input name="email" type="email" required value="${mode === 'login' ? 'aluno@teste.com' : ''}">
+        <label>Senha${mode === 'reg' ? ' (mín. 6 caracteres)' : ''}</label><input name="password" type="password" required minlength="6" value="${mode === 'login' ? '123456' : ''}">
+        ${err ? `<div class="err">${esc(err)}</div>` : ''}
+        <p><button class="pri big">${mode === 'login' ? 'Entrar' : 'Criar conta e entrar'}</button></p>
+      </form>
+      <p class="mut">Contas de teste: aluno@teste.com / 123456 · bloqueado@teste.com / 123456</p>`;
+    document.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('click', () => { mode = b.dataset.m; draw(); }));
+    $('#f').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const f = Object.fromEntries(new FormData(e.target)); const d = db(); const email = f.email.trim().toLowerCase();
+      if (mode === 'reg') {
+        if (d.users.some((u) => u.email === email)) return draw('Este e-mail já está cadastrado.');
+        const u = { id: Store.uid(), email, name: f.name.trim(), password: f.password, role: 'student', status: 'active', mustChange: false, createdAt: Date.now(), lastLoginAt: Date.now() };
+        d.users.push(u); d.sessions.web = u.id; Store.save(); toast('Conta criada.'); location.hash = '#/home'; return;
+      }
+      const u = d.users.find((x) => x.email === email && x.password === f.password);
+      if (!u) return draw('E-mail ou senha inválidos.');
+      if (u.status === 'blocked') return draw('Conta bloqueada. Fale com o administrador.');
+      u.lastLoginAt = Date.now(); d.sessions.web = u.id; Store.save(); location.hash = '#/home';
+    });
+  };
+  draw();
+}
+function vChange() {
+  $('#app').innerHTML = `<h2>Troque sua senha</h2><p class="mut">O administrador redefiniu sua senha. Defina uma nova para continuar.</p>
+    <form class="card" id="f"><label>Senha atual (temporária)</label><input name="cur" type="password" required>
+    <label>Nova senha (mín. 6)</label><input name="n" type="password" required minlength="6"><div class="err" id="e"></div>
+    <p><button class="pri big">Salvar</button></p></form>`;
+  $('#f').addEventListener('submit', (e) => {
+    e.preventDefault(); const f = Object.fromEntries(new FormData(e.target)); const u = me();
+    if (f.cur !== u.password) return ($('#e').textContent = 'Senha atual incorreta.');
+    u.password = f.n; u.mustChange = false; Store.save(); toast('Senha alterada.'); location.hash = '#/home';
+  });
+}
+
+/* ---------- navegação: contexto → nível → tópico ---------- */
+function vHome() {
+  const pubs = published();
+  const ctxs = db().contexts.filter((c) => pubs.some((p) => p.contextId === c.id));
+  $('#app').innerHTML = `<h2>Olá, ${esc(me().name.split(' ')[0])}</h2>
+    <p class="mut">O que você quer ouvir? Escolha o <b>contexto</b>, depois o nível e o conteúdo.</p>
+    ${ctxs.length ? ctxs.map((c) => {
+      const mine = pubs.filter((p) => p.contextId === c.id);
+      const lv = [...new Set(mine.map((p) => Store.topic(p.topicId).levelId))].sort();
+      return `<a class="item" href="#/context/${c.id}"><span><b>${esc(c.name)}</b><br><span class="mut">${esc(c.category)} · ${mine.length} playlist(s)</span></span>
+        <span>${lv.map((l) => `<span class="badge">${l}</span>`).join(' ')}</span></a>`;
+    }).join('') : '<div class="card mut">Nenhuma playlist publicada ainda. Publique uma no backoffice.</div>'}`;
+}
+function vContext(cid, lid) {
+  const c = Store.context(cid); const pubs = published().filter((p) => p.contextId === cid);
+  if (!c || !pubs.length) return (location.hash = '#/home');
+  if (!lid) {
+    const levels = db().levels.filter((l) => pubs.some((p) => Store.topic(p.topicId).levelId === l.id)).sort((a, b) => a.order - b.order);
+    $('#app').innerHTML = `<div class="mut">Contexto</div><h2>${esc(c.name)}</h2><p class="mut">Escolha o nível.</p>
+      ${levels.map((l) => { const n = pubs.filter((p) => Store.topic(p.topicId).levelId === l.id).length;
+        return `<a class="item" href="#/context/${cid}/${l.id}"><b>Nível ${l.code}</b><span class="badge">${n} conteúdo(s)</span></a>`; }).join('')}`;
+    return;
+  }
+  const inL = pubs.filter((p) => Store.topic(p.topicId).levelId === lid).sort((a, b) => Store.topic(a.topicId).order - Store.topic(b.topicId).order);
+  if (!inL.length) return (location.hash = '#/context/' + cid);
+  $('#app').innerHTML = `<div class="mut">${esc(c.name)} · Nível ${lid}</div><h2>Conteúdo gramatical</h2>
+    ${inL.map((p) => `<a class="item" href="#/playlist/${p.id}"><span><span class="mut">${Store.topic(p.topicId).order}.</span> ${esc(Store.topic(p.topicId).name)}</span>
+      <span>${isDownloaded(p.id) ? '<span class="badge ok">offline</span>' : ''}</span></a>`).join('')}`;
+}
+
+/* ---------- tela da playlist ---------- */
+function vPlaylist(pid) {
+  const p = Store.playlist(pid);
+  if (!p || p.status !== 'published') { toast('Playlist indisponível.'); return (location.hash = '#/home'); }
+  const t = Store.title(p), st = settings(), list = getSentences(pid), es = effState(pid), dl = db().offline[key(pid)];
+  const outdated = dl && db().online && dl.version !== p.version;
+  const idx = es ? list.findIndex((s) => s.id === es.sentenceId) : -1;
+  $('#app').innerHTML = `
+    <div class="card"><span class="badge">${t.level}</span> <span class="badge">${esc(t.topic)}</span>
+      <h2 style="margin-top:10px">${esc(t.context)}</h2>
+      <div class="kv"><span>Frases</span><b>${list.length}</b></div>
+      <div class="kv"><span>Duração estimada</span><b>~${fmtMin(estTotalMs(list, st))}</b></div>
+      <div class="kv"><span>Voltas completas</span><b>${es?.loops || 0}</b></div>
+      <div class="kv"><span>Tempo ouvido</span><b>${Math.floor((es?.seconds || 0) / 60)} min ${(es?.seconds || 0) % 60} s</b></div>
+      ${db().local[key(pid)]?.dirty ? '<div class="badge warn" style="margin-top:6px">progresso pendente de sincronização</div>' : ''}
+    </div>
+    <div class="card"><h3>Ouvir sem rede</h3>
+      ${dl ? `<div class="row"><span class="badge ok">baixada</span><span class="mut sp">${dl.sentences.length} frases · ${fmtDate(dl.at)}</span></div>
+        ${outdated ? '<p class="badge warn">A playlist mudou no servidor.</p>' : ''}` : '<p class="mut">Baixe a playlist inteira para tocar direto no aparelho, sem chamar o servidor.</p>'}
+      <div id="prog" style="display:none"><div class="bar"><i id="pbar"></i></div><div class="mut" id="ptxt"></div></div>
+      <p><button id="dl" class="${dl && !outdated ? '' : 'pri'} big" ${!db().online ? 'disabled' : ''}>${dl ? (outdated ? 'Atualizar download' : 'Baixar de novo') : 'Baixar playlist'}</button></p>
+      ${!db().online && !dl ? '<div class="err">Sem rede e sem download: não dá para ouvir.</div>' : ''}
+    </div>
+    <div class="card"><h3>Configurações</h3>
+      <label>Repetições seguidas por frase</label>
+      <select id="rep">${[1, 2, 3, 4, 5].map((n) => `<option ${n === st.repeats ? 'selected' : ''}>${n}</option>`).join('')}</select>
+      <label>Velocidade</label>
+      <select id="spd"><option value="0.75" ${st.speed === 0.75 ? 'selected' : ''}>0,75x</option><option value="1" ${st.speed === 1 ? 'selected' : ''}>1x</option></select>
+      <div class="toggle"><span>Loop da playlist</span><input type="checkbox" id="loop" style="width:auto" ${st.loop ? 'checked' : ''}></div>
+      <p class="mut">Silêncio entre audições: duração do áudio ÷ velocidade + 1,5 s (regra fixa).</p>
+    </div>
+    <button class="pri big" id="play" ${!db().online && !dl ? 'disabled' : ''}>▶ ${idx > 0 ? 'Continuar da frase ' + (idx + 1) : 'Play'}</button>
+    ${idx > 0 ? '<p><button class="big" id="restart">Recomeçar do início</button></p>' : ''}`;
+  const sv = () => { st.repeats = +$('#rep').value; st.speed = +$('#spd').value; st.loop = $('#loop').checked; Store.save(); vPlaylist(pid); };
+  ['#rep', '#spd', '#loop'].forEach((s) => $(s).addEventListener('change', sv));
+  $('#play').addEventListener('click', () => (location.hash = '#/player/' + pid));
+  $('#restart')?.addEventListener('click', () => { const d = db(), k = key(pid); const cur = d.local[k] || d.server[k]; saveProgress(pid, null, cur?.loops || 0, cur?.seconds || 0); location.hash = '#/player/' + pid; });
+  $('#dl').addEventListener('click', () => download(pid));
+}
+function download(pid) {
+  if (prep) return;
+  const list = Store.sorted(pid), p = Store.playlist(pid); let i = 0;
+  $('#prog').style.display = 'block'; $('#dl').disabled = true;
+  prep = setInterval(() => {
+    const s = list[i]; const fresh = !Store.hasAudio(s.text);
+    Store.ensureAudio(s.text);
+    i++; $('#pbar') && ($('#pbar').style.width = (i / list.length) * 100 + '%');
+    $('#ptxt') && ($('#ptxt').textContent = `Frase ${i} de ${list.length}${fresh ? ' · áudio gerado agora' : ' · áudio já existia'}`);
+    if (i >= list.length) {
+      clearInterval(prep); prep = null;
+      db().offline[key(pid)] = { at: Date.now(), version: p.version, sentences: list.map((s) => ({ ...s })) };
+      Store.save(); toast('Playlist baixada. Agora ela toca sem rede.'); vPlaylist(pid);
+    }
+  }, 90);
+}
+
+/* ---------- player ---------- */
+function speak(text, rate, done) {
+  if (!('speechSynthesis' in window)) return setTimeout(done, Store.estDurationMs(text) / rate);
+  const u = new SpeechSynthesisUtterance(text); u.lang = 'en-US'; u.rate = rate;
+  u.onend = done; u.onerror = done;
+  speechSynthesis.cancel(); speechSynthesis.speak(u);
+}
+function vPlayer(pid) {
+  const p = Store.playlist(pid);
+  if (!p || p.status !== 'published') { toast('Playlist indisponível.'); return (location.hash = '#/home'); }
+  if (!db().online && !isDownloaded(pid)) { toast('Baixe a playlist com rede antes.'); return (location.hash = '#/playlist/' + pid); }
+  const list = getSentences(pid); if (!list.length) { toast('Playlist vazia.'); return (location.hash = '#/home'); }
+  const st = settings(), es = effState(pid);
+  let idx = es?.sentenceId ? list.findIndex((s) => s.id === es.sentenceId) : 0; if (idx < 0) idx = 0;
+  P = { pid, list, idx, rep: 1, phase: 'playing', left: 0, total: 0, paused: false, tk: 0, loops: es?.loops || 0, sec: es?.seconds || 0, st: { ...st } };
+  P.timer = setInterval(tick, 100);
+  const t = Store.title(p);
+  $('#app').innerHTML = `
+    <div class="mut" style="text-align:center">${t.level} · ${esc(t.topic)} · ${esc(t.context)}</div>
+    <div class="card"><div class="mut" id="pos" style="text-align:center"></div>
+      <div class="now" id="now"></div>
+      <div class="st" id="stt"></div><div class="bar" id="bwrap"><i id="bar"></i></div>
+      <div class="mut" id="rule" style="text-align:center;margin-top:6px"></div>
+      <div class="ctl"><button id="prev">⏮</button><button class="play" id="pp">⏸</button><button id="next">⏭</button></div>
+      <div class="row mut"><span id="lp"></span><span class="sp"></span><span id="sc"></span></div>
+    </div>
+    <div class="card"><h3>Frases</h3><ol class="sent" id="sl">${list.map((s, i) => `<li data-i="${i}"><span>${i + 1}</span>${esc(s.text)}</li>`).join('')}</ol></div>`;
+  $('#prev').onclick = () => jump(-1); $('#next').onclick = () => jump(1); $('#pp').onclick = togglePause;
+  $('#sl').onclick = (e) => { const li = e.target.closest('li'); if (li) goTo(+li.dataset.i); };
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.metadata = new MediaMetadata({ title: t.context, artist: 'Reouvir EN', album: t.level + ' · ' + t.topic });
+    navigator.mediaSession.setActionHandler('play', togglePause); navigator.mediaSession.setActionHandler('pause', togglePause);
+    navigator.mediaSession.setActionHandler('nexttrack', () => jump(1)); navigator.mediaSession.setActionHandler('previoustrack', () => jump(-1));
+  }
+  playCurrent();
+}
+function playCurrent() {
+  const s = P.list[P.idx]; P.phase = 'playing'; const tk = ++P.tk; const t0 = performance.now();
+  const nominal = Store.audioDur(s.text);
+  paint();
+  speak(s.text, P.st.speed, () => {
+    if (!P || tk !== P.tk) return;
+    const el = (performance.now() - t0) * P.st.speed;
+    if (!Store.hasAudio(s.text)) Store.ensureAudio(s.text, el > 400 ? el : nominal);
+    const dur = Store.audioDur(s.text);
+    P.phase = 'silence'; P.total = P.left = calcularSilencioMs(dur, P.st.speed); P.dur = dur; paint();
+  });
+}
+function tick() {
+  if (!P || P.paused) return;
+  P.sec += 0.1;
+  if (P.phase === 'silence') { P.left -= 100; if (P.left <= 0) return afterSilence(); }
+  paint();
+}
+function afterSilence() {
+  if (P.rep < P.st.repeats) { P.rep++; return playCurrent(); }
+  P.rep = 1; P.idx++;
+  if (P.idx >= P.list.length) {
+    P.loops++; toast(`Volta ${P.loops} completa.`);
+    if (!P.st.loop) { saveProgress(P.pid, null, P.loops, P.sec); P.idx = 0; P.paused = true; P.phase = 'playing'; P.tk++; paint(); return; }
+    P.idx = 0;
+  }
+  saveProgress(P.pid, P.list[P.idx].id, P.loops, P.sec); playCurrent();
+}
+function cancelSpeech() { if (P) P.tk++; if ('speechSynthesis' in window) speechSynthesis.cancel(); }
+function togglePause() {
+  if (!P) return;
+  if (!P.paused) { P.paused = true; if (P.phase === 'playing') cancelSpeech(); }
+  else { P.paused = false; if (P.phase === 'playing') playCurrent(); }
+  paint();
+}
+function goTo(i) { cancelSpeech(); P.idx = i; P.rep = 1; P.phase = 'playing'; saveProgress(P.pid, P.list[i].id, P.loops, P.sec); if (!P.paused) playCurrent(); else paint(); }
+function jump(d) { goTo((P.idx + d + P.list.length) % P.list.length); }
+function paint() {
+  if (!P || !$('#now')) return;
+  const s = P.list[P.idx];
+  $('#pos').textContent = `Frase ${P.idx + 1} de ${P.list.length} · repetição ${P.rep}/${P.st.repeats}`;
+  $('#now').textContent = s.text;
+  const stt = $('#stt'), bar = $('#bar'), bw = $('#bwrap');
+  if (P.paused) { stt.className = 'st'; stt.textContent = '⏸ Pausado'; }
+  else if (P.phase === 'playing') { stt.className = 'st pl'; stt.textContent = '▶ Tocando…'; }
+  else { stt.className = 'st sil'; stt.textContent = `⏳ Silêncio: ${fmtS(Math.max(0, P.left))}`; }
+  bw.className = 'bar ' + (P.phase === 'silence' ? 'sil' : '');
+  bar.style.width = P.phase === 'silence' ? ((P.total - P.left) / P.total) * 100 + '%' : P.phase === 'playing' && !P.paused ? '100%' : '0';
+  $('#rule').textContent = P.phase === 'silence' ? `silêncio = ${fmtS(P.dur)} ÷ ${P.st.speed}x + 1,5 s = ${fmtS(P.total)}` : `velocidade ${P.st.speed}x · silêncio = duração ÷ velocidade + 1,5 s`;
+  $('#pp').textContent = P.paused ? '▶' : '⏸';
+  $('#lp').textContent = `Voltas: ${P.loops}`; $('#sc').textContent = `Ouvido: ${Math.floor(P.sec / 60)} min ${Math.floor(P.sec % 60)} s`;
+  document.querySelectorAll('#sl li').forEach((li) => li.classList.toggle('cur', +li.dataset.i === P.idx));
+  const cur = document.querySelector('#sl li.cur'); if (cur && P.lastIdx !== P.idx) { cur.scrollIntoView({ block: 'nearest' }); P.lastIdx = P.idx; }
+}
+function stopPlayer() {
+  if (!P) return;
+  clearInterval(P.timer); cancelSpeech();
+  const cur = P.list[P.idx]; if (cur) saveProgress(P.pid, cur.id, P.loops, P.sec);
+  P = null;
+}
+
+/* ---------- configurações / sair ---------- */
+function vSettings() {
+  const u = me();
+  $('#app').innerHTML = `<h2>Conta</h2><div class="card"><div class="kv"><span>Nome</span><b>${esc(u.name)}</b></div><div class="kv"><span>E-mail</span><b>${esc(u.email)}</b></div></div>
+    <p><button class="big" id="out">Sair</button></p>
+    <p><button class="big" id="outall">Sair de todos os aparelhos</button></p>`;
+  const out = () => { db().sessions.web = null; Store.save(); location.hash = '#/login'; };
+  $('#out').onclick = out; $('#outall').onclick = out;
+}
+if ('serviceWorker' in navigator) { /* o PWA real registraria o service worker aqui */ }
+route();
+</script>
+</body>
+</html>

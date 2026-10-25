@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reouvir EN — backoffice (protótipo)</title>
+<style>
+  :root{--bg:#f3f4f6;--card:#fff;--ink:#111827;--mut:#6b7280;--line:#e5e7eb;--line2:#d1d5db;--pri:#4f46e5;--btn:#4f46e5;--pri2:#eef2ff;--ok:#059669;--warn:#d97706;--bad:#dc2626;--sunk:#e5e7eb;--hover:#f9fafb;--neu-bg:#e5e7eb;--neu-fg:#374151;--ok-bg:#d1fae5;--ok-fg:#065f46;--pri-bg:#e0e7ff;--pri-fg:#3730a3;--warn-bg:#fef3c7;--warn-fg:#92400e;--bad-bg:#fee2e2;--bad-fg:#991b1b;--vio-bg:#ede9fe;--vio-fg:#5b21b6;--proto-bg:#fef9c3;--proto-fg:#713f12;--sec-bg:#fef9c3;--sec-fg:#713f12;color-scheme:light}
+  @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b0d14;--card:#161a26;--ink:#e5e7eb;--mut:#9ca3af;--line:#2a2f42;--line2:#3a4058;--pri:#818cf8;--btn:#4f46e5;--pri2:#25285a;--ok:#34d399;--warn:#fbbf24;--bad:#f87171;--sunk:#2a2f42;--hover:#20253a;--neu-bg:#2a2f42;--neu-fg:#d1d5db;--ok-bg:#064e3b;--ok-fg:#a7f3d0;--pri-bg:#25285a;--pri-fg:#c7d2fe;--warn-bg:#4a3207;--warn-fg:#fde68a;--bad-bg:#4c1414;--bad-fg:#fecaca;--vio-bg:#3b1f6b;--vio-fg:#ddd6fe;--proto-bg:#3a3410;--proto-fg:#fde68a;--sec-bg:#3a3410;--sec-fg:#fde68a;color-scheme:dark}}
+  :root[data-theme="dark"]{--bg:#0b0d14;--card:#161a26;--ink:#e5e7eb;--mut:#9ca3af;--line:#2a2f42;--line2:#3a4058;--pri:#818cf8;--btn:#4f46e5;--pri2:#25285a;--ok:#34d399;--warn:#fbbf24;--bad:#f87171;--sunk:#2a2f42;--hover:#20253a;--neu-bg:#2a2f42;--neu-fg:#d1d5db;--ok-bg:#064e3b;--ok-fg:#a7f3d0;--pri-bg:#25285a;--pri-fg:#c7d2fe;--warn-bg:#4a3207;--warn-fg:#fde68a;--bad-bg:#4c1414;--bad-fg:#fecaca;--vio-bg:#3b1f6b;--vio-fg:#ddd6fe;--proto-bg:#3a3410;--proto-fg:#fde68a;--sec-bg:#3a3410;--sec-fg:#fde68a;color-scheme:dark}
+  *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink);font-size:14px}
+  .proto{background:var(--proto-bg);color:var(--proto-fg);font-size:12px;text-align:center;padding:4px}
+  .app{display:flex;min-height:calc(100vh - 25px)}
+  nav{width:210px;background:#111827;color:#d1d5db;padding:16px 10px;flex-shrink:0}
+  nav h1{color:#fff;font-size:17px;margin:0 8px 16px} nav h1 small{display:block;font-weight:400;color:#9ca3af;font-size:11px}
+  nav a{display:block;padding:9px 12px;border-radius:8px;color:inherit;text-decoration:none;margin-bottom:2px} nav a.on{background:#374151;color:#fff}
+  nav .who{margin:24px 8px 0;font-size:12px;color:#9ca3af}
+  main{flex:1;padding:24px;min-width:0}
+  h2{margin:0 0 16px;font-size:22px} h3{margin:18px 0 8px;font-size:15px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+  table{width:100%;border-collapse:collapse} th{text-align:left;color:var(--mut);font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+  th,td{padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}
+  button{font:inherit;cursor:pointer;border:1px solid var(--line2);background:var(--card);color:var(--ink);border-radius:8px;padding:6px 12px} button:hover{background:var(--hover)}
+  button.pri{background:var(--btn);border-color:var(--btn);color:#fff} button.pri:hover{background:#4338ca} button.bad{color:var(--bad)} button:disabled{opacity:.4;cursor:not-allowed}
+  button.sm{padding:3px 8px;font-size:12px}
+  input,select{font:inherit;padding:7px 9px;border:1px solid var(--line2);border-radius:8px;background:var(--card);color:var(--ink)} input.w{width:100%}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap} .sp{flex:1}
+  .badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:99px;background:var(--neu-bg);color:var(--neu-fg)}
+  .badge.published{background:var(--ok-bg);color:var(--ok-fg)} .badge.draft{background:var(--pri-bg);color:var(--pri-fg)} .badge.warnb{background:var(--warn-bg);color:var(--warn-fg)}
+  .badge.archived{background:var(--neu-bg);color:var(--mut)} .badge.blocked{background:var(--bad-bg);color:var(--bad-fg)} .badge.active{background:var(--ok-bg);color:var(--ok-fg)} .badge.admin{background:var(--vio-bg);color:var(--vio-fg)}
+  .tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--line)} .tabs a{padding:8px 14px;text-decoration:none;color:var(--mut);border-bottom:2px solid transparent;cursor:pointer} .tabs a.on{color:var(--pri);border-color:var(--pri);font-weight:600}
+  .mut{color:var(--mut)} .err{color:var(--bad)} .ok{color:var(--ok)} .warn{color:var(--warn)}
+  .bar{height:8px;background:var(--sunk);border-radius:9px;overflow:hidden;min-width:100px} .bar i{display:block;height:100%;background:var(--pri)}
+  .login{max-width:360px;margin:80px auto}
+  tr.sent td{background:var(--card)} tr.sent.drag{opacity:.4} tr.sent.over td{border-top:2px solid var(--pri)}
+  .handle{cursor:grab;color:#9ca3af;user-select:none;font-size:16px} .gap td:first-child{box-shadow:inset 3px 0 var(--warn)}
+  td input.txt{width:100%;border-color:transparent;background:transparent} td input.txt:hover,td input.txt:focus{border-color:var(--line2);background:var(--card)}
+  td input.mv{width:54px}
+  #theme{position:fixed;left:14px;bottom:14px;z-index:30;background:#374151;color:#fff;border-color:#4b5563;border-radius:99px}
+  #theme:hover{background:#4b5563}
+  textarea{width:100%;min-height:130px;margin-top:10px;font:12px ui-monospace,monospace;padding:8px;border:1px solid var(--line2);border-radius:8px;background:var(--card);color:var(--ink)}
+  #toast{position:fixed;right:20px;bottom:20px;background:#111827;color:#fff;padding:10px 16px;border-radius:10px;opacity:0;transition:.25s;pointer-events:none;max-width:420px}
+  #toast.on{opacity:1}
+  .secret{font-family:ui-monospace,monospace;font-size:18px;color:var(--sec-fg);background:var(--sec-bg);padding:6px 10px;border-radius:8px;display:inline-block}
+  @media(max-width:760px){.app{flex-direction:column} nav{width:auto;display:flex;flex-wrap:wrap;gap:4px} nav h1,nav .who{display:none} main{padding:12px}}
+</style>
+</head>
+<body>
+<div class="proto">Protótipo com dados fictícios · no sistema real, o backoffice fica em /admin e fala com a API</div>
+<div id="root"></div>
+<button id="theme" title="Alternar tema"></button>
+<div id="toast"></div>
+<script src="../shared/store.js"></script>
+<script>
+const $ = (s) => document.querySelector(s);
+const db = () => Store.db;
+const me = () => db().users.find((u) => u.id === db().sessions.admin);
+const WORDS = { A1: [4, 10], A2: [4, 10], B1: [8, 18], B2: [8, 18], C1: [12, 30], C2: [12, 30] };
+
+$('#theme').textContent = Theme.label();
+$('#theme').onclick = () => { Theme.toggle(); $('#theme').textContent = Theme.label(); };
+function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 2800); }
+const wc = (t) => Store.norm(t).split(' ').filter(Boolean).length;
+const badge = (s) => `<span class="badge ${s}">${{ published: 'publicada', draft: 'rascunho', archived: 'arquivada', blocked: 'bloqueado', active: 'ativo', admin: 'admin', student: 'aluno' }[s] || s}</span>`;
+
+/* ---------- shell ---------- */
+const NAV = [['catalog', 'Catálogo'], ['playlists', 'Playlists'], ['import', 'Importar'], ['users', 'Usuários'], ['stats', 'Painel']];
+function route() {
+  const h = location.hash || '#/playlists';
+  if (!me() || me().role !== 'admin') return vLogin();
+  const [, page, id] = h.split('/');
+  $('#root').innerHTML = `<div class="app"><nav><h1>Reouvir EN<small>Backoffice</small></h1>
+    ${NAV.map(([k, n]) => `<a href="#/${k}" class="${page === k || (k === 'playlists' && page === 'playlist') ? 'on' : ''}">${n}</a>`).join('')}
+    <div class="who">${esc(me().email)}<br><a href="#" id="out" style="display:inline;padding:0;color:#a5b4fc">Sair</a></div></nav><main id="main"></main></div>`;
+  $('#out').onclick = (e) => { e.preventDefault(); db().sessions.admin = null; Store.save(); route(); };
+  ({ catalog: vCatalog, playlists: vPlaylists, playlist: () => vReview(id), import: vImport, users: vUsers, stats: vStats }[page] || vPlaylists)();
+}
+window.addEventListener('hashchange', route);
+window.addEventListener('store-sync', () => { if (!document.activeElement || document.activeElement.tagName !== 'INPUT') route(); });
+
+function vLogin() {
+  $('#root').innerHTML = `<form class="card login" id="f"><h2>Backoffice</h2><p class="mut">Acesso restrito ao papel admin.</p>
+    <p><input class="w" name="email" value="admin@reouvir.en" placeholder="E-mail"></p><p><input class="w" name="password" type="password" value="admin123" placeholder="Senha"></p>
+    <div class="err" id="e"></div><p><button class="pri" style="width:100%">Entrar</button></p></form>`;
+  $('#f').onsubmit = (e) => {
+    e.preventDefault(); const f = Object.fromEntries(new FormData(e.target));
+    const u = db().users.find((x) => x.email === f.email.trim().toLowerCase() && x.password === f.password);
+    if (!u) return ($('#e').textContent = 'E-mail ou senha inválidos.');
+    if (u.role !== 'admin') return ($('#e').textContent = 'Esta conta não tem acesso ao backoffice.');
+    if (u.status === 'blocked') return ($('#e').textContent = 'Conta bloqueada.');
+    db().sessions.admin = u.id; u.lastLoginAt = Date.now(); Store.save(); route();
+  };
+}
+
+/* ---------- catálogo ---------- */
+let catTab = 'levels';
+function vCatalog() {
+  const d = db();
+  const tab = (k, n) => `<a class="${catTab === k ? 'on' : ''}" data-t="${k}">${n}</a>`;
+  let body = '';
+  if (catTab === 'levels') body = `<table><tr><th>Código</th><th>Nome</th><th>Ordem</th><th>Ativo</th></tr>${[...d.levels].sort((a, b) => a.order - b.order).map((l) => `<tr><td><b>${l.code}</b></td><td>${esc(l.name)}</td><td>${l.order}</td>
+    <td><input type="checkbox" data-lv="${l.id}" ${l.active ? 'checked' : ''}></td></tr>`).join('')}</table>`;
+  if (catTab === 'topics') body = `<form class="row" id="ft" style="margin-bottom:12px"><select name="level">${d.levels.map((l) => `<option>${l.id}</option>`).join('')}</select>
+    <input name="name" placeholder="Novo tópico gramatical" required style="flex:1"><button class="pri">Adicionar</button></form>
+    <table><tr><th>Nível</th><th>Ordem</th><th>Tópico</th><th>Slug</th><th>Playlists</th><th>Ativo</th><th></th></tr>${[...d.topics].sort((a, b) => Store.level(a.levelId).order - Store.level(b.levelId).order || a.order - b.order).map((t) => `<tr><td>${Store.level(t.levelId).code}</td><td>${t.order}</td><td>${esc(t.name)}</td><td class="mut">${esc(t.slug)}</td>
+    <td>${d.playlists.filter((p) => p.topicId === t.id).length}</td><td><input type="checkbox" data-tp="${t.id}" ${t.active ? 'checked' : ''}></td>
+    <td><button class="sm bad" data-dt="${t.id}">Excluir</button></td></tr>`).join('')}</table>`;
+  if (catTab === 'contexts') body = `<form class="row" id="fc" style="margin-bottom:12px"><input name="name" placeholder="Novo contexto" required style="flex:1"><input name="category" placeholder="Categoria" required>
+    <button class="pri">Adicionar</button></form><table><tr><th>Contexto</th><th>Slug</th><th>Categoria</th><th>Playlists</th><th>Ativo</th><th></th></tr>${d.contexts.map((c) => `<tr><td>${esc(c.name)}</td><td class="mut">${esc(c.slug)}</td><td>${esc(c.category)}</td>
+    <td>${d.playlists.filter((p) => p.contextId === c.id).length}</td><td><input type="checkbox" data-cx="${c.id}" ${c.active ? 'checked' : ''}></td><td><button class="sm bad" data-dc="${c.id}">Excluir</button></td></tr>`).join('')}</table>`;
+  $('#main').innerHTML = `<h2>Catálogo</h2><div class="tabs">${tab('levels', 'Níveis')}${tab('topics', 'Tópicos gramaticais')}${tab('contexts', 'Contextos')}</div>
+    <div class="card">${body}</div><p class="mut">Itens inativos somem do app do aluno, sem apagar as playlists já criadas.</p>`;
+  document.querySelectorAll('.tabs a').forEach((a) => (a.onclick = () => { catTab = a.dataset.t; vCatalog(); }));
+  const tg = (sel, attr, list) => document.querySelectorAll(sel).forEach((i) => (i.onchange = () => { list.find((x) => x.id === i.dataset[attr]).active = i.checked; Store.save(); toast('Salvo.'); }));
+  tg('[data-lv]', 'lv', d.levels); tg('[data-tp]', 'tp', d.topics); tg('[data-cx]', 'cx', d.contexts);
+  $('#ft')?.addEventListener('submit', (e) => { e.preventDefault(); const f = Object.fromEntries(new FormData(e.target)); const nm = f.name.trim(); d.topics.push({ id: Store.uid(), levelId: f.level, slug: Store.slugify(nm), name: nm, order: Math.max(0, ...d.topics.filter((t) => t.levelId === f.level).map((t) => t.order)) + 1, active: true }); Store.save(); vCatalog(); });
+  $('#fc')?.addEventListener('submit', (e) => { e.preventDefault(); const f = Object.fromEntries(new FormData(e.target)); d.contexts.push({ id: Store.uid(), slug: Store.slugify(f.name), name: f.name.trim(), category: f.category.trim(), description: '', active: true }); Store.save(); vCatalog(); });
+  const del = (sel, attr, list, field) => document.querySelectorAll(sel).forEach((b) => (b.onclick = () => {
+    const id = b.dataset[attr]; if (d.playlists.some((p) => p[field] === id)) return toast('Há playlists usando este item. Desative em vez de excluir.');
+    list.splice(list.findIndex((x) => x.id === id), 1); Store.save(); vCatalog();
+  }));
+  del('[data-dt]', 'dt', d.topics, 'topicId'); del('[data-dc]', 'dc', d.contexts, 'contextId');
+}
+
+/* ---------- playlists ---------- */
+function coverage(pid) { const l = Store.sorted(pid); return { total: l.length, ready: l.filter((s) => Store.hasAudio(s.text)).length }; }
+let plFilter = '';
+function vPlaylists() {
+  const d = db();
+  $('#main').innerHTML = `<h2>Playlists</h2>
+    <form class="card row" id="f"><b>Nova playlist vazia</b>
+      <select name="topic">${d.topics.map((t) => `<option value="${t.id}">${Store.level(t.levelId).code} · ${esc(t.name)}</option>`).join('')}</select>
+      <select name="context">${d.contexts.map((c) => `<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select>
+      <button class="pri">Criar rascunho</button></form>
+    <div class="row" style="margin-bottom:8px"><span class="mut">Filtrar por contexto</span><select id="fl"><option value="">Todos</option>${d.contexts.map((c) => `<option value="${c.id}" ${c.id === plFilter ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></div>
+    <div class="card"><table><tr><th>Contexto</th><th>Nível</th><th>Tópico</th><th>Status</th><th>Frases</th><th>Áudios</th><th></th></tr>
+    ${[...d.playlists].filter((p) => !plFilter || p.contextId === plFilter).sort((a, b) => Store.context(a.contextId).name.localeCompare(Store.context(b.contextId).name) || Store.level(Store.topic(a.topicId).levelId).order - Store.level(Store.topic(b.topicId).levelId).order || Store.topic(a.topicId).order - Store.topic(b.topicId).order).map((p) => { const t = Store.title(p), c = coverage(p.id); return `<tr><td>${esc(t.context)}</td><td>${t.level}</td><td>${esc(t.topic)}</td><td>${badge(p.status)}</td>
+      <td>${c.total}</td><td>${c.ready}/${c.total}</td><td><a href="#/playlist/${p.id}"><button class="sm">Abrir</button></a></td></tr>`; }).join('')}</table></div>`;
+  $('#fl').onchange = (e) => { plFilter = e.target.value; vPlaylists(); };
+  $('#f').onsubmit = (e) => {
+    e.preventDefault(); const f = Object.fromEntries(new FormData(e.target));
+    if (d.playlists.some((p) => p.topicId === f.topic && p.contextId === f.context)) return toast('Já existe playlist para este tópico e contexto.');
+    const p = { id: Store.uid(), topicId: f.topic, contextId: f.context, status: 'draft', createdAt: Date.now(), publishedAt: null, version: 1 };
+    d.playlists.push(p); Store.save(); location.hash = '#/playlist/' + p.id;
+  };
+}
+
+/* ---------- revisão de uma playlist ---------- */
+function renumber(pid, ids) { // reordena: renumera tudo de 1 a n (fecha lacunas)
+  const d = db(); const map = new Map(d.sentences.filter((s) => s.playlistId === pid).map((s) => [s.id, s]));
+  ids.forEach((id, i) => (map.get(id).position = i + 1)); bump(pid); Store.save();
+}
+const bump = (pid) => { const p = Store.playlist(pid); p.version++; };
+const hasGaps = (list) => list.some((s, i) => s.position !== i + 1);
+
+function vReview(pid) {
+  const d = db(), p = Store.playlist(pid); if (!p) return (location.hash = '#/playlists');
+  const t = Store.title(p), list = Store.sorted(pid), c = coverage(pid), [lo, hi] = WORDS[t.level] || [0, 999];
+  const editable = true;
+  $('#main').innerHTML = `
+    <div class="row"><a href="#/playlists">← Playlists</a></div>
+    <h2>${t.level} · ${esc(t.topic)} <span class="mut">/ ${esc(t.context)}</span> ${badge(p.status)}</h2>
+    <div class="card row">
+      <span class="mut">As frases vêm da pipeline: use <a href="#/import">Importar</a> para criar ou substituir. Aqui você ajusta à mão.</span>
+      <span class="sp"></span>
+      ${p.status === 'draft' ? '<button class="pri" id="pub">Publicar</button>' : ''}
+      ${p.status === 'published' ? '<button id="unpub">Despublicar</button>' : ''}
+      ${p.status !== 'archived' ? '<button id="arc">Arquivar</button>' : ''}
+      ${p.status === 'archived' ? '<button id="unarc">Restaurar como rascunho</button>' : ''}
+    </div>
+    <div class="card"><div class="row"><b>${list.length} frases</b><span class="mut">· áudio gerado: ${c.ready}/${c.total}</span>
+      ${hasGaps(list) ? '<span class="warn">· há lacunas nas posições</span><button class="sm" id="fix">Renumerar</button>' : ''}<span class="sp"></span>
+      <span class="mut">Arraste ⠿ ou digite a posição de destino. Limite do nível ${t.level}: ${lo}–${hi} palavras.</span></div>
+      <table style="margin-top:8px"><tr><th></th><th>#</th><th>Pos.</th><th>Frase</th><th>Palavras</th><th>Áudio</th><th>Mover para</th><th></th></tr><tbody id="tb">
+      ${list.map((s, i) => { const w = wc(s.text); return `<tr class="sent ${s.position !== i + 1 ? 'gap' : ''}" draggable="${editable}" data-id="${s.id}">
+        <td class="handle">⠿</td><td>${i + 1}</td><td class="mut" title="posição gravada no banco">${s.position}</td>
+        <td><input class="txt" data-edit="${s.id}" value="${esc(s.text)}" ${editable ? '' : 'disabled'}></td>
+        <td class="${w < lo || w > hi ? 'warn' : 'mut'}">${w}</td><td>${Store.hasAudio(s.text) ? '<span class="ok">✔ pronto</span>' : '<span class="mut">sem áudio</span>'}</td>
+        <td><input class="mv" type="number" min="1" max="${list.length}" placeholder="${i + 1}" data-mv="${s.id}"></td>
+        <td><button class="sm bad" data-del="${s.id}" ${editable ? '' : 'disabled'}>Excluir</button></td></tr>`; }).join('')}
+      ${list.length ? '' : '<tr><td colspan="8" class="mut">Nenhuma frase ainda. Importe um arquivo ou adicione uma.</td></tr>'}</tbody></table>
+      <form class="row" id="add" style="margin-top:12px"><input name="text" class="w" style="flex:1" placeholder="Nova frase (entra na última posição)" required ${editable ? '' : 'disabled'}><button class="pri" ${editable ? '' : 'disabled'}>Adicionar ao fim</button></form>
+    </div>`;
+  const again = () => vReview(pid);
+  $('#pub')?.addEventListener('click', () => { if (!list.length) return toast('Adicione frases antes de publicar.'); p.status = 'published'; p.publishedAt = Date.now(); Store.save(); toast('Publicada. Já aparece para os alunos.'); again(); });
+  $('#unpub')?.addEventListener('click', () => { p.status = 'draft'; Store.save(); again(); });
+  $('#arc')?.addEventListener('click', () => { p.status = 'archived'; Store.save(); again(); });
+  $('#unarc')?.addEventListener('click', () => { p.status = 'draft'; Store.save(); again(); });
+  $('#fix')?.addEventListener('click', () => { renumber(pid, list.map((s) => s.id)); toast('Posições renumeradas de 1 a ' + list.length + '.'); again(); });
+  $('#add').onsubmit = (e) => {
+    e.preventDefault(); const text = Store.norm(new FormData(e.target).get('text'));
+    if (list.some((s) => Store.norm(s.text).toLowerCase() === text.toLowerCase())) return toast('Frase duplicada na playlist.');
+    d.sentences.push({ id: Store.uid(), playlistId: pid, position: Math.max(0, ...list.map((s) => s.position)) + 1, text }); bump(pid); Store.save(); again();
+  };
+  document.querySelectorAll('[data-edit]').forEach((i) => (i.onchange = () => {
+    const s = d.sentences.find((x) => x.id === i.dataset.edit), text = Store.norm(i.value);
+    if (!text) { i.value = s.text; return toast('A frase não pode ficar vazia.'); }
+    if (list.some((o) => o.id !== s.id && o.text.toLowerCase() === text.toLowerCase())) { i.value = s.text; return toast('Frase duplicada na playlist.'); }
+    s.text = text; bump(pid); Store.save(); toast(Store.hasAudio(text) ? 'Frase salva.' : 'Frase salva. O texto novo gera outro áudio na primeira escuta.'); again();
+  }));
+  document.querySelectorAll('[data-mv]').forEach((i) => (i.onchange = () => {
+    const to = Math.max(1, Math.min(list.length, +i.value | 0)); const ids = list.map((s) => s.id); const from = ids.indexOf(i.dataset.mv);
+    ids.splice(to - 1, 0, ids.splice(from, 1)[0]); renumber(pid, ids); toast('Movida para a posição ' + to + '.'); again();
+  }));
+  document.querySelectorAll('[data-del]').forEach((b) => (b.onclick = () => { d.sentences.splice(d.sentences.findIndex((s) => s.id === b.dataset.del), 1); bump(pid); Store.save(); toast('Frase removida. A posição dela ficou como lacuna.'); again(); }));
+  // arrastar e soltar
+  let dragId = null; const tb = $('#tb');
+  tb.ondragstart = (e) => { const tr = e.target.closest('tr.sent'); if (!tr) return; dragId = tr.dataset.id; tr.classList.add('drag'); e.dataTransfer.effectAllowed = 'move'; };
+  tb.ondragover = (e) => { e.preventDefault(); tb.querySelectorAll('.over').forEach((x) => x.classList.remove('over')); e.target.closest('tr.sent')?.classList.add('over'); };
+  tb.ondragend = () => { dragId = null; tb.querySelectorAll('.drag,.over').forEach((x) => x.classList.remove('drag', 'over')); };
+  tb.ondrop = (e) => {
+    e.preventDefault(); const tr = e.target.closest('tr.sent'); if (!tr || !dragId || tr.dataset.id === dragId) return;
+    const ids = list.map((s) => s.id); const from = ids.indexOf(dragId), to = ids.indexOf(tr.dataset.id);
+    ids.splice(to, 0, ids.splice(from, 1)[0]); renumber(pid, ids); toast('Ordem atualizada. Posições renumeradas de 1 a ' + ids.length + '.'); again();
+  };
+}
+/* ---------- importação ---------- */
+const URL_RE = /https?:\/\/|www\./i, EMOJI_RE = /\p{Extended_Pictographic}/u;
+let impText = '', impFile = '', impOpts = { updateCatalog: false, replacePublished: false }, impReport = null;
+const chip = (cls, t) => `<span class="badge ${cls}">${t}</span>`;
+function analyze(text, opts) {
+  const r = { fatal: null, context: null, catalog: [], playlists: [] }, d = db();
+  let data; try { data = JSON.parse(text); } catch (e) { r.fatal = 'JSON inválido: ' + e.message; return r; }
+  if (data.schema_version !== 1) { r.fatal = 'schema_version não suportado (esperado 1).'; return r; }
+  const c = data.context;
+  if (!c || !c.slug || !c.name || !c.category || !Array.isArray(c.levels) || !c.levels.length) { r.fatal = 'context precisa de slug, name, category e levels.'; return r; }
+  const ctx = d.contexts.find((x) => x.slug === c.slug);
+  r.context = { slug: c.slug, name: c.name, exists: !!ctx };
+  if (ctx && (ctx.name !== c.name || ctx.category !== c.category)) r.catalog.push({ kind: 'dif', text: `Contexto ${c.slug}: dados diferentes do catálogo` });
+  const int1 = (n) => Number.isInteger(n) && n >= 1, codes = new Set(), slugs = new Set();
+  for (const lv of c.levels) {
+    if (!lv.code || !int1(lv.order)) { r.fatal = 'Todo nível precisa de code e order (inteiro ≥ 1).'; return r; }
+    if (codes.has(lv.code)) { r.fatal = 'Nível repetido no arquivo: ' + lv.code; return r; }
+    codes.add(lv.code);
+    const exL = d.levels.find((l) => l.code === lv.code);
+    if (!exL) r.catalog.push({ kind: 'novo', text: `Nível ${lv.code} será criado (ordem ${lv.order})` });
+    else if ((lv.name && exL.name !== lv.name) || exL.order !== lv.order) r.catalog.push({ kind: 'dif', text: `Nível ${lv.code}: "${exL.name}" ordem ${exL.order} → "${lv.name}" ordem ${lv.order}` });
+    for (const tp of lv.topics || []) {
+      const pl = { level: lv.code, slug: tp.slug, name: tp.name, count: 0, errors: [], warnings: [], action: 'create', items: [] };
+      r.playlists.push(pl);
+      if (!tp.slug || !tp.name) { pl.errors.push('slug e name são obrigatórios'); pl.action = 'error'; continue; }
+      if (slugs.has(tp.slug)) { r.fatal = 'Tópico repetido no arquivo: ' + tp.slug; return r; }
+      slugs.add(tp.slug);
+      if (!int1(tp.order)) pl.errors.push('order do tópico deve ser inteiro ≥ 1');
+      const exT = d.topics.find((t) => t.slug === tp.slug);
+      if (exT && Store.level(exT.levelId).code !== lv.code) pl.errors.push(`o tópico já existe no nível ${Store.level(exT.levelId).code}`);
+      else if (!exT) r.catalog.push({ kind: 'novo', text: `Tópico ${tp.slug} será criado em ${lv.code} (ordem ${tp.order})` });
+      else if (exT.name !== tp.name || exT.order !== tp.order) r.catalog.push({ kind: 'dif', text: `Tópico ${tp.slug}: "${exT.name}" ordem ${exT.order} → "${tp.name}" ordem ${tp.order}` });
+      const seen = new Set(), orders = new Set(), sents = Array.isArray(tp.sentences) ? tp.sentences : [];
+      if (!sents.length) pl.errors.push('playlist sem frases');
+      sents.forEach((st, i) => {
+        const text = typeof st.text === 'string' ? Store.norm(st.text) : '';
+        if (!int1(st.order)) return pl.errors.push(`frase #${i + 1}: order inválida`);
+        if (orders.has(st.order)) return pl.errors.push(`frase #${i + 1}: order ${st.order} repetida`);
+        orders.add(st.order);
+        if (!text) return pl.errors.push(`frase order ${st.order}: texto vazio`);
+        if (URL_RE.test(text) || EMOJI_RE.test(text)) return pl.errors.push(`frase order ${st.order}: contém URL ou emoji`);
+        if (seen.has(text.toLowerCase())) return pl.errors.push(`frase order ${st.order}: duplicada na playlist`);
+        seen.add(text.toLowerCase());
+        const [lo, hi] = WORDS[lv.code] || [0, 999], w = wc(text);
+        if (w < lo || w > hi) pl.warnings.push(`order ${st.order}: ${w} palavras (faixa ${lo}–${hi})`);
+        pl.items.push({ order: st.order, text, metadata: st.metadata });
+      });
+      pl.items.sort((a, b) => a.order - b.order); pl.count = pl.items.length;
+      if (pl.errors.length) { pl.action = 'error'; continue; }
+      const ex = ctx && exT && d.playlists.find((p) => p.topicId === exT.id && p.contextId === ctx.id);
+      if (ex) {
+        pl.existingId = ex.id;
+        const cur = Store.sorted(ex.id).map((x) => x.text);
+        if (cur.length === pl.items.length && cur.every((t, i) => t === pl.items[i].text)) pl.action = 'unchanged';
+        else if (ex.status === 'published' && !opts.replacePublished) { pl.action = 'refused'; pl.note = 'playlist publicada: marque "Substituir playlists publicadas"'; }
+        else {
+          pl.action = 'replace';
+          const n = Object.keys({ ...d.server, ...d.local }).filter((k) => k.endsWith(':' + ex.id)).length;
+          pl.note = ex.status === 'published' ? `publicada${n ? ` · ${n} aluno(s) com progresso voltam ao início` : ''}` : 'substitui as frases atuais';
+        }
+      }
+    }
+  }
+  return r;
+}
+function applyImport(text, opts, fileName) {
+  const r = analyze(text, opts); if (r.fatal) return r;
+  const data = JSON.parse(text), c = data.context, d = db();
+  let ctx = d.contexts.find((x) => x.slug === c.slug);
+  if (!ctx) { ctx = { id: Store.uid(), slug: c.slug, name: c.name, category: c.category, description: c.description || '', active: true }; d.contexts.push(ctx); }
+  else if (opts.updateCatalog) { ctx.name = c.name; ctx.category = c.category; if (c.description) ctx.description = c.description; }
+  for (const lv of c.levels) {
+    let L = d.levels.find((l) => l.code === lv.code);
+    if (!L) { L = { id: Store.uid(), code: lv.code, name: lv.name || lv.code, order: lv.order, active: true }; d.levels.push(L); }
+    else if (opts.updateCatalog) { L.name = lv.name || L.name; L.order = lv.order; }
+    for (const tp of lv.topics || []) {
+      const pl = r.playlists.find((x) => x.slug === tp.slug); if (!pl || pl.action === 'error') continue;
+      let T = d.topics.find((t) => t.slug === tp.slug);
+      if (!T) { T = { id: Store.uid(), levelId: L.id, slug: tp.slug, name: tp.name, order: tp.order, active: true }; d.topics.push(T); }
+      else if (opts.updateCatalog) { T.name = tp.name; T.order = tp.order; }
+      if (pl.action === 'unchanged' || pl.action === 'refused') continue;
+      let P = pl.existingId ? Store.playlist(pl.existingId) : null;
+      if (!P) { P = { id: Store.uid(), topicId: T.id, contextId: ctx.id, status: 'draft', createdAt: Date.now(), publishedAt: null, version: 1 }; d.playlists.push(P); }
+      else { d.sentences = d.sentences.filter((x) => x.playlistId !== P.id); P.version++; }
+      pl.items.forEach((it, i) => d.sentences.push({ id: Store.uid(), playlistId: P.id, position: i + 1, text: it.text, metadata: it.metadata }));
+    }
+  }
+  const n = (a) => r.playlists.filter((p) => p.action === a).length;
+  (d.imports ||= []).unshift({ at: Date.now(), file: fileName || '(colado)', context: c.slug, created: n('create'), replaced: n('replace'), unchanged: n('unchanged'), refused: n('refused'), errors: n('error'), pipeline: data.source?.pipeline || '—' });
+  Store.save(); r.applied = true; return r;
+}
+function reportHtml() {
+  const r = impReport; if (!r) return '';
+  if (r.fatal) return `<div class="card"><b class="err">Arquivo recusado</b><p>${esc(r.fatal)}</p></div>`;
+  const label = { create: chip('draft', 'criar rascunho'), replace: chip('warnb', 'substituir'), unchanged: chip('archived', 'sem mudanças'), refused: chip('blocked', 'recusada'), error: chip('blocked', 'erro') };
+  const cat = r.catalog.map((c) => `<li>${c.kind === 'novo' ? '➕' : '↻'} ${esc(c.text)}${c.kind === 'dif' ? (impOpts.updateCatalog ? ' <span class="warn">(será atualizado)</span>' : ' <span class="mut">(mantido; não será atualizado)</span>') : ''}</li>`).join('');
+  return `<div class="card"><b>${r.applied ? '✔ Importação concluída' : 'Prévia (nada foi gravado)'}</b>
+    <p>Contexto <b>${esc(r.context.slug)}</b>: ${r.context.exists ? 'já existe, será reaproveitado' : 'será criado'}.</p>
+    ${cat ? `<p class="mut">Catálogo:</p><ul>${cat}</ul>` : ''}
+    <table><tr><th>Nível</th><th>Tópico</th><th>Frases</th><th>Resultado</th><th>Detalhes</th></tr>
+    ${r.playlists.map((p) => `<tr><td>${esc(p.level)}</td><td>${esc(p.name || p.slug)}<br><span class="mut">${esc(p.slug || '')}</span></td><td>${p.count}</td><td>${label[p.action]}</td>
+      <td>${[...p.errors.map((e) => `<span class="err">${esc(e)}</span>`), ...(p.note ? [`<span class="warn">${esc(p.note)}</span>`] : []), ...(p.warnings.length ? [`<span class="mut">${p.warnings.length} aviso(s) de tamanho: ${esc(p.warnings.slice(0, 3).join('; '))}${p.warnings.length > 3 ? '…' : ''}</span>`] : [])].join('<br>')}</td></tr>`).join('')}</table></div>`;
+}
+function vImport() {
+  const d = db(), canGo = impReport && !impReport.fatal && !impReport.applied && (impReport.playlists.some((p) => p.action === 'create' || p.action === 'replace') || impReport.catalog.some((c) => c.kind === 'novo'));
+  $('#main').innerHTML = `<h2>Importar playlists</h2>
+    <div class="card"><p class="mut">As frases vêm de uma pipeline externa. Envie o JSON de um contexto (formato em <code>docs/exemplo-importacao.json</code>). Tudo entra como <b>rascunho</b>: a revisão e a publicação continuam aqui.</p>
+      <div class="row"><input type="file" id="file" accept=".json,application/json"><button id="ex">Carregar exemplo</button></div>
+      <textarea id="txt" placeholder="…ou cole o JSON aqui">${esc(impText)}</textarea>
+      <div class="row" style="margin-top:10px">
+        <label><input type="checkbox" id="o1" ${impOpts.updateCatalog ? 'checked' : ''}> Atualizar nomes e ordem do catálogo</label>
+        <label><input type="checkbox" id="o2" ${impOpts.replacePublished ? 'checked' : ''}> Substituir playlists publicadas</label>
+        <span class="sp"></span><button id="val">Validar (prévia)</button><button class="pri" id="go" ${canGo ? '' : 'disabled'}>Importar</button></div></div>
+    ${reportHtml()}
+    <h3>Histórico de importações</h3><div class="card">${(d.imports || []).length ? `<table><tr><th>Quando</th><th>Arquivo</th><th>Contexto</th><th>Criadas</th><th>Substituídas</th><th>Sem mudança</th><th>Recusadas</th><th>Erros</th></tr>
+      ${d.imports.map((h) => `<tr><td>${fmtDate(h.at)}</td><td>${esc(h.file)}</td><td>${esc(h.context)}</td><td>${h.created}</td><td>${h.replaced}</td><td>${h.unchanged}</td><td>${h.refused}</td><td>${h.errors}</td></tr>`).join('')}</table>` : '<span class="mut">Nenhuma importação ainda.</span>'}</div>`;
+  const read = () => { impText = $('#txt').value; impOpts = { updateCatalog: $('#o1').checked, replacePublished: $('#o2').checked }; };
+  const validate = () => { read(); impReport = impText.trim() ? analyze(impText, impOpts) : null; vImport(); };
+  $('#val').onclick = validate; $('#o1').onchange = $('#o2').onchange = () => { read(); if (impReport && !impReport.applied) validate(); };
+  $('#file').onchange = (e) => { const f = e.target.files[0]; if (!f) return; const fr = new FileReader(); fr.onload = () => { impText = fr.result; impFile = f.name; $('#txt').value = impText; validate(); }; fr.readAsText(f); };
+  $('#ex').onclick = () => fetch('exemplo-importacao.json').then((x) => x.text()).then((t) => { impText = t; impFile = 'exemplo-importacao.json'; $('#txt').value = t; validate(); }).catch(() => toast('Não foi possível carregar o exemplo.'));
+  $('#go').onclick = () => { read(); const r = applyImport(impText, impOpts, impFile); impReport = r; toast(r.fatal ? 'Arquivo recusado.' : 'Importação concluída. Revise e publique em Playlists.'); vImport(); };
+}
+
+/* ---------- usuários ---------- */
+let revealed = null;
+function vUsers() {
+  const d = db();
+  $('#main').innerHTML = `<h2>Usuários</h2>
+    ${revealed ? `<div class="card">Senha temporária de <b>${esc(revealed.email)}</b> (exibida só agora): <span class="secret">${revealed.pwd}</span>
+      <p class="mut">Repasse ao aluno. No próximo login ele será obrigado a trocá-la.</p><button id="ok">Entendi</button></div>` : ''}
+    <div class="card"><table><tr><th>E-mail</th><th>Nome</th><th>Papel</th><th>Status</th><th>Cadastro</th><th>Último acesso</th><th></th></tr>
+    ${d.users.map((u) => `<tr><td>${esc(u.email)}</td><td>${esc(u.name)}</td><td>${badge(u.role)}</td><td>${badge(u.status)}${u.mustChange ? ' <span class="badge">trocar senha</span>' : ''}</td>
+      <td>${fmtDate(u.createdAt)}</td><td>${fmtDate(u.lastLoginAt)}</td><td>
+      ${u.id === me().id ? '<span class="mut">você</span>' : `<button class="sm" data-bl="${u.id}">${u.status === 'blocked' ? 'Desbloquear' : 'Bloquear'}</button> <button class="sm" data-rs="${u.id}">Redefinir senha</button>`}</td></tr>`).join('')}</table></div>
+    <p class="mut">O backoffice não cria nem edita contas: o aluno se cadastra sozinho. Bloquear revoga as sessões; redefinir gera senha temporária.</p>`;
+  $('#ok')?.addEventListener('click', () => { revealed = null; vUsers(); });
+  document.querySelectorAll('[data-bl]').forEach((b) => (b.onclick = () => {
+    const u = d.users.find((x) => x.id === b.dataset.bl); u.status = u.status === 'blocked' ? 'active' : 'blocked';
+    if (u.status === 'blocked') { for (const k of Object.keys(d.sessions)) if (d.sessions[k] === u.id) d.sessions[k] = null; }
+    Store.save(); toast(u.status === 'blocked' ? 'Usuário bloqueado e sessões revogadas.' : 'Usuário desbloqueado.'); vUsers();
+  }));
+  document.querySelectorAll('[data-rs]').forEach((b) => (b.onclick = () => {
+    const u = d.users.find((x) => x.id === b.dataset.rs); const pwd = Math.random().toString(36).slice(2, 6) + '-' + Math.random().toString(36).slice(2, 6);
+    u.password = pwd; u.mustChange = true; for (const k of Object.keys(d.sessions)) if (d.sessions[k] === u.id) d.sessions[k] = null;
+    Store.save(); revealed = { email: u.email, pwd }; vUsers();
+  }));
+}
+
+/* ---------- painel ---------- */
+function vStats() {
+  const d = db();
+  const rows = d.playlists.map((p) => {
+    const t = Store.title(p), list = Store.sorted(p.id), c = coverage(p.id);
+    const chars = list.reduce((a, s) => a + (Store.hasAudio(s.text) ? Store.norm(s.text).length : 0), 0);
+    const students = new Set([...Object.keys(d.server), ...Object.keys(d.local)].filter((k) => k.endsWith(':' + p.id)).map((k) => k.split(':')[0])).size;
+    return { p, t, c, chars, students };
+  });
+  const tot = Object.values(d.audios).reduce((a, x) => a + x.chars, 0);
+  $('#main').innerHTML = `<h2>Painel</h2>
+    <div class="row"><div class="card"><div class="mut">Áudios gerados</div><h2 style="margin:4px 0 0">${Object.keys(d.audios).length}</h2></div>
+    <div class="card"><div class="mut">Caracteres no TTS (total)</div><h2 style="margin:4px 0 0">${tot.toLocaleString('pt-BR')}</h2></div>
+    <div class="card"><div class="mut">Alunos cadastrados</div><h2 style="margin:4px 0 0">${d.users.filter((u) => u.role === 'student').length}</h2></div></div>
+    <div class="card"><table><tr><th>Playlist</th><th>Status</th><th>Frases</th><th>Cobertura de áudio</th><th>Caracteres</th><th>Alunos que iniciaram</th></tr>
+    ${rows.map((r) => `<tr><td>${r.t.level} · ${esc(r.t.topic)}<br><span class="mut">${esc(r.t.context)}</span></td><td>${badge(r.p.status)}</td><td>${r.c.total}</td>
+      <td><div class="row"><div class="bar"><i style="width:${r.c.total ? (r.c.ready / r.c.total) * 100 : 0}%"></i></div>${r.c.ready}/${r.c.total}</div></td><td>${r.chars}</td><td>${r.students}</td></tr>`).join('')}</table></div>
+    <p class="mut">Cobertura e caracteres crescem quando um aluno baixa ou ouve a playlist (geração lazy do áudio).</p>`;
+}
+route();
+</script>
+</body>
+</html>
