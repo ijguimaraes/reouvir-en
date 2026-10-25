@@ -7,6 +7,5 @@ command = [
     "run",
     "claude",
     "--yolo",
-    "--no-daemon",
 ]
 network = false
