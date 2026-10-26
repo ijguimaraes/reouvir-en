@@ -16,6 +16,7 @@ Responder ao usuário sempre em **português** (com acentuação correta). Ident
 
 ## Decisões já tomadas
 
+- **Níveis do escopo: A1, A2, B1 e B2.** C1 e C2 ficam fora (não entram no seed nem na pipeline).
 - **Conteúdo curado:** o catálogo (níveis, tópicos, contextos) é gerido no backoffice. Os alunos só veem playlists publicadas.
 - **As frases NÃO são geradas aqui.** Uma **pipeline externa** (outro projeto) gera por contexto/nível/tópico e entrega um **JSON aninhado** (contexto → níveis → tópicos → frases, com `order` em cada nível). O admin **importa** pelo backoffice (prévia + confirmação), tudo entra como `draft`, e depois revisa e publica. Formato em `docs/exemplo-importacao.json` e na seção 8 do documento. A regra "nunca usar gramática de tópico posterior" vive na pipeline.
 - **Só o áudio é lazy:** gerado no ElevenLabs na primeira escuta, guardado e reaproveitado por todos. Chave: `sha256(texto normalizado | voice_id | model_id | voice_settings)`. Single-flight com `UNIQUE(audio_key)`.

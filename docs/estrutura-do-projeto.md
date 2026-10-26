@@ -79,9 +79,9 @@ O sistema tem dois apps de front-end, independentes, e uma API:
 
 | Termo | Definição |
 |---|---|
-| **Nível** | Nível CEFR (A1–C2), cadastrado no backoffice. |
+| **Nível** | Nível CEFR, cadastrado no backoffice. O escopo é **A1, A2, B1 e B2** (C1 e C2 ficam fora). |
 | **Tópico gramatical** | Item da lista CEFR (ex.: Verbo to be). Pertence a um nível. |
-| **Contexto** | Cenário temático (ex.: Entrevista de engenheiro de software Java). É **transversal**: um mesmo contexto tem playlists em todos os níveis (A1–C2) e para todos os tópicos de cada nível, e todas as frases são ambientadas nele. |
+| **Contexto** | Cenário temático (ex.: Entrevista de engenheiro de software Java). É **transversal**: um mesmo contexto tem playlists em todos os níveis (A1–B2) e para todos os tópicos de cada nível, e todas as frases são ambientadas nele. |
 | **Playlist** | Lista ordenada e fixa de frases para um par `(tópico, contexto)`. O nível vem do tópico. Compartilhada entre todos os alunos. |
 | **Frase** | Texto em inglês, único dentro da playlist, com posição fixa. |
 | **Áudio** | Arquivo de voz de uma frase. Identificado por hash do texto + voz + modelo + configurações. |
@@ -620,7 +620,7 @@ Estes itens entram como seed e passam a ser gerenciados no backoffice. A pipelin
 
 ### Níveis
 
-A1, A2, B1, B2, C1, C2.
+A1, A2, B1 e B2. **C1 e C2 estão fora do escopo**: não entram no seed nem na pipeline.
 
 ### Tópicos gramaticais (conforme a lista CEFR)
 
@@ -631,6 +631,8 @@ A1, A2, B1, B2, C1, C2.
 **B1:** Present Perfect (for, since, already, yet, ever) · Present Perfect vs. Past Simple · Past Continuous vs. Past Simple · primeira e segunda condicional · voz passiva (presente e passado) · modais de possibilidade e dedução · orações relativas · discurso indireto básico · used to / be used to · gerúndio vs. infinitivo · phrasal verbs comuns · conectores (although, however, while, in order to)
 
 **B2:** Terceira condicional e condicionais mistas · wish/if only · Past Perfect e Past Perfect Continuous · Present Perfect Continuous · voz passiva avançada · discurso indireto completo · modais no passado · orações relativas não restritivas · inversão para ênfase · Future Perfect e Future Continuous · phrasal verbs e collocations avançados · conectores formais · registro formal vs. informal
+
+> **Fora do escopo:** C1 e C2. As listas abaixo ficam só como referência, caso o escopo seja ampliado.
 
 **C1:** Inversão formal · condicionais formais · subjuntivo · orações clivadas · modais avançados · passiva complexa e impessoal · nominalização · orações reduzidas · coesão avançada · hedging · collocations, idioms e phrasal verbs de registro alto · pontuação em textos longos · adaptação de registro ao público
 
