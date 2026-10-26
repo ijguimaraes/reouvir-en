@@ -1,0 +1,23 @@
+{
+  "name": "reouvir-en",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.15.0",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "pnpm -r --parallel --filter \"./apps/*\" dev",
+    "build": "pnpm -r --filter \"./apps/*\" build",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "db:up": "docker compose -f infra/docker-compose.yml up -d postgres",
+    "db:migrate": "dbmate --migrations-dir apps/api/src/db/migrations --no-dump-schema up",
+    "db:rollback": "dbmate --migrations-dir apps/api/src/db/migrations --no-dump-schema rollback",
+    "db:status": "dbmate --migrations-dir apps/api/src/db/migrations --no-dump-schema status",
+    "db:new": "dbmate --migrations-dir apps/api/src/db/migrations new",
+    "seed:admin": "pnpm --filter @reouvir/api seed:admin"
+  },
+  "devDependencies": {
+    "dbmate": "^2.22.0",
+    "typescript": "^5.6.3"
+  }
+}

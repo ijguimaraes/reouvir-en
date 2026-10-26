@@ -1,0 +1,70 @@
+# Deploy local: postgres, migrate, api e caddy.
+# Antes: `pnpm build` (gera apps/web/dist e apps/admin/dist, que o Caddy serve).
+# Uso:   docker compose --env-file .env -f infra/docker-compose.yml up -d --build
+# HTTPS: `tailscale serve --bg ${CADDY_PORT:-8080}` (o Caddy escuta só em 127.0.0.1).
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-reouvir}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-reouvir}
+      POSTGRES_DB: ${POSTGRES_DB:-reouvir}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-reouvir} -d ${POSTGRES_DB:-reouvir}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  migrate:
+    image: ghcr.io/amacneil/dbmate:2
+    command: --migrations-dir /db/migrations --no-dump-schema --wait up
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-reouvir}:${POSTGRES_PASSWORD:-reouvir}@postgres:5432/${POSTGRES_DB:-reouvir}?sslmode=disable
+    volumes:
+      - ../apps/api/src/db/migrations:/db/migrations:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    build:
+      context: ..
+      dockerfile: infra/api.Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: "3711"
+      DATABASE_URL: postgres://${POSTGRES_USER:-reouvir}:${POSTGRES_PASSWORD:-reouvir}@postgres:5432/${POSTGRES_DB:-reouvir}?sslmode=disable
+      SESSION_SECRET: ${SESSION_SECRET:?defina SESSION_SECRET no .env}
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:-}
+      AUDIO_DIR: /data/audio
+    volumes:
+      - audio:/data/audio
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2
+    ports:
+      - "127.0.0.1:${CADDY_PORT:-8080}:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ../apps/web/dist:/srv/web:ro
+      - ../apps/admin/dist:/srv/admin:ro
+      - audio:/srv/audio:ro
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  audio:

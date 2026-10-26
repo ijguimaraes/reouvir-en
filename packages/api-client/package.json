@@ -1,0 +1,13 @@
+{
+  "name": "@reouvir/api-client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": { "@reouvir/shared": "workspace:*" },
+  "devDependencies": { "typescript": "^5.6.3", "vitest": "^2.1.4" }
+}
