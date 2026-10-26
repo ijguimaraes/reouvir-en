@@ -66,6 +66,20 @@ Uma frase é **rejeitada** se:
 
 Além disso, **a playlist inteira** é checada: o tópico-alvo aparece em pelo menos X% das frases (ex.: o recurso introduzido), e nenhuma estrutura domina a lista (ex.: >30% começando por `I am`).
 
+### 4.1 Rodadas, exclusão e balanceamento entre lotes
+
+Um lote de ~40 frases não cobre a playlist, e lotes independentes se repetem e se desequilibram (no teste do tópico 1, 13% de duplicatas e estruturas e cenas com pouca cobertura). Por isso a geração é uma **série de rodadas** sobre um **estado** por playlist (`state.json`, em `PIPELINE_DATA_DIR/runs/...`), que guarda as frases já **aceitas**:
+
+1. `build_prompt.py --state state.json --pool 130` monta o prompt do próximo lote. Sem estado ele é o prompt simples; com estado, acrescenta:
+   - **Lista de exclusão** (seção 2.2): as frases já aceitas, que o modelo não pode repetir nem quase copiar.
+   - **O que ainda falta** (seção 2.1): cada estrutura marcada `need N more` ou `enough`, as cenas abaixo da cota e as palavras repetidas demais (fora os nomes dos personagens).
+2. O modelo gera o lote.
+3. `validate.py --state state.json --update-state` valida o lote **contra o estado** (repetir uma frase anterior é duplicata) e soma as aceitas ao estado. Ele imprime a situação do pool, o que ainda falta e as cotas **travadas** (pedidas na rodada anterior e não preenchidas: provavelmente difíceis demais para o tópico, e não vale insistir).
+4. Repete até o pool chegar a ~130 e as cotas fecharem, ou até um limite de rodadas (3, como no fluxo geral).
+5. `select_final.py` escolhe as ~100 frases finais por **rodízio de estruturas** e, dentro delas, a cena **menos representada** primeiro, preferindo frases com estrutura confirmada, sem aviso de vocabulário e mais curtas. Se uma estrutura se esgota, as outras completam o total.
+
+**Cotas** (`balance.py`): cada estrutura deve ter 70% da sua parte igual do pool e cada cena 60% (mais frouxo, porque cenas como o encerramento mal cabem em tópicos básicos). A contagem usa só estruturas **confirmadas** (declaradas pelo modelo e detectadas pela regra).
+
 ## 5. Juiz (etapa 3)
 
 Ainda não escrito (fica para a etapa 3). Desenho: segundo passe com **outro modelo** e rubrica fixa, com saída estruturada:
@@ -144,7 +158,7 @@ pipeline/
   validator/{rules.py,analyze.py}                  (já existe)
   prompts/v1/generate.md  (juiz e regeneração: ainda não escritos)
   contexts/entrevista-java.yaml
-  src/build_prompt.py validate.py vocab.py fetch_cefrj.py test_validate.py   (já existem)
+  src/build_prompt.py validate.py vocab.py balance.py select_final.py fetch_cefrj.py   (já existem; testes: test_*.py)
   src/ generate.py judge.py write_db.py
   runs/<context>/<level>/<topic>/{candidates,validated,judged}.jsonl
 ```
@@ -170,7 +184,7 @@ pipeline-data/
 3. Corte do juiz (calibrar com amostra manual).
 4. Cada estrutura foi validada com **um** exemplo. Falta um conjunto maior de frases (positivas e negativas) para medir a precisão real dos detectores, e algumas regras são largas (ver a seção "Regras largas" da análise).
 5. Níveis da CEFR-J: ela foi feita para aprendizes japoneses e alguns níveis surpreendem (`friendly` = B2). Revisar com o professor, e registrar exceções no contexto se necessário.
-6. Lotes seguintes ainda não recebem a lista do que já foi gerado (duplicatas subiram a 13% no v2); falta decidir a estratégia de exclusão e de balanceamento de estruturas e cenas.
+6. Calibrar o ciclo de rodadas com dados reais: tamanho do lote, cotas (70% e 60%) e o limite de rodadas.
 7. Acesso da pipeline ao banco: qual papel (role) do Postgres ela usa e como a conexão chega a ela (rede local ou Tailscale). Uma role própria, com permissão só em `levels`, `grammar_topics` e `sentences`, seria a opção mais segura.
 
 ## 11. Próximo passo
