@@ -1,0 +1,7 @@
+node_modules
+dist
+.env
+audio-data
+*.log
+.worktrees
+.vite/
