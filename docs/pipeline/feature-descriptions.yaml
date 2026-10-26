@@ -1,0 +1,89 @@
+# Descrição legível de cada recurso de features.yaml, usada para montar o prompt de geração.
+# `label` e `ex` ficam em inglês porque entram no prompt. Toda feature precisa ter uma entrada
+# (o analisador reclama se faltar).
+
+schema_version: 1
+
+descriptions:
+  # ---------- A1 ----------
+  pron_subject:   { label: "subject pronouns (I, you, he, she, it, we, they)", ex: "She is happy." }
+  be_present:     { label: "present of 'to be' (am, is, are, and 'm 's 're)", ex: "We're at home." }
+  be_negative:    { label: "negative of 'to be' (am not, isn't, aren't)", ex: "He isn't late." }
+  be_question:    { label: "yes/no questions with 'to be'", ex: "Are you ready?" }
+  wh_be:          { label: "question words with 'to be' (what, where, who, how, when, why, which, whose)", ex: "Where are you from?" }
+  poss_adj:       { label: "possessive adjectives (my, your, his, her, its, our, their)", ex: "My name is Ana." }
+  art_indefinite: { label: "indefinite articles a / an", ex: "It is an apple." }
+  noun_plural:    { label: "plural nouns", ex: "They are good friends." }
+  demonstrative:  { label: "this / that / these / those", ex: "That is my bag." }
+  art_definite:   { label: "the definite article 'the'", ex: "The door is open." }
+  prep_on:        { label: "the preposition 'on'", ex: "The book is on the table." }
+  there_be:       { label: "there is / there are", ex: "There is a park here." }
+  number_big:     { label: "numbers above ten (twenty, a hundred...)", ex: "There are twenty books." }
+  ordinal:        { label: "ordinal numbers (first, second, third...)", ex: "It is the third door." }
+  date_word:      { label: "months and weekdays", ex: "The class is on Monday." }
+  time_expr:      { label: "clock-time expressions (o'clock, half past, quarter to)", ex: "It is half past seven." }
+  have_got:       { label: "have / has (got) for possession", ex: "She has got a new phone." }
+  present_simple: { label: "Present Simple (affirmative)", ex: "She works in a hospital." }
+  do_negative:    { label: "don't / doesn't (negative do-support)", ex: "I don't like cold tea." }
+  do_question:    { label: "Do / Does questions", ex: "Do you like music?" }
+  modal_can:      { label: "can / can't for ability", ex: "I can swim." }
+  imperative:     { label: "the imperative (commands, instructions, Don't + verb)", ex: "Open the door, please." }
+  lets:           { label: "Let's + verb (suggestions)", ex: "Let's go to the park." }
+  # ---------- A2 ----------
+  obj_pron:       { label: "object pronouns (me, him, her, us, them, it, you)", ex: "She calls me on Sunday." }
+  poss_pron:      { label: "possessive pronouns (mine, yours, hers, ours, theirs)", ex: "This bag is mine." }
+  genitive_s:     { label: "possessive 's", ex: "Maria's bag is here." }
+  freq_adverb:    { label: "adverbs of frequency (always, usually, often, sometimes, never, every day, twice a week)", ex: "I always drink tea." }
+  manner_adverb:  { label: "adverbs of manner (slowly, well, fast, hard)", ex: "He drives very slowly." }
+  pres_continuous: { label: "Present Continuous", ex: "I am reading a book now." }
+  quantifier:     { label: "quantifiers (some, any, much, many, a lot of, a few, enough)", ex: "We need some water." }
+  wh_other:       { label: "question words with other verbs (do, does, did, can, will...)", ex: "Where do you live?" }
+  verb_xcomp:     { label: "verb + -ing / verb + to + verb (like swimming, want to go)", ex: "I want to learn English." }
+  going_to:       { label: "be going to (plans and predictions)", ex: "I am going to cook tonight." }
+  will_future:    { label: "will / 'll / won't (future)", ex: "I will call you tomorrow." }
+  modal_obligation: { label: "must / should (obligation, advice)", ex: "You should sleep early." }
+  have_to:        { label: "have to / has to / don't have to", ex: "I have to work on Saturday." }
+  be_past:        { label: "was / were", ex: "I was at home yesterday." }
+  past_simple:    { label: "Past Simple (regular and irregular, including didn't / did ... ?)", ex: "We went to the park." }
+  comparative:    { label: "comparatives (bigger, more interesting, better)", ex: "My bag is smaller than yours." }
+  superlative:    { label: "superlatives (the biggest, the most popular, the best)", ex: "She is the best cook in town." }
+  as_as:          { label: "as ... as comparisons", ex: "He is as tall as his father." }
+  conj_simple:    { label: "connectors because, so, then, when, before, after", ex: "I am tired because I worked late." }
+  # ---------- B1 ----------
+  pres_perfect:   { label: "Present Perfect", ex: "I have visited three countries." }
+  pp_adverb:      { label: "already, yet, ever, since, just, recently, lately", ex: "They have already left." }
+  past_continuous: { label: "Past Continuous", ex: "I was cooking when the phone rang." }
+  while_clause:   { label: "while + clause", ex: "I was walking while it was raining." }
+  used_to:        { label: "used to / be used to", ex: "I used to play football." }
+  ger_prep:       { label: "-ing form after a preposition (good at cooking, before leaving)", ex: "She is good at solving problems." }
+  ger_subject:    { label: "-ing form as the subject", ex: "Swimming every morning is healthy." }
+  modal_epistemic: { label: "may / might / could (possibility and deduction)", ex: "It might rain this afternoon." }
+  if_clause:      { label: "if-clauses (first and second conditional)", ex: "If it rains, we will stay home." }
+  would:          { label: "would", ex: "I would travel more if I had money." }
+  passive:        { label: "passive voice (simple present and past)", ex: "This bridge was built long ago." }
+  relative_clause: { label: "relative clauses (who, which, that, where, whose)", ex: "The woman who lives next door is kind." }
+  reported_verb:  { label: "basic reported speech (said / told / asked + backshift)", ex: "She said she was tired." }
+  phrasal_verb:   { label: "common phrasal verbs (pick up, give up, find out)", ex: "She picked up the phone." }
+  connector_b1:   { label: "although, though, however, despite, in order to", ex: "Although it rained, we walked." }
+  # ---------- B2 ----------
+  pres_perf_cont: { label: "Present Perfect Continuous", ex: "I have been waiting for an hour." }
+  past_perfect:   { label: "Past Perfect", ex: "The film had already started." }
+  past_perf_cont: { label: "Past Perfect Continuous", ex: "She had been working all night." }
+  would_have:     { label: "would have + past participle (third and mixed conditionals)", ex: "I would have helped you." }
+  modal_perfect:  { label: "modal + have + past participle (should have, could have, must have...)", ex: "You should have told me." }
+  wish:           { label: "wish / if only", ex: "I wish I had more time." }
+  future_adv:     { label: "Future Continuous and Future Perfect", ex: "I will have finished by Friday." }
+  passive_complex: { label: "complex passives (perfect, modal, future, continuous)", ex: "The road has been built." }
+  causative:      { label: "have / get something done", ex: "I had my car repaired." }
+  reported_question: { label: "reported questions (asked if / whether / where...)", ex: "She asked me if I was ready." }
+  reported_command: { label: "reported commands and requests (told me to...)", ex: "He told me to leave." }
+  reported_verb_adv: { label: "advanced reporting verbs (suggest, admit, deny, promise, warn...)", ex: "She admitted that she was wrong." }
+  relcl_nondef:   { label: "non-defining relative clauses (with commas)", ex: "My brother, who lives in Canada, is here." }
+  inversion_neg:  { label: "negative inversion (Never have I..., Hardly had..., Not only did...)", ex: "Never have I seen such a view." }
+  inversion_cond: { label: "conditional inversion (Had I known..., Should you need..., Were I...)", ex: "Had I known, I would have called." }
+  connector_formal: { label: "formal connectors (moreover, nevertheless, therefore, unless, whereas, in spite of...)", ex: "It is cheap; moreover, it is easy." }
+  phrasal_3part:  { label: "three-part phrasal verbs (look forward to, put up with, come up with)", ex: "I am looking forward to the trip." }
+  collocation:    { label: "strong verb + noun collocations (make a decision, take advantage of, reach a conclusion)", ex: "We need to make a decision." }
+  shall:          { label: "shall (formal offers and suggestions)", ex: "Shall we begin?" }
+  formal_marker:  { label: "formal register vocabulary (grateful, regret, kindly, commence, purchase)", ex: "I regret to inform you of this." }
+  informal_marker: { label: "informal register markers (hey, gonna, kind of, I mean, you know)", ex: "Hey, are you coming tonight?" }

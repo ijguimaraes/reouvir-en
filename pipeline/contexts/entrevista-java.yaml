@@ -1,0 +1,20 @@
+# Contexto de exemplo, todo em inglês. Estruturado para a pipeline: cenas e vocabulário alimentam o
+# prompt e o filtro de léxico. `name`, `category`, `description` e `details` espelham os campos do
+# contexto no backoffice (o contexto em si é criado lá; a pipeline só lê este arquivo).
+
+slug: software-engineer-interview-java
+name: Software engineer interview (Java)
+category: Work
+description: Technical and behavioural interview for a Java developer position.
+details: >-
+  The learner is a candidate in a job interview for a Java backend developer position, with a
+  friendly interviewer. Situations: introducing yourself, talking about your experience and
+  your team, answering technical and behavioural questions, asking about the company, closing.
+scenes:
+  - { id: introduction, desc: "greetings and introducing yourself to the interviewer" }
+  - { id: experience, desc: "talking about past jobs, projects and skills" }
+  - { id: technical, desc: "answering technical questions about code, tools and problems" }
+  - { id: teamwork, desc: "working with a team, a manager and colleagues" }
+  - { id: company, desc: "asking about the company, the office and the role" }
+  - { id: closing, desc: "thanking the interviewer and saying goodbye" }
+vocabulary: [Java, Spring, code, project, team, manager, office, interview, bug, server, database, deadline]

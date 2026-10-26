@@ -49,6 +49,13 @@ def main(folder, report=None):
     for fid in feats:
         if fid not in introduced:
             problems.append(f"feature {fid} nunca é introduzida")
+    descs = yaml.safe_load((folder / "feature-descriptions.yaml").read_text())["descriptions"]
+    for fid in feats:
+        if fid not in descs:
+            problems.append(f"feature {fid} sem descrição em feature-descriptions.yaml")
+    for fid in descs:
+        if fid not in feats:
+            problems.append(f"descrição de feature inexistente: {fid}")
 
     allowed, rows, details, docs = set(), [], [], []
     for t in topics:
