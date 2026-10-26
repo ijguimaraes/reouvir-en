@@ -11,9 +11,9 @@ interface Overview {
 
 export function DashboardPage() {
   const load = useCallback(() => api.request<Overview>("GET", "/admin/overview"), []);
-  const { data, error } = useLoad(load);
+  const { data, error, reload } = useLoad(load);
 
-  if (!data) return <Status error={error} loading />;
+  if (!data) return <Status error={error} loading onRetry={reload} />;
   return (
     <>
       <h2>Painel</h2>

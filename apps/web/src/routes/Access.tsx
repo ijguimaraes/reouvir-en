@@ -27,7 +27,7 @@ export function Access({ onUser }: { onUser: (u: PublicUser) => void }) {
   }
 
   return (
-    <main>
+    <main className="auth">
       <h1>Reouvir EN</h1>
       <p className="muted">Hear it again.</p>
       <form onSubmit={submit}>
@@ -42,7 +42,7 @@ export function Access({ onUser }: { onUser: (u: PublicUser) => void }) {
           <input name="email" type="email" required autoComplete="email" />
         </label>
         <label>
-          Senha
+          Senha{mode === "register" && <span className="muted">Mínimo de 8 caracteres</span>}
           <input
             name="password"
             type="password"
@@ -51,8 +51,8 @@ export function Access({ onUser }: { onUser: (u: PublicUser) => void }) {
             autoComplete={mode === "login" ? "current-password" : "new-password"}
           />
         </label>
-        {error && <p className="error">{error}</p>}
-        <button type="submit">{mode === "login" ? "Entrar" : "Criar conta"}</button>
+        {error && <p className="error" role="alert">{error}</p>}
+        <button type="submit" className="primary big">{mode === "login" ? "Entrar" : "Criar conta"}</button>
         <button
           type="button"
           className="link"
@@ -84,7 +84,7 @@ export function ChangePassword({ onDone }: { onDone: (u: PublicUser) => void }) 
   }
 
   return (
-    <main>
+    <main className="auth">
       <h1>Troque sua senha</h1>
       <p className="muted">Sua senha foi redefinida pelo administrador.</p>
       <form onSubmit={submit}>
@@ -96,8 +96,8 @@ export function ChangePassword({ onDone }: { onDone: (u: PublicUser) => void }) 
           Nova senha
           <input name="next" type="password" required minLength={8} autoComplete="new-password" />
         </label>
-        {error && <p className="error">{error}</p>}
-        <button type="submit">Trocar senha</button>
+        {error && <p className="error" role="alert">{error}</p>}
+        <button type="submit" className="primary big">Trocar senha</button>
       </form>
     </main>
   );

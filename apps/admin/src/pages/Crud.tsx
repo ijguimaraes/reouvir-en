@@ -1,6 +1,6 @@
 import { useCallback, useState, type FormEvent, type ReactNode } from "react";
 import { api } from "../api";
-import { errMsg, Status, useLoad } from "../ui";
+import { errMsg, Status, TableWrap, useConfirm, useLoad } from "../ui";
 
 export interface FieldDef {
   key: string;
@@ -30,6 +30,7 @@ export function Crud({ title, path, fields, defaults, hint, readOnly, rowActions
   const [editing, setEditing] = useState<string | null>(null);
   const [form, setForm] = useState<Record<string, unknown>>(defaults);
   const [formError, setFormError] = useState("");
+  const [confirm, confirmDialog] = useConfirm();
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -47,7 +48,15 @@ export function Crud({ title, path, fields, defaults, hint, readOnly, rowActions
   }
 
   async function remove(row: Record<string, unknown>) {
-    if (!window.confirm("Excluir este item?")) return;
+    const name = String(row.name ?? row.code ?? "este item");
+    const ok = await confirm({
+      title: `Excluir "${name}"?`,
+      body: title === "Contextos"
+        ? "As playlists vazias do contexto são apagadas. A exclusão é recusada se alguma tiver frases."
+        : "Não é possível desfazer.",
+      confirmLabel: "Excluir", danger: true,
+    });
+    if (!ok) return;
     try {
       await api.request("DELETE", `${path}/${row.id}`);
       reload();
@@ -77,7 +86,7 @@ export function Crud({ title, path, fields, defaults, hint, readOnly, rowActions
               </select>
             </label>
           ) : f.type === "textarea" ? (
-            <label key={f.key} style={{ flexBasis: "100%" }}>
+            <label key={f.key} className="wide">
               {f.label}
               <textarea
                 rows={6}
@@ -101,12 +110,12 @@ export function Crud({ title, path, fields, defaults, hint, readOnly, rowActions
         {editing && <button type="button" onClick={() => { setEditing(null); setForm(defaults); }}>Cancelar</button>}
       </form>
       )}
-      {formError && <p className="error">{formError}</p>}
-      <Status error={error} loading={!data} />
+      {formError && <p className="error" role="alert">{formError}</p>}
+      <Status error={error} loading={!data} onRetry={reload} />
       {data && (
-        <table>
+        <TableWrap>
           <thead>
-            <tr>{fields.filter((f) => !f.hidden).map((f) => <th key={f.key}>{f.label}</th>)}<th /></tr>
+            <tr>{fields.filter((f) => !f.hidden).map((f) => <th key={f.key}>{f.label}</th>)}<th><span className="sr-only">Ações</span></th></tr>
           </thead>
           <tbody>
             {data.map((row) => (
@@ -116,16 +125,19 @@ export function Crud({ title, path, fields, defaults, hint, readOnly, rowActions
                     {f.format ? f.format(row[f.key], row) : f.type === "checkbox" ? (row[f.key] ? "sim" : "não") : String(row[f.key] ?? "")}
                   </td>
                 ))}
-                <td className="row">
-                  {rowActions?.(row)}
-                  {!readOnly && <button type="button" onClick={() => { setEditing(String(row.id)); setForm(row); }}>Editar</button>}
-                  {!readOnly && <button type="button" className="danger" onClick={() => remove(row)}>Excluir</button>}
+                <td>
+                  <div className="row">
+                    {rowActions?.(row)}
+                    {!readOnly && <button type="button" onClick={() => { setEditing(String(row.id)); setForm(row); }}>Editar</button>}
+                    {!readOnly && <button type="button" className="danger" onClick={() => remove(row)}>Excluir</button>}
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
-        </table>
+        </TableWrap>
       )}
+      {confirmDialog}
     </>
   );
 }

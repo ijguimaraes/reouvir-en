@@ -6,6 +6,7 @@ import { cachedSettings, loadSettings } from "../offline/settings";
 import { getLocalState } from "../offline/sync";
 import { offlineSource, onlineSource } from "../player/source";
 import { Player, type PlayerInit } from "../components/Player";
+import { RetryError, SkeletonList } from "../components/Skeleton";
 
 interface Loaded {
   title: { context: string; level: string; topic: string };
@@ -79,12 +80,12 @@ export function PlaylistPage({ playlistId }: { playlistId: string }) {
     }
   }, [playlistId]);
 
-  if (error) return <main><p className="error">{error}</p></main>;
-  if (!loaded) return <main><p className="muted">Carregando…</p></main>;
+  if (error) return <main><RetryError message={error} onRetry={() => { setError(""); setRev((r) => r + 1); }} /></main>;
+  if (!loaded) return <main><SkeletonList rows={4} /></main>;
 
   const { title, manifest, online } = loaded;
   return (
-    <main>
+    <main className="has-dock">
       <h2>{title.topic}</h2>
       <p className="muted">{title.context} · {title.level}</p>
 
@@ -98,17 +99,22 @@ export function PlaylistPage({ playlistId }: { playlistId: string }) {
             <button onClick={download}>{manifest ? "Atualizar download" : "Baixar playlist"}</button>
           )}
           {manifest && !progress && (
-            <button className="link" onClick={async () => { await removeDownload(playlistId); setRev((r) => r + 1); }}>Remover</button>
+            <button className="link" onClick={async () => { await removeDownload(playlistId); setRev((r) => r + 1); }}>Remover download</button>
           )}
         </span>
       </div>
       {progress && (
         <>
-          <div className="bar"><i style={{ width: `${(progress[0] / progress[1]) * 100}%` }} /></div>
-          <p className="muted">Baixando {progress[0]} de {progress[1]}… (os áudios novos são gerados agora)</p>
+          <div
+            className="bar" role="progressbar" aria-label="Download da playlist"
+            aria-valuemin={0} aria-valuemax={progress[1]} aria-valuenow={progress[0]}
+          >
+            <i style={{ width: `${(progress[0] / progress[1]) * 100}%` }} />
+          </div>
+          <p className="muted num" role="status">Baixando {progress[0]} de {progress[1]}… (os áudios novos são gerados agora)</p>
         </>
       )}
-      {downloadError && <p className="error">{downloadError}</p>}
+      {downloadError && <p className="error" role="alert">{downloadError}</p>}
 
       <Player key={`${playlistId}:${manifest?.version ?? "online"}`} init={{ ...loaded.init, settings: loaded.settings }} />
     </main>

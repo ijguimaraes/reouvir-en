@@ -8,6 +8,10 @@ Responder ao usuário sempre em **português** (com acentuação correta). Ident
 
 `docs/estrutura-do-projeto.md` tem o desenho completo (escopo, regras, modelo de dados, API, stack, estrutura de pastas, deploy, riscos, premissas e fases). Leia antes de implementar qualquer coisa. Se uma decisão mudar, atualize o documento.
 
+## Design e layout
+
+Regras de design system e layout ficam em `.agents/skills/` (Markdown puro, valem para qualquer agente). Comece por `.agents/skills/README.md`, que diz quando usar cada uma. Antes de criar ou alterar UI, leia ao menos `design-tokens`, `design-layout` e `design-accessibility`, mais `design-player-ux` (apps/web) ou `design-backoffice` (apps/admin). Ao terminar uma mudança visual, siga `design-visual-qa`. Os tokens vivem em `packages/shared/src/theme.css`; não duplique valores nos CSS dos apps.
+
 ## Estado atual
 
 - Existem o documento, o protótipo HTML (`prototipo/`, referência de UX, não é código de produção) e o código das fases 1 a 8, em monorepo pnpm. Portas de dev: API 3711, web 5273, admin 5274.

@@ -25,8 +25,8 @@ export function LevelsPage() {
 
 export function TopicsPage() {
   const load = useCallback(() => api.request<LevelDto[]>("GET", "/admin/levels"), []);
-  const { data: levels, error } = useLoad(load);
-  if (!levels) return <Status error={error} loading />;
+  const { data: levels, error, reload } = useLoad(load);
+  if (!levels) return <Status error={error} loading onRetry={reload} />;
   const levelName = (id: unknown) => levels.find((l) => l.id === id)?.code ?? "?";
   return (
     <Crud
@@ -52,7 +52,7 @@ export function ContextsPage() {
       title="Contextos"
       path="/admin/contexts"
       hint="Ao criar um contexto, uma playlist vazia é gerada para cada tópico. A descrição é curta; o detalhamento é livre (cenário, situações, objetivos) e serve de guia para montar o contexto."
-      rowActions={(row) => <Link to={`/contexts/${row.id}`}><button type="button" className="primary">Tópicos</button></Link>}
+      rowActions={(row) => <Link className="btn primary" to={`/contexts/${row.id}`}>Tópicos</Link>}
       defaults={{ slug: "", name: "", description: "", category: "", details: "", active: true }}
       fields={[
         { key: "slug", label: "Slug", type: "text" },

@@ -1,37 +1,92 @@
+/*
+ * Tokens de design (fonte única dos dois apps). Veja .agents/skills/design-tokens.
+ * Cor semântica: todo token de cor existe nos TRÊS blocos (claro, escuro automático, escuro manual).
+ */
 :root {
   color-scheme: light dark;
+
+  /* cor (claro) */
   --bg: #ffffff;
   --surface: #f4f5f7;
+  --surface-2: #e9ecf1;
   --text: #15181e;
   --text-muted: #5d6675;
   --border: #dde1e7;
+  --border-strong: #7d8696; /* limite de campos e controles: ≥ 3:1 */
   --accent: #3b5bdb;
   --accent-text: #ffffff;
   --danger: #c92a2a;
+  --success: #257536;
+  --warning: #b34700;
+
+  /* tipografia */
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --text-meta: 0.8125rem;
+  --text-label: 0.875rem;
+  --text-body: 1rem;
+  --text-title: 1.25rem;
+  --text-display: 1.625rem;
+
+  /* espaço (base 4) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+
+  /* raio: um por papel */
+  --radius-sm: 0.5rem; /* campo, botão */
+  --radius-md: 0.75rem; /* cartão */
+  --radius-full: 99px; /* badge, controle redondo */
+
+  /* movimento */
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 350ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* camadas */
+  --z-sticky: 10;
+  --z-overlay: 20;
+  --z-toast: 30;
+
+  /* alvo de toque mínimo */
+  --tap-min: 2.75rem;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #101216;
     --surface: #1a1d23;
+    --surface-2: #242831;
     --text: #eceef2;
     --text-muted: #9aa3b2;
     --border: #2c313a;
+    --border-strong: #6b7587;
     --accent: #748ffc;
     --accent-text: #101216;
     --danger: #ff8787;
+    --success: #51cf66;
+    --warning: #ffa94d;
   }
 }
 
 :root[data-theme="dark"] {
   --bg: #101216;
   --surface: #1a1d23;
+  --surface-2: #242831;
   --text: #eceef2;
   --text-muted: #9aa3b2;
   --border: #2c313a;
+  --border-strong: #6b7587;
   --accent: #748ffc;
   --accent-text: #101216;
   --danger: #ff8787;
+  --success: #51cf66;
+  --warning: #ffa94d;
 }
 
 :root[data-theme="light"] { color-scheme: light; }
