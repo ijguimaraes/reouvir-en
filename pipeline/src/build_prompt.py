@@ -61,11 +61,17 @@ def build(context, topic_slug, count=40, version="v1"):
     sid = [s["id"] for s in structures]
     lo, hi = topic["level"]["sentence_words"]["min"], topic["level"]["sentence_words"]["max"]
 
+    chars = context.get("characters", [])
     ctx = [f'Context: {context["name"]}', f'Category: {context["category"]}', f'Description: {context["description"]}']
     if context.get("details"):
         ctx.append(f'Details: {context["details"]}')
+    if chars:
+        ctx.append("Characters (names are always allowed):\n" + "\n".join(f'  - {c["name"]}: {c["role"]}' for c in chars))
     if scenes:
-        ctx.append("Scenes:\n" + "\n".join(f'  - {s["id"]}: {s["desc"]}' for s in scenes))
+        def scene_text(s):
+            sit = "".join(f"\n      * {x}" for x in s.get("situations", []))
+            return f'  - {s["id"]}: {s["desc"]}' + (f"\n    Situations:{sit}" if sit else "")
+        ctx.append("Scenes:\n" + "\n".join(scene_text(s) for s in scenes))
     if context.get("vocabulary"):
         ctx.append("Theme vocabulary (optional, only where the grammar allows): " + ", ".join(context["vocabulary"]))
 
@@ -80,6 +86,15 @@ def build(context, topic_slug, count=40, version="v1"):
         "target_block": "\n".join(feature_line(descs, f) for f in target)
         or "This topic introduces no new grammar. It is an in-depth review of structures that were already taught: bring more variants of them (different subjects, verbs, tenses, affirmative / negative / question forms, time expressions and sentence positions), following the structures in section 2.",
         "forbidden_block": "\n".join(feature_line(descs, f) for f in forbidden) or "- (nothing: everything has been taught)",
+        "one_clause_rule": (
+            "- Each sentence is ONE clause: one subject with its verb(s). Never join two clauses, with or without a comma "
+            "(no \", and I am...\", no \", but...\", no \"I think he is...\"). You may join words (Tom and Ana, tea or coffee) "
+            "and verbs that share the same subject (I can swim and run).\n"
+            if "multi_clause" in forbidden else ""
+        ),
+        "characters_rule": (
+            "- Use the characters by name when it fits (names are always allowed), so the sentences feel connected.\n" if chars else ""
+        ),
         "min_each": str(min_each),
         "max_same_start": str(max(3, round(count * 0.25))),
         "structures_block": "\n".join(f'- `{s["id"]}`: pattern like "{s["ex"]}"' for s in structures),

@@ -49,8 +49,8 @@ Tag each sentence with the id of the structure it mainly practises.
 
 How to use the theme:
 
-- Every sentence should be something a person could really say in this context.
-- {{scene_rule}}
+- Every sentence should be something a person could really say in this context: think of it as a line spoken, or said about someone, in one of the situations of its scene.
+{{characters_rule}}- {{scene_rule}}
 - Use theme vocabulary only where the allowed grammar lets you. Many nouns need an article, a plural or a possessive that the learner may not have studied yet. When a theme word does not fit the allowed grammar, do not use it: use a name, an adjective, a place or another word that does fit.
 - If a scene cannot be expressed with the allowed grammar, write fewer sentences for it, or none. Never break a grammar rule to cover a scene.
 - Grammar always wins over theme. If a sentence cannot be both on-theme and inside the grammar rules, keep the grammar rules and make the sentence a little more general.
@@ -58,7 +58,7 @@ How to use the theme:
 # 4. Form rules
 
 - {{word_min}} to {{word_max}} words per sentence (a contraction counts as one word).
-- One complete sentence each, ending in a full stop, a question mark or an exclamation mark.
+{{one_clause_rule}}- One complete sentence each, ending in a full stop, a question mark or an exclamation mark.
 - Straight apostrophes only (') and straight double quotes ("). Never curly ones.
 - Numbers as words, never digits. No symbols, emojis, URLs, hashtags or abbreviations (Mr., etc.).
 - Use contractions the way a native speaker does in speech (I'm, she's, isn't, don't).
