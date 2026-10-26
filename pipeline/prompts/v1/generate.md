@@ -37,13 +37,13 @@ If an idea needs anything from 1.4, drop the idea and write a different sentence
 
 # 2. Structures to cover
 
-This playlist must cover every structure below. Write at least {{min_each}} sentences for each one and distribute the rest freely. Each example only shows the pattern: never copy it and never output the example sentences themselves. Make every sentence different in subject, vocabulary and meaning.
+This playlist must cover every structure below. {{quota_rule}} Each example only shows the pattern: never copy it and never output the example sentences themselves. Make every sentence different in subject, vocabulary and meaning.
 
 {{structures_block}}
 
 Tag each sentence with the id of the structure it mainly practises.
 
-# 3. Theme
+{{balance_blocks}}# 3. Theme
 
 {{context_block}}
 

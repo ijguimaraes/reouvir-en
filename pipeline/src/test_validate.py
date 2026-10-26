@@ -160,6 +160,34 @@ class Vocabulary(unittest.TestCase):
         self.assertTrue(rep["sentences"][0]["accepted"])
 
 
+class EarlierBatches(unittest.TestCase):
+    """Frases aceitas em lotes anteriores (estado) contam como duplicatas e entram nas estatísticas."""
+    T = "subject-pronouns-and-verb-to-be"
+
+    def first_round(self):
+        rep = validate(self.T, [{"text": "I am very tired today.", "structure": "i-am", "scene": "introduction"}], nlp=NLP, cefr=None)
+        import balance
+        return [balance.item_from_result(r) for r in rep["sentences"] if r["accepted"]]
+
+    def test_repeat_of_an_earlier_sentence_is_rejected(self):
+        rep = validate(self.T, [{"text": "I am very tired today."}, {"text": "i am very tired today!"},
+                                {"text": "She is very happy today."}], nlp=NLP, cefr=None, existing=self.first_round())
+        a, b, c = rep["sentences"]
+        self.assertTrue(any("duplicate of earlier" in e for e in a["errors"]))
+        self.assertTrue(any("duplicate of earlier" in e for e in b["errors"]))
+        self.assertTrue(c["accepted"])
+        self.assertEqual(rep["reject_reasons"]["duplicate"], 1)         # idêntica
+        self.assertEqual(rep["reject_reasons"]["near-duplicate"], 1)    # só caixa e pontuação
+
+    def test_pool_counts_earlier_and_new(self):
+        rep = validate(self.T, [{"text": "She is very happy today.", "structure": "he-she-is", "scene": "closing"}],
+                       nlp=NLP, cefr=None, existing=self.first_round(), pool=20)
+        self.assertEqual(rep["accepted"], 1)             # só o lote novo
+        self.assertEqual(rep["pool"]["accepted"], 2)     # a playlist inteira
+        self.assertEqual(rep["coverage_confirmed"]["i-am"], 1)
+        self.assertEqual(rep["coverage_confirmed"]["he-she-is"], 1)
+
+
 class Duplicates(unittest.TestCase):
     def test_exact_and_near(self):
         rs = run(T1, "I am very tired today.", "I am very tired today.", "i am very tired today!")

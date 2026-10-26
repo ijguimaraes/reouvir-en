@@ -2,7 +2,10 @@
 
 Uso:
   python build_prompt.py --context ../contexts/entrevista-java.yaml --topic subject-pronouns-and-verb-to-be \
-      [--count 40] [--schema schema.json]
+      [--count 40] [--schema schema.json] [--state state.json] [--pool 130]
+
+Com --state (gerado por validate.py --update-state), o prompt inclui as frases já aceitas (para não repetir)
+e o que ainda falta por estrutura e por cena.
 
 Imprime o prompt na saída padrão. Com --schema, grava também o JSON schema da resposta
 (structure e scene viram enums). O template é pipeline/prompts/<versão>/generate.md.
@@ -14,6 +17,7 @@ from pathlib import Path
 
 import yaml
 
+import balance
 import vocab
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -40,7 +44,7 @@ def feature_line(descs, fid):
     return f'- {d["label"]}, e.g. "{d["ex"]}"'
 
 
-def build(context, topic_slug, count=40, version="v1"):
+def build(context, topic_slug, count=40, version="v1", state=None, pool=130):
     topics, baseline = load_curriculum()
     descs = yaml.safe_load((DOCS / "feature-descriptions.yaml").read_text())["descriptions"]
     all_features = yaml.safe_load((DOCS / "features.yaml").read_text())["features"]
@@ -78,7 +82,38 @@ def build(context, topic_slug, count=40, version="v1"):
     if theme:
         ctx.append("Theme vocabulary (optional, only where the grammar allows): " + ", ".join(theme))
 
+    accepted = (state or {}).get("accepted", [])
+    scene_ids_all = [s["id"] for s in scenes]
+    gap = balance.deficits(accepted, sid, scene_ids_all, pool) if accepted else None
+    if gap:
+        need = gap["structures"]
+        quota_rule = ("Write the number of sentences marked \"need N more\" for each structure; a structure marked "
+                      "\"enough\" is optional (write it only when it fits). Structures already well covered in earlier rounds "
+                      "must not take sentences away from the ones that are missing.")
+        structures_block = "\n".join(
+            f'- `{s["id"]}`: pattern like "{s["ex"]}" ' + (f"(need {need[s['id']]} more)" if s["id"] in need else "(enough)")
+            for s in structures)
+        parts = [f"## 2.1 What is still missing\n\nThe playlist already has {len(accepted)} accepted sentences "
+                 f"(goal: {pool}). Fill the gaps first.\n"]
+        if gap["scenes"]:
+            parts.append("- Scenes that still need sentences: " + ", ".join(f"{k} ({v} more)" for k, v in gap["scenes"].items())
+                         + ". If a scene cannot be written inside the grammar rules, skip it.")
+        over = balance.overused(accepted, ignore={c["name"].lower() for c in chars})
+        if over:
+            parts.append("- Overused so far, use sparingly: " + ", ".join(f"{w} ({n} sentences)" for w, n in over))
+        exclusion = "\n".join(f"- {x['text']}" for x in accepted)
+        balance_blocks = ("\n".join(parts) + "\n\n## 2.2 Already written: never repeat\n\n"
+                          "Do not write any sentence below, and do not write near-copies of them (the same sentence with one word "
+                          "changed, or different punctuation). Write new sentences with new vocabulary and new situations.\n\n"
+                          + exclusion + "\n\n")
+    else:
+        quota_rule = f"Write at least {min_each} sentences for each one and distribute the rest freely."
+        structures_block = "\n".join(f'- `{s["id"]}`: pattern like "{s["ex"]}"' for s in structures)
+        balance_blocks = ""
+
     blocks = {
+        "quota_rule": quota_rule,
+        "balance_blocks": balance_blocks,
         "count": str(count),
         "level": topic["level"]["code"],
         "topic_name": topic["name"],
@@ -100,7 +135,7 @@ def build(context, topic_slug, count=40, version="v1"):
         ),
         "min_each": str(min_each),
         "max_same_start": str(max(3, round(count * 0.25))),
-        "structures_block": "\n".join(f'- `{s["id"]}`: pattern like "{s["ex"]}"' for s in structures),
+        "structures_block": structures_block,
         "context_block": "\n".join(ctx),
         "scene_rule": (
             f"Spread the sentences across the scenes ({', '.join(scene_ids)}) and tag each sentence with its scene id."
@@ -142,8 +177,11 @@ if __name__ == "__main__":
     ap.add_argument("--count", type=int, default=40)
     ap.add_argument("--version", default="v1")
     ap.add_argument("--schema")
+    ap.add_argument("--state")
+    ap.add_argument("--pool", type=int, default=130)
     a = ap.parse_args()
-    prompt, schema = build(yaml.safe_load(Path(a.context).read_text()), a.topic, a.count, a.version)
+    state = balance.load_state(a.state, a.topic) if a.state else None
+    prompt, schema = build(yaml.safe_load(Path(a.context).read_text()), a.topic, a.count, a.version, state, a.pool)
     print(prompt)
     if a.schema:
         Path(a.schema).write_text(json.dumps(schema, indent=2))

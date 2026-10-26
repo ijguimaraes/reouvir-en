@@ -2,7 +2,11 @@
 
 Uso:
   python validate.py --topic subject-pronouns-and-verb-to-be --input sentences.json \
-      [--context ../contexts/entrevista-java.yaml] [--out relatorio.json]
+      [--context ../contexts/entrevista-java.yaml] [--out relatorio.json] \
+      [--state state.json [--update-state]] [--pool 130]
+
+Com --state, as frases já aceitas em lotes anteriores contam como duplicatas e entram nas estatísticas da
+playlist (cobertura, cenas, começos). Com --update-state, as aceitas deste lote são somadas ao estado.
 
 `sentences.json` é a resposta do modelo ({"sentences": [{text, structure, scene}]}) ou uma lista simples.
 Cada frase é normalizada como o banco faz, e rejeitada se quebrar alguma regra de texto, a faixa de
@@ -28,6 +32,7 @@ ROOT = Path(__file__).resolve().parents[2]
 DOCS = ROOT / "docs" / "pipeline"
 sys.path.insert(0, str(ROOT / "pipeline"))
 from validator.rules import detect  # noqa: E402
+import balance  # noqa: E402
 import vocab  # noqa: E402
 
 LEVELS = ["a1", "a2", "b1", "b2"]
@@ -84,8 +89,14 @@ def text_errors(text: str, lo: int, hi: int):
     return errors, []
 
 
+def reason_key(e):
+    if e.startswith("near-duplicate"): return "near-duplicate"
+    if e.startswith("duplicate"): return "duplicate"
+    return e.split(":")[0].split(" (")[0]
+
+
 def validate(topic_slug, items, nlp=None, max_same_start=0.25, target_share=0.6, context=None, cefr="auto",
-             vocab_share=0.15):
+             vocab_share=0.15, existing=None, pool=130):
     topics = load_curriculum()
     feats = yaml.safe_load((DOCS / "features.yaml").read_text())["features"]
     idx = next((i for i, t in enumerate(topics) if t["slug"] == topic_slug), None)
@@ -102,7 +113,11 @@ def validate(topic_slug, items, nlp=None, max_same_start=0.25, target_share=0.6,
     ctx_vocab = vocab.context_vocab((context or {}).get("vocabulary"))
     level = topic["level"]["code"]
 
+    existing = list(existing or [])
     results, seen_hash, seen_loose = [], {}, {}
+    for i, x in enumerate(existing):  # frases de lotes anteriores: novas candidatas não podem repeti-las
+        seen_hash[text_hash(x["text"])] = f"earlier #{i}"
+        seen_loose[re.sub(r"[^a-z0-9 ]", "", x["text"].lower())] = f"earlier #{i}"
     for n, item in enumerate(items):
         raw = item["text"] if isinstance(item, dict) else item
         text = normalize_text(raw)
@@ -110,11 +125,11 @@ def validate(topic_slug, items, nlp=None, max_same_start=0.25, target_share=0.6,
         h = text_hash(text)
         loose = re.sub(r"[^a-z0-9 ]", "", text.lower())
         if h in seen_hash:
-            errors.append(f"duplicate of #{seen_hash[h]}")
+            errors.append(f"duplicate of {seen_hash[h]}")
         elif loose in seen_loose:
-            errors.append(f"near-duplicate of #{seen_loose[loose]}")
+            errors.append(f"near-duplicate of {seen_loose[loose]}")
         else:
-            seen_hash[h], seen_loose[loose] = n, n
+            seen_hash[h] = seen_loose[loose] = f"#{n}"
 
         doc = nlp(text)
         trig = {f for f, spec in feats.items() if detect(doc, spec, feats)}
@@ -138,7 +153,8 @@ def validate(topic_slug, items, nlp=None, max_same_start=0.25, target_share=0.6,
             "target": bool(trig & new), "scene": item.get("scene") if isinstance(item, dict) else None,
         })
 
-    ok = [r for r in results if r["accepted"]]
+    new_ok = [r for r in results if r["accepted"]]
+    ok = [dict(balance.item_from_result(x), vocab=x.get("vocab") or []) for x in existing] + new_ok  # playlist inteira
     cover = Counter(m for r in ok for m in r["matched"])  # detectada: uma frase conta em todas as regras que disparam
     # confirmada: o modelo declarou a estrutura E a regra a detecta. Sem declaração, cai para a detectada.
     conf = Counter(r["claimed"] if r["claimed"] in r["matched"] else None for r in ok if r["claimed"])
@@ -147,8 +163,9 @@ def validate(topic_slug, items, nlp=None, max_same_start=0.25, target_share=0.6,
             conf.update(r["matched"])
     claim = Counter(r["claimed"] for r in ok if r["claimed"])
     starts = Counter(r["text"].split()[0].lower() for r in ok)
-    count_goal = len(items)
-    min_each = max(1, int(0.7 * count_goal / len(structures)))
+    scene_ids = [s["id"] for s in (context or {}).get("scenes", [])] or sorted({r["scene"] for r in ok if r["scene"]})
+    gap = balance.deficits(ok, sids, scene_ids, pool)
+    min_each = gap["per_structure"]
     playlist = []
     if new and ok:
         share = sum(r["target"] for r in ok) / len(ok)
@@ -164,13 +181,15 @@ def validate(topic_slug, items, nlp=None, max_same_start=0.25, target_share=0.6,
     elif ok and n_flag / len(ok) > vocab_share:
         playlist.append(f"{n_flag / len(ok):.0%} of accepted sentences have words above the level (limit {vocab_share:.0%}): "
                         + ", ".join(f"{w}={c}" for w, c in flagged.most_common(8)))
-    missing = [s for s in sids if conf[s] < min_each]
-    if missing:
-        playlist.append(f"structures below {min_each} confirmed sentences: " + ", ".join(f"{s}={conf[s]}" for s in missing))
+    if gap["structures"]:
+        playlist.append(f"structures below {min_each} confirmed sentences: " + ", ".join(f"{s}={conf[s]}" for s in gap["structures"]))
+    if gap["scenes"]:
+        playlist.append(f"scenes below {gap['per_scene']} sentences: " + ", ".join(f"{s}={gap['per_scene'] - d}" for s, d in gap["scenes"].items()))
     return {
         "topic": topic_slug, "level": topic["level"]["code"], "words": [lo, hi],
-        "total": len(results), "accepted": len(ok), "rejected": len(results) - len(ok),
-        "reject_reasons": Counter(e.split(":")[0].split(" (")[0] for r in results for e in r["errors"]),
+        "total": len(results), "accepted": len(new_ok), "rejected": len(results) - len(new_ok),
+        "pool": {"accepted": len(ok), "target": pool, "gaps": gap, "overused": balance.overused(ok)},
+        "reject_reasons": Counter(reason_key(e) for r in results for e in r["errors"]),
         "coverage_confirmed": {s: conf[s] for s in sids},
         "coverage_detected": {s: cover[s] for s in sids}, "coverage_claimed": {s: claim[s] for s in sids},
         "scenes": Counter(r["scene"] for r in ok if r["scene"]),
@@ -189,15 +208,25 @@ if __name__ == "__main__":
     ap.add_argument("--input", required=True)
     ap.add_argument("--context")
     ap.add_argument("--out")
+    ap.add_argument("--state")
+    ap.add_argument("--update-state", action="store_true")
+    ap.add_argument("--pool", type=int, default=130)
     a = ap.parse_args()
     ctx = yaml.safe_load(Path(a.context).read_text()) if a.context else None
-    rep = validate(a.topic, load_items(a.input), context=ctx)
+    state = balance.load_state(a.state, a.topic) if a.state else None
+    rep = validate(a.topic, load_items(a.input), context=ctx, existing=state["accepted"] if state else None, pool=a.pool)
     if a.out:
         Path(a.out).write_text(json.dumps(rep, indent=2, ensure_ascii=False, default=dict))
     print(f"{rep['topic']} ({rep['level']}, {rep['words'][0]}-{rep['words'][1]} words): "
           f"{rep['accepted']}/{rep['total']} accepted")
     print("rejection reasons:", dict(rep["reject_reasons"]))
     print("coverage (confirmed = declared and detected):", rep["coverage_confirmed"])
+    g = rep["pool"]["gaps"]
+    print(f"POOL: {rep['pool']['accepted']}/{rep['pool']['target']} accepted | still needed: structures {g['structures'] or 'none'}, scenes {g['scenes'] or 'none'}")
+    if state is not None:
+        hard = balance.stalled(state["history"][-1]["gaps"] if state["history"] else None, g)
+        if hard:
+            print("STALLED (asked last round, not filled; maybe too hard for this topic):", ", ".join(hard))
     for w in rep["playlist_warnings"]:
         print("PLAYLIST:", w)
     for r in rep["sentences"]:
@@ -205,3 +234,8 @@ if __name__ == "__main__":
             print(f"  REJECT #{r['n']:>3} {r['text']!r}: {'; '.join(r['errors'])}")
         elif r["warnings"]:
             print(f"  warn   #{r['n']:>3} {r['text']!r}: {'; '.join(r['warnings'])}")
+    if state is not None and a.update_state:
+        state["accepted"] += [balance.item_from_result(r) for r in rep["sentences"] if r["accepted"]]
+        state["history"].append({"round": len(state["history"]) + 1, "accepted_total": len(state["accepted"]), "gaps": g})
+        balance.save_state(a.state, state)
+        print(f"state saved: {a.state} ({len(state['accepted'])} accepted, round {len(state['history'])})")
