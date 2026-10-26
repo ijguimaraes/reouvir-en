@@ -57,9 +57,12 @@ Uma frase é **rejeitada** se:
 - tem palavras fora da faixa do nível (A1–A2: 4–10; B1–B2: 8–18; contagem por espaços, como `countWords` do app);
 - contém URL ou emoji (mesmas regras de `hasUrl` e `hasEmoji`), dígito ou abreviação (o TTS lê mal);
 - repete outra frase da playlist **depois de normalizada** (o banco recusa o INSERT inteiro por `UNIQUE (playlist_id, text_hash)`) ou fica muito parecida (embedding, limiar a calibrar);
-- tem palavra fora da lista do nível (Oxford 3000/5000, CEFR-J), exceto nomes próprios e termos do contexto (`context.vocabulary`).
 
-**O validador já existe** em [`pipeline/validator/`](../pipeline/validator/) (`rules.py` é a DSL das regras, `analyze.py` roda a análise). Hoje ele valida os próprios currículos: cada estrutura precisa ser detectada pela regra no seu exemplo, caber na faixa de palavras e não usar recurso posterior. O resultado está em [`pipeline/analise-estruturas.md`](pipeline/analise-estruturas.md), regerado por `python analyze.py ../../docs/pipeline ../../docs/pipeline/analise-estruturas.md` (requer `pip install -r requirements.txt` e `python -m spacy download en_core_web_sm`). A normalização e as checagens de URL e emoji ainda não estão no código.
+**O validador já existe** em [`pipeline/validator/`](../pipeline/validator/) (`rules.py` é a DSL das regras, `analyze.py` roda a análise). Hoje ele valida os próprios currículos: cada estrutura precisa ser detectada pela regra no seu exemplo, caber na faixa de palavras e não usar recurso posterior. O resultado está em [`pipeline/analise-estruturas.md`](pipeline/analise-estruturas.md), regerado por `python analyze.py ../../docs/pipeline ../../docs/pipeline/analise-estruturas.md` (requer `pip install -r requirements.txt` e `python -m spacy download en_core_web_sm`). O **validador de frases** também existe: [`pipeline/src/validate.py`](../pipeline/src/validate.py) (normalização igual à do banco, URL, emoji, dígito, abreviação, faixa de palavras, duplicatas, gramática por tópico, cobertura das estruturas) com testes em `test_validate.py` (`python -m unittest test_validate`).
+
+**Regra de uma oração.** Até o tópico `simple-connectors` (A2 · 13) cada frase tem **uma** oração: um sujeito e seus verbos. A feature `multi_clause` (dois sujeitos próprios, ou vírgula + `and/but/or/so`) é rejeitada antes disso. Continuam liberados `and`/`or` entre palavras (*Tom and Ana*, *tea or coffee*) e entre verbos com o mesmo sujeito (*I can swim and run*). `but` também só entra nos conectores.
+
+**Vocabulário por nível (só aviso).** Palavra acima do nível da playlist, ou desconhecida, vira **aviso** na frase, nunca rejeição. A lista é a CEFR-J (A1–B2, por lema). Se mais de 15% das frases aceitas tiverem aviso, a playlist também recebe um aviso. A lista é geral; **o que é específico de um tema vem sempre do contexto**: o `vocabulary` do arquivo do contexto é a única exceção (texto simples = liberado em qualquer nível; `{ word, from }` = liberado a partir de um nível). Assim, trocar de contexto (Java, culinária...) não exige mexer em código. Nomes próprios (com inicial maiúscula) nunca são checados. O prompt lista só as palavras do tema já liberadas no nível do tópico.
 
 Além disso, **a playlist inteira** é checada: o tópico-alvo aparece em pelo menos X% das frases (ex.: o recurso introduzido), e nenhuma estrutura domina a lista (ex.: >30% começando por `I am`).
 
@@ -141,10 +144,24 @@ pipeline/
   validator/{rules.py,analyze.py}                  (já existe)
   prompts/v1/generate.md  (juiz e regeneração: ainda não escritos)
   contexts/entrevista-java.yaml
-  src/build_prompt.py                              (já existe)
-  src/ generate.py validate.py judge.py write_db.py
+  src/build_prompt.py validate.py vocab.py fetch_cefrj.py test_validate.py   (já existem)
+  src/ generate.py judge.py write_db.py
   runs/<context>/<level>/<topic>/{candidates,validated,judged}.jsonl
 ```
+
+## 9.1 Dados fora do repositório
+
+Listas de terceiros e saídas das rodadas ficam **fora do git**, em `PIPELINE_DATA_DIR` (padrão: `pipeline-data/`, irmão da pasta do projeto, ou seja, `.worktrees/pipeline-data/`, que o `.gitignore` da raiz já ignora):
+
+```
+pipeline-data/
+  cefrj/            CEFR-J Wordlist v1.6 (zip, xlsx, lemmas.json, ATTRIBUTION.txt)
+  runs/<contexto>/<nível>/<tópico>/<versão do prompt>/   batches, prompt usado e relatório
+```
+
+`python fetch_cefrj.py` baixa a lista e gera `lemmas.json` (requer `openpyxl`).
+
+**Fonte e licença.** CEFR-J Wordlist, https://www.cefr-j.org/download.html. A página diz que a lista "can be used for both research and commercial purposes with a proper acknowledgement of the source". Citação exigida: *The CEFR-J Wordlist Version 1.6. Compiled by Yukio Tono, Tokyo University of Foreign Studies.* Redistribuição **não é mencionada**, por isso o arquivo não é commitado. A versão japonesa da página acrescenta que, em uso comercial com supervisão da equipe, é preciso consultá-la antes. Oxford 3000/5000 e English Vocabulary Profile: termos **não confirmados**, não usados.
 
 ## 10. Decisões em aberto
 
@@ -152,7 +169,9 @@ pipeline/
 2. Limiar de similaridade para duplicatas.
 3. Corte do juiz (calibrar com amostra manual).
 4. Cada estrutura foi validada com **um** exemplo. Falta um conjunto maior de frases (positivas e negativas) para medir a precisão real dos detectores, e algumas regras são largas (ver a seção "Regras largas" da análise).
-5. Acesso da pipeline ao banco: qual papel (role) do Postgres ela usa e como a conexão chega a ela (rede local ou Tailscale). Uma role própria, com permissão só em `levels`, `grammar_topics` e `sentences`, seria a opção mais segura.
+5. Níveis da CEFR-J: ela foi feita para aprendizes japoneses e alguns níveis surpreendem (`friendly` = B2). Revisar com o professor, e registrar exceções no contexto se necessário.
+6. Lotes seguintes ainda não recebem a lista do que já foi gerado (duplicatas subiram a 13% no v2); falta decidir a estratégia de exclusão e de balanceamento de estruturas e cenas.
+7. Acesso da pipeline ao banco: qual papel (role) do Postgres ela usa e como a conexão chega a ela (rede local ou Tailscale). Uma role própria, com permissão só em `levels`, `grammar_topics` e `sentences`, seria a opção mais segura.
 
 ## 11. Próximo passo
 
