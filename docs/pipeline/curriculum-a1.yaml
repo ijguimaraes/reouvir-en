@@ -1,49 +1,28 @@
 # Currículo do nível A1 (rascunho para validação pedagógica).
 #
-# É independente de contexto: o mesmo arquivo serve a todos os contextos
-# (entrevista, viagem, etc.). `level.code`, `topic.slug`, `topic.name` e
-# `topic.order` vão direto para o JSON de importação (docs/estrutura-do-projeto.md, seção 8).
-# O `slug` do tópico é único em todo o catálogo, não só neste nível.
+# Agnóstico a contextos: só gramática e nível. Cenas, vocabulário temático e exemplos específicos
+# vêm do arquivo do contexto (contexts/*.yaml). Os exemplos abaixo são neutros, do dia a dia.
 #
-# Lógica de gramática:
-#   permitido(tópico N) = baseline + introduces dos tópicos 1..N
-#   proibido(tópico N)  = tudo o que não está em "permitido" (o `forbids` abaixo só
-#                         explicita o que costuma escapar e o que o prompt deve repetir).
-# `soft` = tolerado, mas com teto de frases (ratio) por playlist.
+# Regra de ordem (vale entre níveis, em ordem A1 → A2 → B1 → B2):
+#   permitido(tópico N) = baseline + features introduzidas nos tópicos 1..N
+#   proibido(tópico N)  = toda feature do catálogo (features.yaml) ainda não introduzida
+# O `forbids` é derivado pelo analisador (pipeline/validator/analyze.py), não é escrito à mão.
+#
+# `structures`: padrões que a playlist do tópico deve cobrir. Cada um tem uma regra spaCy (`rule`,
+# DSL em pipeline/validator/rules.py) e um exemplo (`ex`) que o analisador valida: detectado pela
+# própria regra, dentro da faixa de palavras e sem gramática de tópico posterior.
+#
+# Fora do catálogo = não vigiado. Baseline sempre permitido em A1:
+#   - nomes próprios (pessoas, cidades, marcas)
+#   - adjetivos da lista A1 (tired, ready, late, happy...)
+#   - preposições in, at, from (com nomes próprios e home/school/work); `on` é do tópico 6
+#   - conjunções and, but
+#   - advérbios very, here, now, today
+#   - números por extenso até 10
+#   - contrações (I'm, she's, isn't, aren't...) desde o tópico 1; o TTS as lê melhor
+#   - phrasal verbs de sala/rotina: sit down, stand up, wake up, get up, come in, go out, turn on/off
 
 schema_version: 1
-
-# Catálogo de recursos gramaticais. O validador (spaCy) detecta cada `id` na frase.
-features:
-  pron_subject:     { detect: "token.tag_ == 'PRP' and token.dep_ == 'nsubj'; I/you/he/she/it/we/they" }
-  be_present:       { detect: "lemma 'be' em VBZ/VBP (am/is/are/'m/'s/'re), sem neg e sem inversão" }
-  be_negative:      { detect: "lemma 'be' com filho dep_ == 'neg' (isn't, am not)" }
-  be_question:      { detect: "frase termina em '?' e o 'be' vem antes do sujeito" }
-  art_indefinite:   { detect: "lower in {a, an} com pos_ == 'DET'" }
-  art_definite:     { detect: "lower == 'the'" }
-  noun_plural:      { detect: "tag_ in {NNS, NNPS}" }
-  demonstrative:    { detect: "lower in {this, that, these, those}" }
-  poss_adj:         { detect: "tag_ == 'PRP$' (my, your, his, her, its, our, their)" }
-  there_be:         { detect: "token com dep_ == 'expl' e lower == 'there'" }
-  have_got:         { detect: "lemma 'have' + 'got', ou 'have/has' como verbo principal" }
-  present_simple:   { detect: "VBZ/VBP cujo lemma não é 'be' nem 'have'" }
-  past:             { detect: "tag_ in {VBD, VBN}" }
-  modal:            { detect: "tag_ == 'MD'" }
-  future:           { detect: "'will' ou 'going to'" }
-
-# Este arquivo é agnóstico a contextos: só gramática e nível. Cenas, vocabulário temático
-# e exemplos específicos vêm do arquivo do contexto (contexts/*.yaml). Os exemplos
-# `good`/`bad` abaixo são neutros, do dia a dia, para não puxar o gerador para um tema.
-#
-# Sempre permitido em A1 (não conta como "gramática nova").
-baseline:
-  - nomes próprios (pessoas, cidades, marcas)
-  - adjetivos da lista A1 (tired, ready, late, happy...)
-  - preposições in, at, on, from, with
-  - conjunções and, but
-  - advérbios very, here, now, today
-  - números por extenso até 10
-  - contrações (I'm, she's, isn't, aren't...) desde o tópico 1; o TTS as lê melhor
 
 level:
   code: A1
@@ -58,86 +37,202 @@ topics:
     name: Pronomes pessoais e verbo to be (afirmativo)
     order: 1
     introduces: [pron_subject, be_present]
-    forbids: [be_negative, be_question, art_indefinite, art_definite, noun_plural, demonstrative, poss_adj, there_be, have_got, present_simple, past, modal, future]
     predicates: "adjetivo, lugar (in/at/from + nome próprio) ou nome próprio"
-    good:
-      - "I am ready."
-      - "She's tired today."
-      - "We're in London."
-      - "Maria is at home."
     bad:
       - { text: "I am a teacher.", why: "a/an é do tópico 3" }
       - { text: "We are teachers.", why: "plural é do tópico 4; profissões só no singular, com a/an" }
       - { text: "He is my brother.", why: "possessivo é do tópico 2" }
       - { text: "Are you ready?", why: "pergunta é do tópico 2" }
+    structures:
+      - { id: i-am, ex: "I am very tired today.", rule: { all: [ { lower: i, dep: nsubj }, { lemma: be, tag: VBP } ] } }
+      - { id: you-are, ex: "You are very kind today.", rule: { all: [ { lower: you, dep: nsubj }, { lemma: be } ] } }
+      - { id: he-she-is, ex: "She is happy today.", rule: { all: [ { lower: [he, she], dep: nsubj }, { lemma: be } ] } }
+      - { id: it-is, ex: "It is very cold today.", rule: { all: [ { lower: it, dep: nsubj }, { lemma: be } ] } }
+      - { id: we-they-are, ex: "They are at home now.", rule: { all: [ { lower: [we, they], dep: nsubj }, { lemma: be } ] } }
+      - { id: name-is, ex: "Maria is at home now.", rule: { all: [ { pos: PROPN, dep: nsubj }, { lemma: be } ] } }
+      - { id: be-place, ex: "We are in London today.", rule: { lemma: be, child: { dep: prep, lower: [in, at] } } }
+      - { id: be-from, ex: "I am from Brazil, and you?", rule: { lemma: be, child: { dep: prep, lower: from } } }
+      - { id: contraction, ex: "We're very happy today.", rule: { lower: ["'m", "'re", "'s"], lemma: be } }
+      - { id: coordinated, ex: "He is tired, but we are ready.", rule: { all: [ { lower: [and, but], pos: CCONJ }, { lemma: be } ] } }
 
   - slug: to-be-negativo-perguntas-e-possessivos
     name: Verbo to be (negativo e perguntas) e possessivos
     order: 2
-    introduces: [be_negative, be_question, poss_adj]
-    forbids: [art_indefinite, art_definite, noun_plural, demonstrative, there_be, have_got, present_simple, past, modal, future]
-    good:
-      - "I am not late."
-      - "Are you ready?"
-      - "Is she at home?"
-      - "No, we aren't tired."
-      - "What is your name?"
-      - "My name is Ana."
+    introduces: [be_negative, be_question, wh_be, poss_adj]
+    structures:
+      - { id: negative-full, ex: "I am not late today.", rule: { lemma: be, child: { lower: not } } }
+      - { id: negative-contraction, ex: "She isn't at home now.", rule: { lemma: be, child: { lower: "n't" } } }
+      - { id: yes-no-question, ex: "Are you ready now?", rule: { all: [ { feature: be_question }, { not: { feature: wh_be } } ] } }
+      - { id: short-answer, ex: "Yes, we are, my friend.", rule: { all: [ { sent_start: true, lower: ["yes", "no"] }, { lemma: be } ] } }
+      - { id: wh-what, ex: "What is your name?", rule: { all: [ { feature: wh_be }, { lower: what } ] } }
+      - { id: wh-where, ex: "Where are you from?", rule: { all: [ { feature: wh_be }, { lower: where } ] } }
+      - { id: wh-who-how, ex: "How old are you today?", rule: { all: [ { feature: wh_be }, { lower: [who, how, when, why, which] } ] } }
+      - { id: poss-my-your, ex: "My name is Ana.", rule: { all: [ { lower: [my, your], tag: PRP$ }, { lemma: be } ] } }
+      - { id: poss-his-her, ex: "Her brother is at home.", rule: { lower: [his, her], tag: PRP$ } }
+      - { id: poss-our-their, ex: "Their house is in Paris.", rule: { lower: [our, their, its], tag: PRP$ } }
+      - { id: poss-negative, ex: "Your bag isn't here now.", rule: { all: [ { feature: poss_adj }, { feature: be_negative } ] } }
 
   - slug: artigo-a-an
     name: Artigos a e an
     order: 3
     introduces: [art_indefinite]
-    forbids: [art_definite, noun_plural, demonstrative, there_be, have_got, present_simple, past, modal, future]
-    good:
-      - "I am a teacher."
-      - "She is an actor."
-      - "It is an apple."
     bad:
       - { text: "I am a teacher at the school.", why: "the é do tópico 5" }
+    structures:
+      - { id: a-consonant, ex: "He is a good cook.", rule: { lower: a } }
+      - { id: an-vowel, ex: "It is an apple.", rule: { lower: an } }
+      - { id: profession, ex: "My brother is a doctor.", rule: { all: [ { lower: [a, an] }, { lemma: be } ] } }
+      - { id: a-adj-noun, ex: "It is a good idea.", rule: { lower: [a, an], next: { pos: ADJ } } }
+      - { id: a-question, ex: "Is it a good idea?", rule: { all: [ { lower: [a, an] }, { feature: be_question } ] } }
+      - { id: a-negative, ex: "It is not a problem.", rule: { all: [ { lower: [a, an] }, { feature: be_negative } ] } }
+      - { id: a-after-prep, ex: "He is in a small town.", rule: { lower: [a, an], dep: det, head: { dep: pobj } } }
+      - { id: a-or-a, ex: "Is he a doctor or a nurse?", rule: { all: [ { lower: or }, { lower: [a, an] } ] } }
 
   - slug: plural-e-demonstrativos
     name: Plural e this / that / these / those
     order: 4
     introduces: [noun_plural, demonstrative]
-    forbids: [art_definite, there_be, have_got, present_simple, past, modal, future]
-    good:
-      - "These are good questions."
-      - "That is a good idea."
+    structures:
+      - { id: plural-s, ex: "They are good friends.", rule: { tag: NNS, re: 's$' } }
+      - { id: plural-es-ies, ex: "Her babies are very happy.", rule: { tag: NNS, re: '(es|ies)$' } }
+      - { id: plural-irregular, ex: "Those men are very kind.", rule: { tag: NNS, lemma: [child, man, woman, person, foot, tooth, mouse] } }
+      - { id: this, ex: "This is a good book.", rule: { lower: this } }
+      - { id: that, ex: "That is an old car.", rule: { lower: that, pos: [DET, PRON] } }
+      - { id: these, ex: "These are my bags.", rule: { lower: these } }
+      - { id: those, ex: "Those are not my keys.", rule: { lower: those } }
+      - { id: demonstrative-noun, ex: "This bag is very heavy.", rule: { lower: [this, that, these, those], pos: DET } }
+      - { id: demonstrative-question, ex: "Are these your keys?", rule: { all: [ { feature: demonstrative }, { feature: be_question } ] } }
 
   - slug: artigo-the
     name: Artigo the
     order: 5
     introduces: [art_definite]
-    forbids: [there_be, have_got, present_simple, past, modal, future]
-    good:
-      - "The park is in London."
-      - "Is the door open?"
+    structures:
+      - { id: the-subject, ex: "The park is very big.", rule: { lower: the, dep: det, head: { dep: nsubj } } }
+      - { id: the-after-prep, ex: "We are at the station.", rule: { lower: the, head: { dep: pobj } } }
+      - { id: the-plural, ex: "The children are at school.", rule: { lower: the, head: { tag: NNS } } }
+      - { id: a-and-the, ex: "She is a teacher at the school.", rule: { all: [ { lower: [a, an] }, { lower: the } ] } }
+      - { id: the-question, ex: "Is the door open now?", rule: { all: [ { lower: the }, { feature: be_question } ] } }
+      - { id: the-negative, ex: "The door is not open.", rule: { all: [ { lower: the }, { feature: be_negative } ] } }
+      - { id: the-attribute, ex: "This is the right room.", rule: { lower: the, head: { dep: attr } } }
+      - { id: the-same, ex: "We are in the same room.", rule: { lower: same, prev: { lower: the } } }
+
+  - slug: preposicoes-in-on-at
+    name: Preposições in, on, at
+    order: 6
+    introduces: [prep_on]
+    structures:
+      - { id: in-place, ex: "They are in the kitchen.", rule: { lower: in, pos: ADP, child: { lemma: [kitchen, room, house, garden, car, bag, box, city, school] } } }
+      - { id: on-surface, ex: "The book is on the table.", rule: { lower: "on", pos: ADP, child: { lemma: [table, chair, desk, floor, wall, shelf, bed, bus] } } }
+      - { id: at-place, ex: "She is at the door.", rule: { lower: at, pos: ADP, child: { lemma: [door, station, bank, corner, shop, park, airport] } } }
+      - { id: in-city-country, ex: "My uncle is in Spain today.", rule: { lower: in, child: { pos: PROPN } } }
+      - { id: at-home-school-work, ex: "The kids are at school now.", rule: { lower: at, child: { lower: [home, school, work] } } }
+      - { id: on-street-floor, ex: "My house is on this street.", rule: { lower: "on", child: { lemma: [street, road, floor, corner] } } }
+      - { id: on-negative, ex: "The keys are not on the table.", rule: { all: [ { lower: "on" }, { feature: be_negative } ] } }
+      - { id: on-question, ex: "Is the bag on the chair?", rule: { all: [ { lower: "on" }, { feature: be_question } ] } }
+      - { id: in-and-on, ex: "The cat is on the chair in the kitchen.", rule: { all: [ { lower: "on" }, { lower: in } ] } }
 
   - slug: there-is-there-are
     name: There is / there are
-    order: 6
+    order: 7
     introduces: [there_be]
-    forbids: [have_got, present_simple, past, modal, future]
+    structures:
+      - { id: there-is, ex: "There is a book on the table.", rule: { all: [ { feature: there_be }, { lower: is } ] } }
+      - { id: there-are, ex: "There are two cats in the garden.", rule: { all: [ { feature: there_be }, { lower: are } ] } }
+      - { id: there-contraction, ex: "There's a cat on the chair.", rule: { all: [ { lower: there }, { lower: "'s" } ] } }
+      - { id: there-negative, ex: "There isn't a bank near here.", rule: { all: [ { feature: there_be }, { feature: be_negative } ] } }
+      - { id: there-question-is, ex: "Is there a bank near here?", rule: { all: [ { feature: there_be }, { lower: is, sent_start: true } ] } }
+      - { id: there-question-are, ex: "Are there two beds in the room?", rule: { all: [ { feature: there_be }, { lower: are, sent_start: true } ] } }
+      - { id: there-number, ex: "There are seven days in a week.", rule: { all: [ { feature: there_be }, { pos: NUM } ] } }
+      - { id: there-adj, ex: "There is an old tree here.", rule: { all: [ { feature: there_be }, { lower: [a, an], next: { pos: ADJ } } ] } }
+
+  - slug: numeros-datas-e-horas
+    name: Números, datas e horas
+    order: 8
+    introduces: [number_big, ordinal, date_word, time_expr]
+    structures:
+      - { id: cardinal-11-99, ex: "There are twenty books here.", rule: { feature: number_big } }
+      - { id: hundred-thousand, ex: "There are two hundred people here.", rule: { lower: [hundred, thousand, million] } }
+      - { id: ordinal, ex: "It is the third door.", rule: { feature: ordinal } }
+      - { id: month, ex: "My birthday is in May.", rule: { lower: [january, february, march, april, may, june, july, august, september, october, november, december] } }
+      - { id: weekday, ex: "The class is on Monday.", rule: { lower: [monday, tuesday, wednesday, thursday, friday, saturday, sunday] } }
+      - { id: full-date, ex: "My birthday is on May fifth.", rule: { all: [ { feature: date_word }, { feature: ordinal } ] } }
+      - { id: oclock, ex: "It is seven o'clock now.", rule: { lower: "o'clock" } }
+      - { id: half-past, ex: "It is half past seven.", rule: { lower: half, next: { lower: past } } }
+      - { id: quarter, ex: "It is a quarter to nine.", rule: { lower: quarter, next: { lower: [past, to] } } }
+      - { id: time-question, ex: "What time is it now?", rule: { all: [ { feature: wh_be }, { lower: time } ] } }
+      - { id: at-time, ex: "The film is at eight thirty.", rule: { lower: at, next: { pos: NUM } } }
+      - { id: age, ex: "My brother is twenty years old.", rule: { lower: old, prev: { lower: years } } }
 
   - slug: have-got
     name: Have got
-    order: 7
+    order: 9
     introduces: [have_got]
-    forbids: [present_simple, past, modal, future]
+    structures:
+      - { id: have-got, ex: "I have got a new phone.", rule: { lemma: have, next: { lower: got } } }
+      - { id: has-got, ex: "She has got a big family.", rule: { lower: has, next: { lower: got } } }
+      - { id: have-main, ex: "We have a small house.", rule: { lemma: have, tag: [VBP, VBZ], not_dep: [aux, auxpass] } }
+      - { id: negative, ex: "I haven't got a car.", rule: { lemma: have, next: { lower: ["n't", not] } } }
+      - { id: question, ex: "Have you got a pen?", rule: { lower: [have, has], sent_start: true } }
+      - { id: short-answer, ex: "Yes, I have, my friend.", rule: { all: [ { sent_start: true, lower: ["yes", "no"] }, { lemma: have } ] } }
+      - { id: have-got-number, ex: "She has got two brothers.", rule: { all: [ { lower: has, next: { lower: got } }, { pos: NUM } ] } }
+      - { id: has-got-poss, ex: "My sister has got long hair.", rule: { all: [ { feature: poss_adj }, { lower: has } ] } }
 
   - slug: presente-simples
     name: Presente simples
-    order: 8
-    introduces: [present_simple]
-    forbids: [past, modal, future]
+    order: 10
+    introduces: [present_simple, do_negative, do_question]
+    structures:
+      - { id: i-you-we-they, ex: "We play football on Sunday.", rule: { all: [ { feature: present_simple }, { tag: PRP, lower: [i, you, we, they], dep: nsubj } ] } }
+      - { id: he-she-s, ex: "She works in a hospital.", rule: { tag: VBZ, not_lemma: [be, have, do], child: { dep: nsubj, lower: [he, she, it] } } }
+      - { id: es-ending, ex: "He watches films at night.", rule: { tag: VBZ, re: 'es$', not_lemma: [be, have] } }
+      - { id: ies-ending, ex: "She studies English at home.", rule: { tag: VBZ, re: 'ies$' } }
+      - { id: irregular-3rd, ex: "He goes to school by bus.", rule: { lower: [goes, does] } }
+      - { id: dont, ex: "I don't like cold tea.", rule: { lower: do, next: { lower: ["n't", not] } } }
+      - { id: doesnt, ex: "She doesn't work on Sunday.", rule: { lower: does, next: { lower: ["n't", not] } } }
+      - { id: do-question, ex: "Do you like music?", rule: { lower: do, sent_start: true } }
+      - { id: does-question, ex: "Does he live in London?", rule: { lower: does, sent_start: true } }
+      - { id: short-answer, ex: "Yes, I do, my friend.", rule: { all: [ { sent_start: true, lower: ["yes", "no"] }, { lemma: do } ] } }
+      - { id: verb-object, ex: "They eat rice and beans.", rule: { tag: [VBZ, VBP], child: { dep: dobj } } }
+      - { id: at-time, ex: "The shop opens at nine.", rule: { all: [ { feature: present_simple }, { lower: at, next: { pos: NUM } } ] } }
+      - { id: two-verbs, ex: "She gets up and drinks tea.", rule: { tag: [VBZ, VBP], child: { dep: conj, tag: [VBZ, VBP] } } }
+
+  - slug: can-habilidade
+    name: Can (habilidade)
+    order: 11
+    introduces: [modal_can]
+    structures:
+      - { id: can-affirmative, ex: "I can swim and run.", rule: { feature: modal_can } }
+      - { id: cant, ex: "She can't drive a car.", rule: { lemma: can, next: { lower: ["n't", not] } } }
+      - { id: can-question, ex: "Can you cook rice?", rule: { lemma: can, sent_start: true } }
+      - { id: short-answer, ex: "Yes, I can, my friend.", rule: { all: [ { sent_start: true, lower: ["yes", "no"] }, { lemma: can } ] } }
+      - { id: can-object, ex: "They can play the guitar.", rule: { all: [ { feature: modal_can }, { tag: VB, child: { dep: dobj } } ] } }
+      - { id: can-two-verbs, ex: "He can sing and dance.", rule: { all: [ { feature: modal_can }, { lower: and }, { dep: conj } ] } }
+      - { id: can-3rd-person, ex: "She can speak three languages.", rule: { all: [ { feature: modal_can }, { lower: [he, she, it], dep: nsubj } ] } }
+      - { id: cant-but-can, ex: "I can't swim, but I can run.", rule: { all: [ { lemma: can, next: { lower: ["n't", not] } }, { lower: but } ] } }
+
+  - slug: imperativo
+    name: Imperativo
+    order: 12
+    introduces: [imperative, lets]
+    structures:
+      - { id: affirmative, ex: "Open the door, please.", rule: { all: [ { feature: imperative }, { not: { feature: do_negative } } ] } }
+      - { id: negative-dont, ex: "Don't open the window now.", rule: { all: [ { feature: imperative }, { feature: do_negative } ] } }
+      - { id: please-first, ex: "Please sit down here.", rule: { sent_start: true, lower: please } }
+      - { id: phrasal-chunk, ex: "Stand up and sit down, please.", rule: { dep: prt } }
+      - { id: lets, ex: "Let's go to the park.", rule: { feature: lets } }
+      - { id: be-adjective, ex: "Be careful on the road.", rule: { lemma: be, tag: VB, dep: ROOT } }
+      - { id: vocative, ex: "Please close the door, Maria.", rule: { all: [ { feature: imperative }, { pos: PROPN } ] } }
+      - { id: two-imperatives, ex: "Open your book and read.", rule: { dep: conj, head: { tag: VB, dep: ROOT } } }
+      - { id: dont-be, ex: "Please don't be late again.", rule: { all: [ { feature: imperative }, { lemma: be, tag: VB }, { feature: do_negative } ] } }
 
 # Decisões pedagógicas já tomadas (pelo professor):
 decisions:
   - "Profissões só no singular (com a/an, tópico 3); sem plural no tópico 1."
   - "Possessivos antecipados para o tópico 2 (My name is..., What is your name?)."
   - "Contrações permitidas desde o tópico 1."
-  - "Presente simples depois de there is/are e have got (tópico 8)."
+  - "Presente simples depois de there is/are e have got."
+  - "Todos os tópicos do seed do documento (seção 15) entram no A1, na mesma regra de ordem gramatical."
 
 # A validar com English Grammar Profile (Cambridge) / CEFR-J:
 open_questions:

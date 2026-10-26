@@ -30,7 +30,12 @@ Uma unidade de trabalho é `(contexto, nível, tópico)`. Cada etapa lê e grava
 
 ## 3. Currículo
 
-Fica em arquivo declarativo, **agnóstico a contextos** (só gramática e nível; exemplos neutros do dia a dia): [`pipeline/curriculum-a1.yaml`](pipeline/curriculum-a1.yaml). Cada tópico declara o que **introduz** e o que **proíbe**. O que é permitido num tópico é o `baseline` mais tudo o que os tópicos anteriores introduziram.
+Fica em arquivos declarativos, **agnósticos a contextos** (só gramática e nível; exemplos neutros do dia a dia), um por nível: [A1](pipeline/curriculum-a1.yaml), [A2](pipeline/curriculum-a2.yaml), [B1](pipeline/curriculum-b1.yaml) e [B2](pipeline/curriculum-b2.yaml). O catálogo de recursos gramaticais, com a regra spaCy de cada um, é [`pipeline/features.yaml`](pipeline/features.yaml).
+
+- Cada tópico declara o que **introduz** (`introduces`) e as **estruturas** que a playlist deve cobrir (`structures`, cada uma com regra spaCy e frase de exemplo).
+- A ordem gramatical é **cumulativa entre níveis** (A1 → A2 → B1 → B2): o permitido num tópico é o `baseline` mais tudo o que os tópicos anteriores introduziram. O **proibido é derivado** (todo recurso do catálogo ainda não introduzido); não é escrito à mão.
+- Um assunto pode reaparecer em nível acima, com mais profundidade: o tópico novo tem slug próprio e `deepens` aponta o anterior (ex.: `question-words` aprofunda o `wh + be` do A1).
+- `added: true` marca tópicos que não estão no seed do documento e entram como pré-requisito (`was/were`, possessivos `'s`/`mine`).
 
 `level.code`, `topic.slug`, `topic.name` e `topic.order` vão direto para o JSON de importação, então o catálogo do app e o currículo nunca divergem.
 
@@ -38,12 +43,13 @@ Fica em arquivo declarativo, **agnóstico a contextos** (só gramática e nível
 
 Roda com spaCy (`en_core_web_sm` basta). Uma frase é **rejeitada** se:
 
-- usa um recurso do `forbids` do tópico, ou qualquer recurso não permitido (detectores em `features` no YAML);
+- usa qualquer recurso do catálogo (`features.yaml`) que ainda não foi introduzido naquele ponto do currículo;
 - tem palavras fora da faixa do nível (A1: 4–10);
 - contém dígito, emoji, URL ou abreviação (o TTS lê mal);
 - repete outra frase da playlist (texto normalizado) ou fica muito parecida (embedding, limiar a calibrar);
 - tem palavra fora da lista do nível (Oxford 3000/5000, CEFR-J), exceto nomes próprios e termos do contexto (`context.vocabulary`);
-- estoura o teto `soft` do tópico, quando o tópico define algum (hoje nenhum do A1 define).
+
+**O validador já existe** em [`pipeline/validator/`](../pipeline/validator/) (`rules.py` é a DSL das regras, `analyze.py` roda a análise). Ele valida os próprios currículos: cada estrutura precisa ser detectada pela regra no seu exemplo, caber na faixa de palavras e não usar recurso posterior. O resultado está em [`pipeline/analise-estruturas.md`](pipeline/analise-estruturas.md), regerado por `python analyze.py ../../docs/pipeline ../../docs/pipeline/analise-estruturas.md` (requer `pip install -r requirements.txt` e `python -m spacy download en_core_web_sm`).
 
 Além disso, **a playlist inteira** é checada: o tópico-alvo aparece em pelo menos X% das frases (ex.: o recurso introduzido), e nenhuma estrutura domina a lista (ex.: >30% começando por `I am`).
 
@@ -118,7 +124,8 @@ Python, por causa do spaCy. SDK da Anthropic com a **Batch API** para as etapas 
 
 ```
 pipeline/
-  curriculum/a1.yaml
+  curriculum/{a1,a2,b1,b2}.yaml  features.yaml     (hoje em docs/pipeline/)
+  validator/{rules.py,analyze.py}                  (já existe)
   contexts/entrevista-java.yaml
   prompts/v1/generate.md  judge.md
   src/ generate.py validate.py judge.py assemble.py
@@ -128,10 +135,10 @@ pipeline/
 
 ## 10. Decisões em aberto
 
-1. Conferir a ordem do A1 (já decidida pelo professor, ver `decisions` no YAML) com o English Grammar Profile / CEFR-J.
+1. Conferir a ordem dos quatro níveis (A1 decidida pelo professor; A2, B1 e B2 propostas) com o English Grammar Profile / CEFR-J.
 2. Limiar de similaridade para duplicatas.
 3. Teto das exceções `soft` e corte do juiz (calibrar com amostra manual).
-4. Níveis A2 em diante: mesmo formato de YAML, só depois do A1 validado.
+4. Cada estrutura foi validada com **um** exemplo. Falta um conjunto maior de frases (positivas e negativas) para medir a precisão real dos detectores, e algumas regras são largas (ver a seção "Regras largas" da análise).
 5. O exemplo `exemplo-importacao.json` usa `a/an` e `the` no tópico 1; é só ilustração do formato, mas não segue esta regra. Ajustar se quiser que seja coerente.
 
 ## 11. Próximo passo

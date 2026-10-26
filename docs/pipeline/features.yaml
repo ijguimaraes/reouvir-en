@@ -1,0 +1,96 @@
+# Catálogo de recursos gramaticais (A1–B2), compartilhado pelos currículos.
+#
+# Cada feature tem uma regra executável sobre o Doc do spaCy (DSL em pipeline/validator/rules.py).
+# Uma feature é "introduzida" por exatamente um tópico (`introduces` nos currículos). Numa frase
+# do tópico N, qualquer feature detectada que não tenha sido introduzida nos tópicos 1..N
+# (contando níveis em ordem: A1 → A2 → B1 → B2) é um erro de gramática posterior.
+# O que não está neste catálogo não é vigiado (ex.: adjetivos, preposições in/at/from, nomes próprios).
+
+schema_version: 1
+
+features:
+  # ---------- A1 ----------
+  pron_subject:   { tag: PRP, dep: nsubj }
+  be_present:     { lemma: be, tag: [VBZ, VBP] }
+  be_negative:    { lemma: be, child: { dep: neg } }
+  be_question:    { lemma: be, tag: [VBZ, VBP], right: { dep: nsubj } }
+  wh_be:          { all: [ { sent_start: true, lower: [what, where, who, when, why, how, which, whose] }, { lemma: be, tag: [VBZ, VBP, VBD] } ] }
+  poss_adj:       { tag: PRP$ }
+  art_indefinite: { lower: [a, an], pos: DET }
+  noun_plural:    { tag: [NNS, NNPS] }
+  demonstrative:  { lower: [this, that, these, those], pos: [DET, PRON] }
+  art_definite:   { lower: the }
+  prep_on:        { lower: "on", pos: ADP }
+  there_be:       { lower: there, dep: expl }
+  number_big:     { pos: NUM, not_lower: [zero, one, two, three, four, five, six, seven, eight, nine, ten] }
+  ordinal:        { re: '^(first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|eleventh|twelfth|thirteenth|fourteenth|fifteenth|sixteenth|seventeenth|eighteenth|nineteenth|twentieth|thirtieth|(twenty|thirty)-(first|second|third|fourth|fifth|sixth|seventh|eighth|ninth))$' }
+  date_word:      { lower: [january, february, march, april, may, june, july, august, september, october, november, december, monday, tuesday, wednesday, thursday, friday, saturday, sunday] }
+  time_expr:      { any: [ { lower: "o'clock" }, { lower: half, next: { lower: past } }, { lower: quarter, next: { lower: [past, to] } }, { lower: [noon, midnight] } ] }
+  have_got:       { any: [ { lemma: have, tag: [VBZ, VBP], not_dep: [aux, auxpass] }, { lemma: have, next: { lower: got } } ] }
+  present_simple: { any: [ { tag: [VBZ, VBP], not_lemma: [be, have, do], not_dep: [aux, auxpass] }, { lemma: do, tag: [VBZ, VBP], dep: ROOT } ] }
+  do_negative:    { lemma: do, tag: [VB, VBZ, VBP], next: { lower: ["n't", not] } }
+  do_question:    { lemma: do, tag: [VBZ, VBP], dep: aux, sent_start: true }
+  modal_can:      { lemma: can, tag: MD }
+  imperative:     { tag: VB, dep: ROOT, no_child: { dep: nsubj } }
+  lets:           { lower: let, next: { lower: "'s" } }
+
+  # ---------- A2 ----------
+  obj_pron:       { tag: PRP, dep: [dobj, pobj, iobj, dative, obj], lower: [me, him, her, us, them, it, you] }
+  poss_pron:      { lower: [mine, yours, hers, ours, theirs] }
+  genitive_s:     { tag: POS }
+  freq_adverb:    { lower: [always, usually, often, sometimes, never, rarely, seldom, normally, frequently, hardly, twice, once, every] }
+  manner_adverb:  { any: [ { pos: ADV, re: 'ly$', not_lower: [usually, really, only, early, finally, probably, actually, especially, exactly, totally, nearly, likely, only] }, { lower: [well, fast, hard] , pos: ADV } ] }
+  pres_continuous: { tag: VBG, child: { lemma: be, tag: [VBZ, VBP], dep: aux } }
+  quantifier:     { lower: [some, any, much, many, lot, lots, few, enough] }
+  wh_other:       { all: [ { sent_start: true, lower: [what, where, who, when, why, how, which, whose] }, { not: { lemma: be, tag: [VBZ, VBP, VBD] } } ] }
+  verb_xcomp:     { dep: xcomp, tag: [VBG, VB] }
+  going_to:       { lemma: go, tag: VBG, child: { lemma: be, dep: aux }, next: { lower: to, pos: PART } }
+  will_future:    { lemma: will, tag: MD }
+  modal_obligation: { lemma: [must, should], tag: MD }
+  have_to:        { lemma: have, next: { lower: to, pos: PART } }
+  be_past:        { lemma: be, tag: VBD }
+  past_simple:    { any: [ { tag: VBD, not_lemma: [be, do, have], not_dep: [aux, auxpass] }, { lemma: [do, have], tag: VBD, not_dep: [aux, auxpass] }, { lemma: do, tag: VBD, dep: aux } ] }
+  comparative:    { tag: [JJR, RBR] }
+  superlative:    { tag: [JJS, RBS] }
+  as_as:          { lower: as, next: { pos: [ADJ, ADV] } }
+  conj_simple:    { any: [ { lower: [because, so, then, before, after], pos: [SCONJ, CCONJ, ADV, ADP] }, { lower: when, pos: [SCONJ, ADV], sent_start: false } ] }
+
+  # ---------- B1 ----------
+  pres_perfect:   { tag: VBN, not_lower: got, child: { lemma: have, tag: [VBZ, VBP], dep: aux } }
+  pp_adverb:      { lower: [already, yet, ever, since, just, recently, lately] }
+  past_continuous: { tag: VBG, child: { lemma: be, tag: VBD, dep: aux } }
+  while_clause:   { lower: while, dep: mark }
+  used_to:        { lower: used, next: { lower: to } }
+  ger_prep:       { tag: VBG, prev: { pos: ADP, not_lower: to } }
+  ger_subject:    { any: [ { tag: VBG, dep: csubj }, { dep: [csubj, nsubj], re: 'ing$', pos: [VERB, NOUN], not_lower: [morning, evening, building, meeting, wedding, ceiling, thing, something, nothing, anything, everything, king, ring, spring, king, feeling, painting] } ] }
+  modal_epistemic: { lemma: [may, might, could], tag: MD }
+  if_clause:      { lower: if, dep: mark }
+  would:          { lemma: would, tag: MD }
+  passive:        { any: [ { tag: VBN, not_lower: used, child: { dep: auxpass } }, { lower: used, tag: VBN, child: { dep: auxpass }, not_next: { lower: to } }, { all: [ { lemma: be, sent_start: true }, { tag: VBN, not_lower: [got, tired, used] } ] } ] }
+  relative_clause: { dep: relcl }
+  reported_verb:  { lemma: [say, tell, ask, explain, answer], tag: VBD, child: { dep: ccomp } }
+  phrasal_verb:   { dep: prt, head: { not_lemma: [sit, stand, wake, get, come, go, turn] } }
+  connector_b1:   { any: [ { lower: order, prev: { lower: in }, next: { lower: to } }, { lower: [although, though, however, despite] } ] }
+
+  # ---------- B2 ----------
+  pres_perf_cont: { tag: VBG, child: [ { lower: been }, { lemma: have, tag: [VBZ, VBP], dep: aux } ] }
+  past_perfect:   { tag: VBN, child: { lemma: have, tag: VBD, dep: aux } }
+  past_perf_cont: { tag: VBG, child: [ { lower: been }, { lemma: have, tag: VBD, dep: aux } ] }
+  would_have:     { tag: VBN, child: [ { lemma: would, dep: aux }, { lemma: have, dep: aux } ] }
+  modal_perfect:  { tag: VBN, child: [ { lemma: [could, should, must, might, may, can, ought], tag: MD, dep: aux }, { lemma: have, dep: aux } ] }
+  wish:           { any: [ { lemma: wish, pos: VERB }, { lower: only, prev: { lower: if } } ] }
+  future_adv:     { any: [ { tag: VBG, child: [ { lemma: will, dep: aux }, { lower: be } ] }, { tag: VBN, child: [ { lemma: will, dep: aux }, { lower: have } ] } ] }
+  passive_complex: { any: [ { tag: VBN, child: [ { dep: auxpass }, { dep: aux } ] }, { tag: VBN, child: { dep: auxpass, lower: being } } ] }
+  causative:      { lemma: [have, get], child: { tag: VBN, dep: [ccomp, xcomp, advcl] } }
+  reported_question: { lemma: [ask, wonder], child: { dep: ccomp } }
+  reported_command: { lemma: [tell, ask, order, advise, warn, remind, persuade, invite], child: [ { dep: xcomp }, { dep: [dobj, obj] } ] }
+  reported_verb_adv: { lemma: [suggest, admit, deny, promise, insist, apologise, apologize, complain, threaten, accuse, claim, mention, agree, refuse, offer], tag: [VBD, VBZ, VBP] }
+  relcl_nondef:   { lower: [who, which, whose, whom, where], prev: { lower: "," } }
+  inversion_neg:  { any: [ { sent_start: true, lower: [never, rarely, seldom, hardly, scarcely, barely, little, nowhere, not, "no"], next: { pos: AUX } }, { sent_start: true, lower: not, next: { lower: only } }, { sent_start: true, lower: "no", next: { lower: sooner } }, { sent_start: true, lower: only } ] }
+  inversion_cond: { all: [ { sent_start: true, lower: [had, should, were], next: { pos: [PRON, PROPN, NOUN] } }, { doc_re: ',' }, { doc_not_re: '\?' } ] }
+  connector_formal: { any: [ { lower: [moreover, furthermore, nevertheless, nonetheless, consequently, therefore, thus, hence, otherwise, unless, provided, whereas, notwithstanding] }, { lower: spite, prev: { lower: in } }, { lower: addition, prev: { lower: in } }, { lower: hand, prev: { lower: other } }, { lower: result, prev: { lower: a } } ] }
+  phrasal_3part:  { dep: prt, next: { pos: ADP, not_lower: [than, as] } }
+  collocation:    { lemma: [make, take, reach, draw, run, pay, raise, meet, break, keep, catch], child: { dep: dobj, lemma: [decision, advantage, conclusion, attention, risk, effort, progress, profit, promise, deadline, sight, tab] } }
+  shall:          { lower: shall, tag: MD }
+  formal_marker:  { lemma: [kindly, grateful, regret, apologise, apologize, enquire, inform, sincerely, regards, request, assist, commence, purchase, require, attach] }
+  informal_marker: { any: [ { lower: [gon, wan, gotta, kinda, yeah, okay, ok, hey, guys, stuff, cool, awesome] }, { lower: [well, so], sent_start: true }, { lower: mean, prev: { lower: i } }, { lower: know, prev: { lower: you }, next: { lower: "," } } ] }
