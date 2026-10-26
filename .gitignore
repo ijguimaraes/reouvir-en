@@ -5,3 +5,4 @@ audio-data
 *.log
 .worktrees
 .vite/
+__pycache__/

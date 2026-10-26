@@ -14,6 +14,8 @@ from pathlib import Path
 
 import yaml
 
+import vocab
+
 ROOT = Path(__file__).resolve().parents[2]
 DOCS = ROOT / "docs" / "pipeline"
 LEVELS = ["a1", "a2", "b1", "b2"]
@@ -72,8 +74,9 @@ def build(context, topic_slug, count=40, version="v1"):
             sit = "".join(f"\n      * {x}" for x in s.get("situations", []))
             return f'  - {s["id"]}: {s["desc"]}' + (f"\n    Situations:{sit}" if sit else "")
         ctx.append("Scenes:\n" + "\n".join(scene_text(s) for s in scenes))
-    if context.get("vocabulary"):
-        ctx.append("Theme vocabulary (optional, only where the grammar allows): " + ", ".join(context["vocabulary"]))
+    theme = vocab.theme_words_for(context.get("vocabulary"), topic["level"]["code"])
+    if theme:
+        ctx.append("Theme vocabulary (optional, only where the grammar allows): " + ", ".join(theme))
 
     blocks = {
         "count": str(count),

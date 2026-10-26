@@ -1,12 +1,15 @@
 """Etapa 2: valida as frases candidatas de um tópico.
 
 Uso:
-  python validate.py --topic subject-pronouns-and-verb-to-be --input sentences.json [--out relatorio.json]
+  python validate.py --topic subject-pronouns-and-verb-to-be --input sentences.json \
+      [--context ../contexts/entrevista-java.yaml] [--out relatorio.json]
 
 `sentences.json` é a resposta do modelo ({"sentences": [{text, structure, scene}]}) ou uma lista simples.
 Cada frase é normalizada como o banco faz, e rejeitada se quebrar alguma regra de texto, a faixa de
 palavras do nível ou a ordem gramatical (qualquer recurso do catálogo ainda não introduzido).
-Depois a playlist aceita é checada como um todo (cobertura das estruturas, alvo do tópico, começos).
+Vocabulário acima do nível só gera AVISO (lista CEFR-J em PIPELINE_DATA_DIR, fora do repositório;
+exceções e palavras do tema vêm do `vocabulary` do contexto). Depois a playlist aceita é checada como um
+todo (cobertura das estruturas, alvo do tópico, começos).
 """
 import argparse
 import hashlib
@@ -25,6 +28,7 @@ ROOT = Path(__file__).resolve().parents[2]
 DOCS = ROOT / "docs" / "pipeline"
 sys.path.insert(0, str(ROOT / "pipeline"))
 from validator.rules import detect  # noqa: E402
+import vocab  # noqa: E402
 
 LEVELS = ["a1", "a2", "b1", "b2"]
 EMOJI = regex.compile(r"\p{Extended_Pictographic}")
@@ -80,7 +84,8 @@ def text_errors(text: str, lo: int, hi: int):
     return errors, []
 
 
-def validate(topic_slug, items, nlp=None, max_same_start=0.25, target_share=0.6):
+def validate(topic_slug, items, nlp=None, max_same_start=0.25, target_share=0.6, context=None, cefr="auto",
+             vocab_share=0.15):
     topics = load_curriculum()
     feats = yaml.safe_load((DOCS / "features.yaml").read_text())["features"]
     idx = next((i for i, t in enumerate(topics) if t["slug"] == topic_slug), None)
@@ -93,6 +98,9 @@ def validate(topic_slug, items, nlp=None, max_same_start=0.25, target_share=0.6)
     structures = topic["structures"]
     sids = [s["id"] for s in structures]
     nlp = nlp or spacy.load("en_core_web_sm")
+    cefr = vocab.load_cefr() if cefr == "auto" else cefr
+    ctx_vocab = vocab.context_vocab((context or {}).get("vocabulary"))
+    level = topic["level"]["code"]
 
     results, seen_hash, seen_loose = [], {}, {}
     for n, item in enumerate(items):
@@ -114,6 +122,8 @@ def validate(topic_slug, items, nlp=None, max_same_start=0.25, target_share=0.6)
         if late:
             errors.append("grammar not taught yet: " + ", ".join(late))
         matched = [s["id"] for s in structures if detect(doc, s["rule"], feats)]
+        vocab_found = vocab.check(doc, level, cefr, ctx_vocab)
+        warnings += [vocab.describe(v) for v in vocab_found]
         claimed = item.get("structure") if isinstance(item, dict) else None
         if claimed is not None and claimed not in sids:
             warnings.append(f"unknown structure id: {claimed}")
@@ -124,7 +134,7 @@ def validate(topic_slug, items, nlp=None, max_same_start=0.25, target_share=0.6)
         results.append({
             "n": n, "text": text, "raw": raw if raw != text else None,
             "accepted": not errors, "errors": errors, "warnings": warnings,
-            "claimed": claimed, "matched": matched,
+            "claimed": claimed, "matched": matched, "vocab": [list(v) for v in vocab_found],
             "target": bool(trig & new), "scene": item.get("scene") if isinstance(item, dict) else None,
         })
 
@@ -147,6 +157,13 @@ def validate(topic_slug, items, nlp=None, max_same_start=0.25, target_share=0.6)
     for w, c in starts.most_common(3):
         if ok and c / len(ok) > max_same_start:
             playlist.append(f"{c / len(ok):.0%} of accepted sentences start with '{w}' (limit {max_same_start:.0%})")
+    flagged = Counter(v[0] for r in ok for v in r["vocab"])
+    n_flag = sum(1 for r in ok if r["vocab"])
+    if cefr is None:
+        playlist.append("vocabulary not checked: CEFR list not found (run fetch_cefrj.py)")
+    elif ok and n_flag / len(ok) > vocab_share:
+        playlist.append(f"{n_flag / len(ok):.0%} of accepted sentences have words above the level (limit {vocab_share:.0%}): "
+                        + ", ".join(f"{w}={c}" for w, c in flagged.most_common(8)))
     missing = [s for s in sids if conf[s] < min_each]
     if missing:
         playlist.append(f"structures below {min_each} confirmed sentences: " + ", ".join(f"{s}={conf[s]}" for s in missing))
@@ -157,7 +174,7 @@ def validate(topic_slug, items, nlp=None, max_same_start=0.25, target_share=0.6)
         "coverage_confirmed": {s: conf[s] for s in sids},
         "coverage_detected": {s: cover[s] for s in sids}, "coverage_claimed": {s: claim[s] for s in sids},
         "scenes": Counter(r["scene"] for r in ok if r["scene"]),
-        "playlist_warnings": playlist, "sentences": results,
+        "vocab_flagged": dict(flagged), "playlist_warnings": playlist, "sentences": results,
     }
 
 
@@ -170,9 +187,11 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--topic", required=True)
     ap.add_argument("--input", required=True)
+    ap.add_argument("--context")
     ap.add_argument("--out")
     a = ap.parse_args()
-    rep = validate(a.topic, load_items(a.input))
+    ctx = yaml.safe_load(Path(a.context).read_text()) if a.context else None
+    rep = validate(a.topic, load_items(a.input), context=ctx)
     if a.out:
         Path(a.out).write_text(json.dumps(rep, indent=2, ensure_ascii=False, default=dict))
     print(f"{rep['topic']} ({rep['level']}, {rep['words'][0]}-{rep['words'][1]} words): "

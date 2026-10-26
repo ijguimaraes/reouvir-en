@@ -33,4 +33,18 @@ scenes:
   - id: closing
     desc: "thanking the interviewer and saying goodbye"
     situations: ["Carlos says he is thankful and happy", "Ana says the interview is done", "Tom says goodbye to Carlos", "Ana says Carlos is very good"]
-vocabulary: [Java, Spring, code, project, team, manager, office, interview, bug, server, database, deadline]
+# texto simples = liberado em qualquer nível; { word, from } = liberado a partir do nível indicado.
+# É a ÚNICA exceção ao filtro de vocabulário por nível: cada contexto traz o seu.
+vocabulary:
+  - Java
+  - Spring
+  - code
+  - project
+  - team
+  - manager
+  - office
+  - interview
+  - bug
+  - server
+  - { word: database, from: A2 }
+  - { word: deadline, from: B1 }

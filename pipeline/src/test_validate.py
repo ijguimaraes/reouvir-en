@@ -114,6 +114,52 @@ class OneClause(unittest.TestCase):
             self.assertFalse(self.rejects("simple-connectors", t), t)
 
 
+class Vocabulary(unittest.TestCase):
+    """Vocabulário só avisa. A lista geral é injetada aqui; o tema vem sempre do contexto."""
+    CEFR = {"i": "A1", "be": "A1", "very": "A1", "happy": "A1", "ready": "A1", "today": "A1", "at": "A1",
+            "friendly": "B2", "nervous": "A2", "home": "A1", "kind": "A1", "tomato": "A2", "a": "A1", "an": "A1",
+            "the": "A1", "are": "A1", "it": "A1"}
+
+    def warns(self, text, context=None, slug="subject-pronouns-and-verb-to-be"):
+        r = validate(slug, [{"text": text}], nlp=NLP, context=context, cefr=self.CEFR)["sentences"][0]
+        return r["accepted"], [w for w in r["warnings"] if "word" in w or "above level" in w]
+
+    def test_above_level_only_warns(self):
+        ok, w = self.warns("I am very friendly today.")
+        self.assertTrue(ok)
+        self.assertEqual(w, ["above level: friendly (B2)"])
+
+    def test_level_up_clears_the_warning(self):
+        _, w = self.warns("I am very nervous today.", slug="subject-pronouns-and-verb-to-be")
+        self.assertEqual(w, ["above level: nervous (A2)"])
+        _, w = self.warns("I am very nervous today.", slug="object-pronouns")  # A2
+        self.assertEqual(w, [])
+
+    def test_unknown_word_warns_but_proper_noun_does_not(self):
+        self.assertEqual(self.warns("I am very kubernetesish today.")[1], ["unknown word: kubernetesish"])
+        self.assertEqual(self.warns("I am very ready at Kubernetes today.")[1], [])
+
+    def test_context_vocabulary_is_the_only_exception_and_it_is_per_context(self):
+        sent = "I am very happy at the oven today."
+        self.assertIn("unknown word: oven", self.warns(sent, slug="article-the")[1])
+        cooking = {"vocabulary": ["oven", {"word": "tomato", "from": "B1"}]}
+        java = {"vocabulary": ["Java", "server"]}
+        self.assertEqual(self.warns(sent, cooking, slug="article-the")[1], [])
+        self.assertIn("unknown word: oven", self.warns(sent, java, slug="article-the")[1])
+
+    def test_theme_word_below_its_minimum_level_warns(self):
+        ctx = {"vocabulary": [{"word": "tomato", "from": "B1"}]}
+        _, w = self.warns("I am very happy at home today.", ctx)
+        self.assertEqual(w, [])
+        _, w = self.warns("A tomato is very ready today.", ctx, slug="articles-a-an")
+        self.assertEqual(w, ["theme word above level: tomato (from B1)"])
+
+    def test_no_cefr_list_skips_the_check_with_a_notice(self):
+        rep = validate("subject-pronouns-and-verb-to-be", [{"text": "I am very friendly today."}], nlp=NLP, cefr=None)
+        self.assertTrue(any("not checked" in w for w in rep["playlist_warnings"]))
+        self.assertTrue(rep["sentences"][0]["accepted"])
+
+
 class Duplicates(unittest.TestCase):
     def test_exact_and_near(self):
         rs = run(T1, "I am very tired today.", "I am very tired today.", "i am very tired today!")
