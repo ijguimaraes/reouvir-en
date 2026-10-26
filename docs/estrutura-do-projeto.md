@@ -572,36 +572,38 @@ A1, A2, B1 e B2. **C1 e C2 estão fora do escopo**: não entram no seed nem na p
 
 ### Tópicos gramaticais (conforme a lista CEFR)
 
-**A1:** Verbo to be · pronomes pessoais e possessivos · artigos a/an/the · plural dos substantivos · this/that/these/those · there is/there are · Present Simple · can (habilidade) · imperativo · preposições in, on, at · números, datas e horas
+Em inglês, na ordem do currículo. A fonte é [`pipeline/curriculum-*.yaml`](pipeline/curriculum-a1.yaml); esta lista só a reproduz. *Past of the verb to be* e *Possessive pronouns and 's* não vinham do seed original: entram como pré-requisito.
 
-**A2:** Past Simple (regulares e irregulares) · Present Continuous · futuro com going to e will · comparativos e superlativos · countable/uncountable (some, any, much, many) · advérbios de frequência e de modo · have to/must/should · pronomes objeto · conectores simples (and, but, because, so) · question words · verbo + -ing/to
+**A1:** Subject pronouns and the verb to be (affirmative) · The verb to be (negative and questions) and possessives · Articles a and an · Plural nouns and this / that / these / those · The article the · Prepositions in, on, at · There is / there are · Numbers, dates and times · Have got · Present Simple · Can (ability) · The imperative
 
-**B1:** Present Perfect (for, since, already, yet, ever) · Present Perfect vs. Past Simple · Past Continuous vs. Past Simple · primeira e segunda condicional · voz passiva (presente e passado) · modais de possibilidade e dedução · orações relativas · discurso indireto básico · used to / be used to · gerúndio vs. infinitivo · phrasal verbs comuns · conectores (although, however, while, in order to)
+**A2:** Object pronouns (me, you, him, her, it, us, them) · Possessive pronouns (mine, yours...) and 's · Adverbs of frequency and manner · Present Continuous · Countable and uncountable nouns (some, any, much, many) · Question words (what, where, who, when, why, how, which) · Verb + -ing / to · Future with going to and will · Have to, must and should · Past of the verb to be (was / were) · Past Simple (regular and irregular) · Comparatives and superlatives · Simple connectors (and, but, because, so)
 
-**B2:** Terceira condicional e condicionais mistas · wish/if only · Past Perfect e Past Perfect Continuous · Present Perfect Continuous · voz passiva avançada · discurso indireto completo · modais no passado · orações relativas não restritivas · inversão para ênfase · Future Perfect e Future Continuous · phrasal verbs e collocations avançados · conectores formais · registro formal vs. informal
+**B1:** Present Perfect (for, since, already, yet, ever) · Present Perfect vs. Past Simple · Past Continuous vs. Past Simple · Used to / be used to · Gerund vs. infinitive · Modals of possibility and deduction · First and second conditional · Passive voice (present and past) · Relative clauses (who, which, that, where, whose) · Reported speech (basic) · Common phrasal verbs · Connectors (although, however, while, in order to)
+
+**B2:** Present Perfect Continuous · Past Perfect and Past Perfect Continuous · Third conditional and mixed conditionals · Wish and if only · Past modals (should have, could have, must have...) · Passive voice (advanced) · Reported speech (full) · Non-defining relative clauses · Future Continuous and Future Perfect · Inversion for emphasis · Formal connectors · Advanced phrasal verbs and collocations · Formal vs. informal register
 
 > **Fora do escopo:** C1 e C2. As listas abaixo ficam só como referência, caso o escopo seja ampliado.
 
-**C1:** Inversão formal · condicionais formais · subjuntivo · orações clivadas · modais avançados · passiva complexa e impessoal · nominalização · orações reduzidas · coesão avançada · hedging · collocations, idioms e phrasal verbs de registro alto · pontuação em textos longos · adaptação de registro ao público
+**C1:** Formal inversion · formal conditionals · subjunctive · cleft sentences · advanced modals · complex and impersonal passives · nominalisation · reduced clauses · advanced cohesion · hedging · high-register collocations, idioms and phrasal verbs · punctuation in long texts · adapting register to the audience
 
-**C2:** Domínio flexível das estruturas · nuances semânticas · ironia, eufemismo e ambiguidade intencional · idioms e figuras de linguagem · variação regional (US, UK, AU) · elipse e substituição avançadas · ordem de palavras marcada · estrutura retórica e argumentativa · paráfrase e resumo precisos · edição: concisão e clareza · terminologia especializada e convenções de gênero · linguagem implícita e referências culturais
+**C2:** Flexible command of structures · semantic nuance · irony, euphemism and deliberate ambiguity · idioms and figurative language · regional variation (US, UK, AU) · advanced ellipsis and substitution · marked word order · rhetorical and argumentative structure · precise paraphrase and summary · editing: concision and clarity · specialised terminology and genre conventions · implicit language and cultural references
 
 ### Contextos sugeridos
 
-- Entrevista de engenheiro de software (Java)
-- Daily stand-up de equipe de software
+- Software engineer interview (Java)
+- Software team daily stand-up
 - Code review
-- Reunião de equipe
-- Apresentação de projeto
-- Entrevista de emprego (geral)
-- Aeroporto e viagem de avião
-- Hotel e hospedagem
-- Restaurante
-- Supermercado e compras
-- Consulta médica
-- Academia e exercícios
-- Rotina diária
-- Conhecendo pessoas (small talk)
+- Team meeting
+- Project presentation
+- Job interview (general)
+- Airport and air travel
+- Hotel and accommodation
+- Restaurant
+- Supermarket and shopping
+- Doctor's appointment
+- Gym and exercise
+- Daily routine
+- Meeting people (small talk)
 
 ## 16. Custos e limites
 
