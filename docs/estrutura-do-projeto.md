@@ -20,12 +20,12 @@ O sistema tem dois apps de front-end, independentes, e uma API:
 | App | Quem usa | Função |
 |---|---|---|
 | **App do aluno** (`apps/web`, PWA) | Alunos | Escolher uma playlist publicada e ouvir. |
-| **Backoffice** (`apps/admin`) | Administrador | Gerenciar o catálogo e os usuários; **importar** (arquivo JSON da pipeline), revisar e publicar as playlists. |
-| **API** (`apps/api`) | Os dois apps | Regras de negócio, banco, importação de playlists e geração de áudio. |
+| **Backoffice** (`apps/admin`) | Administrador | Gerenciar contextos e usuários, consultar níveis e tópicos (somente leitura), revisar as frases e publicar as playlists. |
+| **API** (`apps/api`) | Os dois apps | Regras de negócio, banco e geração de áudio. |
 
 ## 2. Princípios de design
 
-1. **O conteúdo é curado e vem de fora.** As frases são produzidas por uma **pipeline externa** (outro projeto) e **importadas** por um administrador no backoffice como arquivo JSON. Ele revisa e publica. O aluno só consome conteúdo publicado. Este sistema não gera frases.
+1. **O conteúdo é curado e vem de fora.** Níveis, tópicos e frases são produzidos por uma **pipeline externa** (outro projeto) e gravados **direto no banco** (seção 8). O administrador revisa e publica. O aluno só consome conteúdo publicado. Este sistema não gera frases.
 2. **O áudio é o único item lazy.** O áudio de uma frase só é gerado na primeira vez que alguém precisa dele, e fica guardado para sempre.
 3. **Gerou uma vez, serve para todos.** O áudio é compartilhado entre todos os alunos. Nenhum áudio é gerado duas vezes.
 4. **Playlist, não frase solta.** A unidade de uso é a playlist inteira. O aluno configura só quantas vezes cada frase repete em sequência.
@@ -54,10 +54,10 @@ O sistema tem dois apps de front-end, independentes, e uma API:
 - Estatísticas simples por playlist (voltas completas, tempo ouvido).
 
 **Backoffice (administrador)**
-- CRUD de **níveis**, **tópicos gramaticais** e **contextos**.
+- **Contextos:** cadastro com criar, editar e excluir, incluindo um campo de **detalhamento** livre. **Níveis** e **tópicos gramaticais** são fixos (inseridos pela pipeline) e aparecem só para leitura.
 - **Usuários:** listar, **bloquear/desbloquear** e **redefinir a senha**.
-- Criação manual de uma playlist vazia para um par `(tópico, contexto)`, para preencher à mão.
-- **Importação de playlists** por arquivo JSON (seção 8), com prévia antes de gravar e histórico.
+- Ao **criar um contexto**, o sistema gera uma **playlist vazia (rascunho) para cada tópico**. Não há criação manual de playlist.
+- **Revisão das frases** por tópico (editar, remover, reordenar, adicionar à mão) e publicação (abaixo).
 - Revisão das frases: editar, remover, reordenar e adicionar à mão.
 - Publicar, despublicar e arquivar playlists.
 - Visão de cobertura de áudio por playlist (quantos áudios já foram gerados) e consumo de caracteres do TTS.
@@ -90,13 +90,13 @@ O sistema tem dois apps de front-end, independentes, e uma API:
 ### Ciclo de vida da playlist
 
 ```
-draft (importada ou vazia) ──(publicar)──► published
+draft (vazia ou preenchida) ──(publicar)──► published
         ▲                                      │
         └────────────(despublicar)─────────────┘
                  archived (fora de uso)
 ```
 
-- **draft:** em preparação (recém-importada ou vazia), invisível para os alunos.
+- **draft:** em preparação (vazia desde a criação do contexto, ou já com frases), invisível para os alunos. **Publicar exige ao menos uma frase.**
 - **published:** visível e tocável pelos alunos.
 - **archived:** retirada de uso, sem apagar o histórico.
 
@@ -188,23 +188,25 @@ Acesso restrito a usuários com papel `admin`.
 
 ### 7.1 Catálogo
 
-- **Níveis:** código (rótulo livre e único, ex.: A1), nome, ordem, ativo.
-- **Tópicos gramaticais:** nome, slug (único), nível, ordem **dentro do nível**, ativo. A ordem global do currículo é `(ordem do nível, ordem do tópico)` e é a ordem em que o aluno vê os tópicos.
-- **Contextos:** nome, slug, descrição, categoria, ativo.
+- **Níveis:** código (rótulo único, ex.: A1), nome, ordem, ativo. **Fixos**: gravados direto no banco pela pipeline; somente leitura no backoffice.
+- **Tópicos gramaticais:** nome, slug (único), nível, ordem **dentro do nível**, ativo. **Fixos** (pipeline, somente leitura). A ordem global do currículo é `(ordem do nível, ordem do tópico)`.
+- **Contextos:** nome, slug, categoria, **descrição** (curta, exibida ao aluno) e **detalhamento** (texto livre e longo, **só para o administrador**: cenário, situações, objetivos ou qualquer orientação sobre como o contexto será montado). O detalhamento aparece na tela do contexto e não é exposto ao aluno.
+  - **Criar** um contexto gera, na mesma transação, uma playlist vazia (`draft`) para cada tópico ativo.
+  - **Excluir** apaga o contexto e as playlists dele, **desde que todas estejam vazias**; se alguma tiver frases, a exclusão é recusada (desative o contexto em vez disso).
 - Itens inativos somem do app do aluno, sem apagar as playlists já criadas.
-- A carga inicial vem dos arquivos de seed (seção 15). O arquivo de importação também pode **criar** níveis e tópicos que faltem (seção 8), mas não sobrescreve nomes nem ordem sem confirmação.
+- Não há seed de catálogo: o banco **nasce vazio** (só o administrador é criado por seed). Níveis e tópicos chegam pela pipeline (seção 8).
 
 ### 7.2 Playlists
 
-1. A playlist nasce de uma **importação** (seção 8), sempre em `draft`. Também é possível criar uma playlist vazia à mão.
-2. O administrador **revisa** a lista:
+1. A playlist de cada tópico **já existe vazia** quando o contexto é criado (e, quando a pipeline cria um tópico novo, vale o mesmo: ver 8.2).
+2. A pipeline grava as frases direto no banco (seção 8). O administrador vê, na **lista de tópicos do contexto** (agrupada por nível), o status, o número de frases e a cobertura de áudio de cada tópico.
+3. Na tela do tópico, **revisa** a lista:
    - editar o texto de uma frase,
    - remover uma frase,
    - reordenar (arrastar e soltar, ou digitar a posição de destino),
    - adicionar uma frase manual (vai para o fim da lista).
-3. **Publica** a playlist. A partir daí os alunos a veem.
-4. Pode **despublicar** ou **arquivar** depois.
-5. Para trocar o conteúdo inteiro, reimporta o arquivo (substitui as frases) ou edita à mão.
+4. **Publica** a playlist (exige ao menos uma frase). A partir daí os alunos a veem.
+5. Pode **despublicar** ou **arquivar** depois.
 
 ### 7.3 Painel de acompanhamento
 
@@ -219,94 +221,50 @@ O cadastro é feito pelo próprio aluno na tela de acesso. O backoffice **não c
 - **Redefinir a senha:** gera uma **senha temporária**, exibida uma única vez ao administrador, que a repassa ao aluno. A conta fica com `must_change_password = true` e todas as sessões são revogadas. No próximo login, o aluno é obrigado a trocar a senha. Não há e-mail transacional no MVP, então não existe "esqueci minha senha" automático.
 - Um administrador não pode bloquear a si mesmo. Papéis não são alterados pelo backoffice.
 
-## 8. Importação de playlists (backoffice)
+## 8. Carga de conteúdo pela pipeline (direto no banco)
 
-**As frases não são geradas neste sistema.** Uma **pipeline externa** (projeto à parte) produz, por contexto, nível e tópico, um arquivo JSON, e o administrador o **importa** pelo backoffice. A pipeline é dona da pedagogia (ordem dos tópicos, regra de gramática por nível, prompts e modelo). Este sistema valida o formato, grava como rascunho e permite a revisão.
+**Não há importação por arquivo.** Níveis, tópicos e frases são produzidos por uma **pipeline externa** e gravados **diretamente no Postgres**. A pipeline é dona da pedagogia (ordem dos tópicos, regra de gramática por nível, prompts, modelo). O backoffice só lê o catálogo, revisa as frases e publica.
 
-### 8.1 Formato do arquivo
+### 8.1 O que a pipeline grava
 
-Um arquivo traz **um contexto**, com a hierarquia aninhada: **contexto → níveis → tópicos → frases**. O nó do tópico **é** a playlist (o par contexto × tópico). Exemplo completo e válido: [`exemplo-importacao.json`](exemplo-importacao.json).
+| Tabela | Colunas que a pipeline preenche | Observações |
+|---|---|---|
+| `levels` | `code` (único), `name`, `sort_order`, `active` | `code` é rótulo livre. |
+| `grammar_topics` | `level_id`, `slug` (único), `name`, `sort_order`, `active` | `sort_order` é dentro do nível. |
+| `sentences` | `playlist_id`, `position`, `text`, `metadata` (opcional) | A playlist (par tópico × contexto) **já existe**: ver 8.2. |
 
-```json
-{
-  "schema_version": 1,
-  "source": { "pipeline": "...", "pipeline_version": "...", "generated_at": "...", "model": "...", "prompt_version": "..." },
-  "context": {
-    "slug": "entrevista-de-engenheiro-de-software-java",
-    "name": "Entrevista de engenheiro de software (Java)",
-    "category": "Trabalho",
-    "description": "...",
-    "levels": [
-      { "code": "A1", "name": "A1", "order": 1,
-        "topics": [
-          { "slug": "verbo-to-be", "name": "Verbo to be", "order": 1,
-            "sentences": [ { "order": 1, "text": "I am a Java developer.", "metadata": { "scene": "introduction" } } ] }
-        ] }
-    ]
-  }
-}
+Para `sentences`, o banco cuida do resto (ver 8.2): normaliza `text`, calcula `text_hash` e `char_count` e sobe a `version` da playlist. A pipeline **não precisa** (nem deve) calcular nada disso.
+
+Exemplo, trocando as frases de um tópico num contexto:
+
+```sql
+BEGIN;
+DELETE FROM sentences WHERE playlist_id = $1;
+INSERT INTO sentences (playlist_id, position, text)
+SELECT $1, o.pos, o.text FROM unnest($2::text[]) WITH ORDINALITY AS o(text, pos);
+COMMIT;
 ```
 
-| Campo | Obrigatório | Regra |
-|---|---|---|
-| `schema_version` | sim | Inteiro (hoje `1`). Permite evoluir o formato. |
-| `source.*` | não | Só rastreabilidade. Fica no registro da importação. |
-| `context.slug` | sim | Chave de busca. Existe: é reaproveitado. Não existe: é criado. |
-| `context.name`, `category` | sim | Usados quando o contexto é criado. `description` é opcional. |
-| `levels[].code` | sim | Rótulo livre e único no arquivo (ex.: `A1`). Não precisa ser CEFR. |
-| `levels[].name` | não | Padrão: o `code`. |
-| `levels[].order` | sim | Inteiro ≥ 1. Ordem entre os níveis. |
-| `topics[].slug` | sim | Único no arquivo **e no catálogo**. Um slug já existente em outro nível é erro. |
-| `topics[].name` | sim | Nome exibido. |
-| `topics[].order` | sim | Inteiro ≥ 1. Ordem **dentro do nível**. |
-| `sentences[].order` | sim | Inteiro ≥ 1, **único** na playlist. Pode ter lacunas no arquivo. |
-| `sentences[].text` | sim | Texto em inglês. |
-| `sentences[].metadata` | não | Objeto livre (cena, tags…), guardado em `jsonb` e ignorado pelo app. |
+### 8.2 O que o banco garante (triggers)
 
-**Ordens.** Vale a ordem escrita no arquivo, e não a posição no array. A ordem global do currículo é `(order do nível, order do tópico)`. As frases são ordenadas por `order` e gravadas com posições **renumeradas de 1 a n**. A playlist não tem ordem própria: deriva do nível e do tópico.
+- **Playlist por tópico:** ao inserir (ou reativar) um tópico, o banco cria a playlist vazia (`draft`) dele em todos os contextos existentes. Ao criar um contexto, o backoffice faz o mesmo para todos os tópicos ativos.
+- **Normalização e hash:** ao inserir ou alterar `text`, o banco aplica a mesma normalização do código (`normalizeText`: NFC, aspas retas, `...`, espaços únicos e sem bordas) e preenche `text_hash` (sha256 do texto normalizado) e `char_count`. Texto vazio é recusado. Há teste que compara a função SQL com a do código.
+- **Duplicatas:** `UNIQUE (playlist_id, text_hash)` recusa a mesma frase duas vezes na playlist, e `UNIQUE (playlist_id, position)` recusa posições repetidas.
+- **Versão:** qualquer INSERT, UPDATE ou DELETE em `sentences` sobe a `version` da playlist (uma vez por comando). É isso que faz o app do aluno oferecer "Atualizar download".
+- **Playlist publicada:** trocar as frases de uma playlist publicada vale na hora para os alunos. Frases removidas zeram `last_sentence_id` de quem estava nelas (a retomada volta ao início).
+- **O áudio continua lazy.** Gravar frases não chama o ElevenLabs. Frases com texto já conhecido reaproveitam o áudio existente (a chave é o hash do texto).
 
-### 8.2 Regras da importação
+### 8.3 Responsabilidade da pipeline
 
-- **Tudo entra como `draft`.** A importação nunca publica.
-- **Catálogo:** níveis e tópicos que faltam são **criados**. Se já existem e `name`/`order` diferem, **nada é sobrescrito** por padrão: a prévia mostra a diferença e o administrador pode marcar **"Atualizar nomes e ordem do catálogo"**.
-- **Playlist (contexto × tópico) já existente:**
-  - conteúdo idêntico: **sem mudanças**;
-  - `draft` ou `archived`: as frases são **substituídas** (mantém o status);
-  - `published`: **recusada**, a menos que o administrador marque **"Substituir playlists publicadas"**. Nesse caso a prévia informa quantos alunos têm progresso nela (a retomada deles volta ao início, pois `last_sentence_id` fica nulo).
-- **Atomicidade:** cada playlist é gravada numa transação. Uma playlist com erro não impede as outras. Erros estruturais do arquivo (JSON inválido, `schema_version` não suportado, `code` ou `slug` repetido) recusam o arquivo inteiro.
-- **O áudio continua lazy.** Importar não chama o ElevenLabs. Frases com texto já conhecido reaproveitam o áudio existente (a chave é o hash do texto).
-
-### 8.3 Validação
-
-- **Erro (a playlist não entra):** texto vazio; URL ou emoji; frase duplicada na playlist (`text_hash`); `order` inválida ou repetida; playlist sem frases; tópico que já existe em outro nível.
-- **Aviso (entra, mas sinaliza):** número de palavras fora da faixa do nível, quando o `code` é um destes:
-
-| Nível | Palavras por frase |
-|---|---|
-| A1–A2 | 4–10 |
-| B1–B2 | 8–18 |
-| C1–C2 | 12–30 |
-
-Para outros rótulos de nível não há aviso de tamanho. A faixa também controla o custo do TTS, que cobra por caractere.
-
-### 8.4 Fluxo no backoffice
-
-1. **Importar** → enviar o arquivo (ou colar o JSON).
-2. **Prévia (dry run):** nada é gravado. Mostra contexto novo ou existente, mudanças de catálogo, e por playlist: criar, substituir, sem mudanças, recusada ou erro, com os motivos.
-3. **Confirmar** (com as duas opções acima, desmarcadas por padrão).
-4. **Relatório** final e registro no **histórico de importações**.
-
-### 8.5 Contrato compartilhado
-
-O schema do arquivo vive em `packages/shared` (zod) e o formato é versionado por `schema_version`. A pipeline pode importar esse schema para validar o arquivo antes de entregá-lo. O limite de tamanho do upload é de 5 MB.
+O banco **não** valida o conteúdo pedagógico. Fica com a pipeline: texto sem URL nem emoji, tamanho adequado ao nível (A1–A2: 4–10 palavras; B1–B2: 8–18; C1–C2: 12–30, o que também controla o custo do TTS, cobrado por caractere), não usar gramática de tópico posterior e a ordem das frases. A revisão do administrador antes de publicar é a rede de proteção.
 
 ## 9. Geração lazy do áudio
 
-**Chave do áudio:** `audio_key = sha256(texto_normalizado | voice_id | model_id | voice_settings)`.
+**Chave do áudio:** `audio_key = sha256(texto_normalizado | voice_id | model_id | voice_settings)`. Na implementação, o texto entra pelo seu hash: `audio_key = sha256(text_hash | voice_id | model_id | settings_hash)`, o que equivale à fórmula e permite ligar `sentences` a `audios` por SQL (`text_hash` + voz + modelo + `settings_hash`), usado na cobertura de áudio do backoffice.
 
 - A chave usa o **texto**, não o id da frase. Se o mesmo texto aparecer em outra playlist, o áudio é reaproveitado.
 - Mudar de voz ou de modelo gera outra chave, de propósito.
-- Se o administrador editar uma frase, o novo texto gera outra chave e outro áudio. O áudio antigo fica órfão e pode ser limpo depois.
+- Se o administrador editar uma frase, o novo texto gera outra chave e outro áudio. O áudio antigo fica órfão. Ele **não é apagado automaticamente nem pelo painel** (já foi pago ao TTS e é reaproveitado se a mesma frase voltar, com a mesma voz e o mesmo modelo). A limpeza é só manual, pelo CLI `pnpm --filter @reouvir/api cleanup:audio`.
 
 ```
 GET /sentences/:id/audio
@@ -383,29 +341,23 @@ grammar_topics (
 
 contexts (
   id, slug, name,                    -- slug UNIQUE
-  description, category, active
+  description,                       -- curta, exibida ao aluno
+  details,                           -- detalhamento livre, só para o administrador
+  category, active
 )
 
 playlists (
   id, grammar_topic_id, context_id,
   status,                            -- 'draft' | 'published' | 'archived'
+  version,                           -- sobe a cada mudança de conteúdo; o app offline compara com o manifesto baixado
   created_by, created_at, published_at,
-  UNIQUE (grammar_topic_id, context_id)
-)
-
-imports (
-  id, context_id, filename,
-  content_hash,                      -- sha256 do arquivo (avisa se já foi importado)
-  status,                            -- 'done' | 'partial' | 'failed'
-  options,                           -- jsonb: update_catalog, replace_published
-  report,                            -- jsonb: o que foi criado, substituído, recusado, com erros
-  source,                            -- jsonb: o bloco "source" do arquivo
-  created_by, created_at
+  UNIQUE (grammar_topic_id, context_id)   -- uma por tópico, gerada vazia ao criar o contexto
 )
 
 sentences (
   id, playlist_id, position, text, text_hash, char_count,
   metadata,                          -- jsonb opcional vindo da pipeline (ignorado pelo app)
+                                     -- text, text_hash e char_count são mantidos por trigger (seção 8.2)
   created_at, updated_at,
   UNIQUE (playlist_id, position),
   UNIQUE (playlist_id, text_hash)
@@ -421,8 +373,9 @@ audios (
 
 user_playlist_state (
   user_id, playlist_id, last_sentence_id,   -- FK ON DELETE SET NULL; sem ela, retoma do início
-  
-  loops_completed, listened_seconds, updated_at,
+  loops_completed, listened_seconds,
+  client_updated_at,                 -- marca do aparelho; em conflito vale a mais recente
+  updated_at,
   PRIMARY KEY (user_id, playlist_id)
 )
 ```
@@ -460,30 +413,29 @@ Convenções: tokens em cookies `httpOnly`, `Secure`, `SameSite=Lax`; erros de c
 
 | Método | Rota | Função |
 |---|---|---|
-| CRUD | `/admin/levels` | Níveis |
-| CRUD | `/admin/topics` | Tópicos gramaticais |
-| CRUD | `/admin/contexts` | Contextos |
-| GET/POST | `/admin/playlists` | Listar (filtro por contexto) e criar playlist vazia |
-| POST | `/admin/imports` | Importa o JSON (`?dry_run=true` devolve só a prévia). Opções: `update_catalog`, `replace_published` |
-| GET | `/admin/imports` | Histórico de importações com o relatório de cada uma |
+| GET | `/admin/levels`, `/admin/topics` | Níveis e tópicos (somente leitura; gravados pela pipeline) |
+| GET/POST/PUT/DELETE | `/admin/contexts` | Contextos. Criar gera as playlists vazias; excluir apaga as vazias e recusa se houver frases |
+| GET | `/admin/playlists` | Listar (filtro `?contextId=`) |
 | PATCH/DELETE | `/admin/sentences/:id` | Editar ou remover uma frase |
 | PUT | `/admin/playlists/:id/order` | Reordenar: recebe a lista completa de ids na nova ordem e renumera de 1 a n |
 | POST | `/admin/playlists/:id/sentences` | Adicionar frase manual (última posição) |
 | POST | `/admin/playlists/:id/publish` | Publicar |
 | POST | `/admin/playlists/:id/unpublish` | Despublicar |
 | POST | `/admin/playlists/:id/archive` | Arquivar |
+| GET | `/admin/playlists/:id` | Playlist com as frases (e se cada uma já tem áudio) |
 | GET | `/admin/playlists/:id/stats` | Cobertura de áudio e consumo do TTS |
 | GET | `/admin/users` | Listar usuários |
 | POST | `/admin/users/:id/block` | Bloquear (revoga os refresh tokens) |
 | POST | `/admin/users/:id/unblock` | Desbloquear |
 | POST | `/admin/users/:id/reset-password` | Gerar senha temporária (exibida uma vez) |
+| GET | `/admin/overview` | Totais do painel: playlists por status, alunos, áudios (inclui órfãos, só contagem) e caracteres do TTS |
 
 ## 13. Arquitetura e stack
 
 ```
 apps/web (Vite + React, PWA)          apps/admin (Vite + React, backoffice)
   ├─ Catálogo e tela da playlist        ├─ CRUD de níveis, tópicos e contextos
-  ├─ Service Worker: cache de áudios    ├─ Playlists: importar, revisar, publicar
+  ├─ Service Worker: cache de áudios    ├─ Playlists: revisar, publicar
   └─ Player: <audio> + Media Session    └─ Painel de acompanhamento
             │                                       │
             └──────────────┬────────────────────────┘
@@ -514,7 +466,7 @@ apps/web (Vite + React, PWA)          apps/admin (Vite + React, backoffice)
   - O papel `admin` nunca vem do cadastro: o primeiro administrador é criado por seed ou comando, usando o e-mail de `.env`. Biblioteca (por exemplo Better Auth) ou implementação própria com `jose` e `argon2`, desde que siga este contrato.
   - O login com Google fica fora do MVP: exige uma URI de redirecionamento pública com HTTPS, e depois entra como provedor extra só por configuração.
 - **Origem única:** em produção, os três ficam sob o mesmo domínio, por caminho: `/` para o app do aluno, `/admin` para o backoffice (`base: '/admin/'` no Vite) e `/api` para a API, via proxy reverso. Isso evita problemas de CORS e permite compartilhar o cookie de sessão. Em desenvolvimento, cada app roda em sua porta e o Vite faz proxy de `/api` para a API.
-- **Concorrência:** `UNIQUE(audio_key)` para o áudio. Cada playlist importada é gravada numa transação.
+- **Concorrência:** `UNIQUE(audio_key)` para o áudio. A troca das frases de uma playlist deve ser feita numa transação.
 
 ### Deploy local (Docker Compose + Tailscale)
 
@@ -548,6 +500,8 @@ Docker Compose:  postgres · migrate (dbmate, executa e sai) · api · caddy
 
 **Tráfego de rede.** Só saem para a internet as chamadas ao ElevenLabs. Nada entra, exceto pela tailnet.
 
+**Limites configuráveis (`.env`).** `TTS_MAX_PER_MINUTE`, `TTS_MAX_PER_USER_PER_MINUTE` (geração de áudio, inclui o "Baixar playlist") e `AUTH_LOGIN_MAX_PER_IP`, `AUTH_LOGIN_MAX_PER_EMAIL`, `AUTH_REGISTER_MAX_PER_IP` (tentativas de acesso). Os contadores ficam em memória da API, o que basta para uma única instância.
+
 **Desenvolvimento e deploy.** No dia a dia, `pnpm dev` sobe `web`, `admin` e `api` em portas locais, com o Postgres em container. O "deploy" é `pnpm build` seguido de `docker compose up -d --build` na máquina de produção.
 
 **Backup.** Além do `pg_dump` agendado do banco, fazer cópia periódica da pasta de áudio para outro disco. Cada MP3 consumiu créditos do ElevenLabs, então perdê-los significa pagar de novo para regenerar.
@@ -565,7 +519,6 @@ reouvir-en/
 ├─ tsconfig.base.json
 ├─ docs/
 │  ├─ estrutura-do-projeto.md
-│  └─ exemplo-importacao.json  # arquivo de exemplo no formato da seção 8
 ├─ prototipo/                # protótipo HTML navegável (referência de UX, não é código de produção)
 ├─ apps/
 │  ├─ web/                   # Vite + React (PWA do aluno)
@@ -593,7 +546,6 @@ reouvir-en/
 │        │  ├─ catalog/      # níveis, tópicos e contextos (rotas, serviço, repositório SQL)
 │        │  ├─ playlists/    # playlists, estado do aluno, publicação
 │        │  ├─ sentences/    # frases da playlist: edição manual, reordenação
-│        │  ├─ imports/      # importação do JSON da pipeline (validação, prévia, relatório)
 │        │  └─ audio/        # chave, single-flight, ElevenLabs
 │        ├─ storage/         # interface de storage + driver local (driver s3 no futuro)
 │        └─ db/
@@ -607,16 +559,12 @@ reouvir-en/
 │  ├─ Caddyfile              # /, /admin, /api, /audio
 │  └─ api.Dockerfile
 ├─ .env.example
-├─ seeds/
-│  ├─ levels.json
-│  ├─ grammar-topics.json    # carga inicial; depois, gerenciado no backoffice
-│  └─ contexts.json          # carga inicial; depois, gerenciado no backoffice
 └─ README.md
 ```
 
-## 15. Carga inicial do catálogo
+## 15. Referência de conteúdo (não é carregada pelo sistema)
 
-Estes itens entram como seed e passam a ser gerenciados no backoffice. A pipeline de frases é dona do currículo: o arquivo de importação pode complementar níveis e tópicos (seção 8), e a ordem do seed é só um ponto de partida.
+Esta seção é só **referência para quem alimenta a pipeline**. O sistema **não carrega** níveis, tópicos, contextos nem frases: o banco nasce vazio, e a pipeline grava níveis e tópicos direto no banco (seção 8). Contextos são criados no backoffice.
 
 ### Níveis
 
@@ -665,12 +613,12 @@ A1, A2, B1, B2, C1, C2.
 | Risco | Tratamento |
 |---|---|
 | Áudio parar com a tela bloqueada, principalmente no iOS, agora com silêncios longos | Spike do player no início, áudios já baixados, Media Session API e faixa silenciosa durante os silêncios. |
-| Frase fora do nível ou com gramática errada | Responsabilidade da pipeline. Aqui: avisos de tamanho na importação e revisão do administrador antes de publicar. |
-| Arquivo de importação malformado ou que sobrescreve conteúdo publicado | Validação com prévia (dry run), tudo entra como rascunho, playlist publicada só é substituída com confirmação explícita, histórico de importações. |
+| Frase fora do nível ou com gramática errada | Responsabilidade da pipeline. Aqui: revisão do administrador antes de publicar. |
+| Pipeline gravar direto no banco dados inconsistentes (hash, versão, playlists faltando) | Triggers no banco normalizam o texto, derivam `text_hash` e `char_count`, sobem a `version` e criam as playlists vazias; `UNIQUE` recusa duplicatas; testes comparam SQL e código. |
 | Espera na primeira escuta por áudio ainda não gerado | Prefetch de 3 frases à frente e botão "Baixar playlist". |
 | Dois alunos gerando o mesmo áudio | `UNIQUE(audio_key)` com single-flight. |
 | Pronúncia ruim de siglas e termos técnicos (Java, JVM, API) | Revisão pontual e, se necessário, campo opcional de pronúncia por frase. |
-| Edição de frase em playlist publicada deixa áudio órfão | Rotina de limpeza de áudios sem frase associada. |
+| Edição de frase em playlist publicada deixa áudio órfão | Sem limpeza no painel (evita apagar áudio já pago). O painel só conta os órfãos; a limpeza é manual, por CLI, com prévia por padrão. |
 | Licença do ElevenLabs não cobrir o uso | Conferir os termos do plano antes de abrir para outros alunos. |
 | Cookie de sessão e CORS com front, backoffice e API separados | Servir os três sob o mesmo domínio (`/`, `/admin` e `/api`) e usar proxy no Vite em desenvolvimento. |
 | SQL nativo sem ORM: queries espalhadas e erros de digitação em colunas | Repositórios por módulo, tipos das linhas explícitos e testes de repositório contra Postgres real. |
@@ -685,13 +633,13 @@ Pontos em que escolhi um padrão. Todos são fáceis de mudar.
 
 1. **O silêncio é contado depois do fim do áudio**, e não do início. Com áudio de 10 s a 1x, o ciclo completo de uma repetição dura 21,5 s (10 s de áudio + 11,5 s de silêncio).
 2. **O silêncio também vale depois da última repetição**, antes de passar para a próxima frase.
-3. **Playlist única por `(tópico, contexto)`**, sem versões. Para trocar o conteúdo, o administrador reimporta o arquivo, edita as frases ou arquiva a playlist.
+3. **Playlist única por `(tópico, contexto)`**, sem versões de conteúdo. Para trocar o conteúdo, a pipeline regrava as frases (ou o administrador edita à mão), ou arquiva-se a playlist.
 4. **Tamanho da playlist definido pela pipeline** (alvo de ~100 frases). Este sistema não impõe quantidade.
 5. **Padrão de 2 repetições** por frase.
 6. **Uma voz americana** no MVP.
 7. **"Baixar playlist" entra no MVP**, porque correr com conexão instável é o caso de uso principal.
 8. **Cadastro aberto** pela tela de acesso (e-mail e senha), com access token + refresh token. O administrador inicial vem de seed. O backoffice só bloqueia usuários e redefine senhas (senha temporária, sem e-mail).
-9. **Qualquer tópico combina com qualquer contexto.** A pipeline decide quais playlists produzir; a regra de gramática por nível (nunca usar estrutura de tópico posterior) fica inteira nela.
+9. **Qualquer tópico combina com qualquer contexto.** Todo contexto nasce com uma playlist vazia por tópico; o administrador escolhe quais preencher e publicar. A regra de gramática por nível (nunca usar estrutura de tópico posterior) fica inteira na LLM/pipeline.
 10. **Sem SRS.** O progresso é medido por voltas completas e tempo ouvido.
 11. **Tudo local, uma única máquina**, acessada pela tailnet em um único nome (`<maquina>.<tailnet>.ts.net`). Não há bucket nem CDN.
 
@@ -699,9 +647,9 @@ Pontos em que escolhi um padrão. Todos são fáceis de mudar.
 
 1. **Fundação:** workspace pnpm (`apps/web`, `apps/admin`, `apps/api`, `packages/shared`, `packages/api-client`), Docker Compose com Postgres, migrações em SQL puro com dbmate, autenticação completa (cadastro, login, refresh, logout, troca de senha), papéis (`student` e `admin`), seed do administrador e limite de tentativas.
 2. **Spike do player:** `<audio>` com Media Session, repetições, regra de silêncio e faixa silenciosa, testado com áudios fixos em iPhone e Android com a tela bloqueada.
-3. **Backoffice do catálogo (`apps/admin`):** estrutura do app, tela de login (reaproveitando a auth da fase 1, só para `admin`), CRUD de níveis, tópicos e contextos, **gestão de usuários** (listar, bloquear, redefinir senha) e carga inicial por seed.
-4. **Backoffice das playlists e importação:** schema do JSON em `packages/shared`, `POST /admin/imports` com prévia e histórico, tela de importação, revisão manual (editar, remover, reordenar, adicionar), publicação.
+3. **Backoffice do catálogo (`apps/admin`):** estrutura do app, tela de login (reaproveitando a auth da fase 1, só para `admin`), CRUD de contextos (com geração das playlists vazias), níveis e tópicos somente leitura, **gestão de usuários** (listar, bloquear, redefinir senha) e carga inicial por seed.
+4. **Backoffice das playlists:** lista de tópicos do contexto, revisão manual (editar, remover, reordenar, adicionar), publicação, e os triggers do banco que sustentam a carga direta pela pipeline (seção 8).
 5. **Geração de áudio lazy:** chave, single-flight, ElevenLabs, storage em disco local servido pelo Caddy e `duration_ms`.
 6. **App do aluno:** catálogo publicado, player completo, prefetch, retomada de posição e configurações.
 7. **Offline:** "Baixar playlist" com service worker e Cache Storage.
-8. **Acabamento:** painel de acompanhamento, limites de proteção, limpeza de áudios órfãos, backups, README e deploy local (Compose + Caddy + `tailscale serve`).
+8. **Acabamento:** painel de acompanhamento, limites de proteção, backups, README e deploy local (Compose + Caddy + `tailscale serve`).
