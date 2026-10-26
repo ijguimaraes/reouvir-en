@@ -16,7 +16,7 @@
 #   - nomes próprios (pessoas, cidades, marcas)
 #   - adjetivos da lista A1 (tired, ready, late, happy...)
 #   - preposições in, at, from (com nomes próprios e home/school/work); `on` é do tópico 6
-#   - conjunções and, but
+#   - and / or entre palavras e entre verbos com o mesmo sujeito (nunca entre orações: `multi_clause` é do A2 · 13)
 #   - advérbios very, here, now, today
 #   - números por extenso até 10
 #   - contrações (I'm, she's, isn't, aren't...) desde o tópico 1; o TTS as lê melhor
@@ -37,7 +37,7 @@ baseline:
   - "proper names (people, cities, brands)"
   - "common A1 adjectives (tired, ready, late, happy, cold, big...)"
   - "the prepositions in, at, from, used with proper names and with home / school / work"
-  - "the conjunctions and, but, or"
+  - "and / or between words (Tom and Ana, tea or coffee) and between verbs that share one subject (I can swim and run); never between two clauses"
   - "the adverbs very, here, now, today"
   - "numbers written as words, from one to ten"
   - "contractions (I'm, she's, isn't, aren't...)"
@@ -62,9 +62,10 @@ topics:
       - { id: we-they-are, ex: "They are at home now.", rule: { all: [ { lower: [we, they], dep: nsubj }, { lemma: be } ] } }
       - { id: name-is, ex: "Maria is at home now.", rule: { all: [ { pos: PROPN, dep: nsubj }, { lemma: be } ] } }
       - { id: be-place, ex: "We are in London today.", rule: { lemma: be, child: { dep: prep, lower: [in, at] } } }
-      - { id: be-from, ex: "I am from Brazil, and you?", rule: { lemma: be, child: { dep: prep, lower: from } } }
+      - { id: be-from, ex: "He is from Chile today.", rule: { lemma: be, child: { dep: prep, lower: from } } }
       - { id: contraction, ex: "We're very happy today.", rule: { lower: ["'m", "'re", "'s"], lemma: be } }
-      - { id: coordinated, ex: "He is tired, but we are ready.", rule: { all: [ { lower: [and, but], pos: CCONJ }, { lemma: be } ] } }
+      - { id: compound-subject, ex: "Tom and Ana are ready now.", rule: { dep: conj, pos: [PROPN, PRON], head: { dep: nsubj } } }
+      - { id: joined-adjectives, ex: "She is very kind and smart.", rule: { lower: [and, or], pos: CCONJ, prev: { pos: ADJ }, next: { pos: ADJ } } }
 
   - slug: to-be-negative-questions-and-possessives
     name: The verb to be (negative and questions) and possessives
@@ -220,7 +221,7 @@ topics:
       - { id: can-object, ex: "They can play the guitar.", rule: { all: [ { feature: modal_can }, { tag: VB, child: { dep: dobj } } ] } }
       - { id: can-two-verbs, ex: "He can sing and dance.", rule: { all: [ { feature: modal_can }, { lower: and }, { dep: conj } ] } }
       - { id: can-3rd-person, ex: "She can speak three languages.", rule: { all: [ { feature: modal_can }, { lower: [he, she, it], dep: nsubj } ] } }
-      - { id: cant-but-can, ex: "I can't swim, but I can run.", rule: { all: [ { lemma: can, next: { lower: ["n't", not] } }, { lower: but } ] } }
+      - { id: cant-or, ex: "I can't swim or run.", rule: { all: [ { lemma: can, next: { lower: ["n't", not] } }, { lower: or } ] } }
 
   - slug: imperative
     name: The imperative

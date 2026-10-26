@@ -1,12 +1,12 @@
 """Mini-DSL de regras sobre um Doc do spaCy.
 
-spec  := cond | {all: [spec]} | {any: [spec]} | {not: spec} | {feature: id}
+spec  := cond | {count: cond, min: n} | {all: [spec]} | {any: [spec]} | {not: spec} | {feature: id}
          | {doc_re: regex} | {doc_not_re: regex} | [spec, ...]  (lista = any)
 cond  := dict de condições sobre UM token (todas precisam valer):
   lower, lemma, tag, pos, dep      str ou lista (igualdade)
   not_lower, not_lemma, not_dep    str ou lista
   re / not_re                      regex (search) sobre o texto em minúsculas
-  sent_start                       bool
+  sent_start / title               bool (início de frase / começa com maiúscula)
   child / right / left             cond ou lista de conds (lista = todas, em filhos distintos ou não)
   no_child                         cond (nenhum filho satisfaz)
   head / prev / next               cond sobre o token cabeça / anterior / seguinte
@@ -41,6 +41,8 @@ def _tok(t, c):
             if not re.search(v, t.lower_): return False
         elif k == "not_re":
             if re.search(v, t.lower_): return False
+        elif k == "title":
+            if t.text[:1].isupper() != v: return False
         elif k == "sent_start":
             if (t.i == t.sent.start) != v: return False
         elif k in ("child", "right", "left"):
@@ -70,6 +72,7 @@ def detect(doc, spec, features=None):
     if "any" in spec: return any(detect(doc, s, features) for s in spec["any"])
     if "not" in spec: return not detect(doc, spec["not"], features)
     if "feature" in spec: return detect(doc, features[spec["feature"]], features)
+    if "count" in spec: return sum(1 for t in doc if _tok(t, spec["count"])) >= spec.get("min", 1)
     if "doc_re" in spec: return re.search(spec["doc_re"], doc.text) is not None
     if "doc_not_re" in spec: return re.search(spec["doc_not_re"], doc.text) is None
     return any(_tok(t, spec) for t in doc)

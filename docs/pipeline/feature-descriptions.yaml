@@ -48,7 +48,8 @@ descriptions:
   comparative:    { label: "comparatives (bigger, more interesting, better)", ex: "My bag is smaller than yours." }
   superlative:    { label: "superlatives (the biggest, the most popular, the best)", ex: "She is the best cook in town." }
   as_as:          { label: "as ... as comparisons", ex: "He is as tall as his father." }
-  conj_simple:    { label: "connectors because, so, then, when, before, after", ex: "I am tired because I worked late." }
+  multi_clause:   { label: "two clauses in one sentence, each with its own subject (..., and I am...; ..., but she likes...; I think he is...)", ex: "I like tea, and she likes coffee." }
+  conj_simple:    { label: "connectors but, because, so, then, when, before, after", ex: "It was cold, so we stayed home." }
   # ---------- B1 ----------
   pres_perfect:   { label: "Present Perfect", ex: "I have visited three countries." }
   pp_adverb:      { label: "already, yet, ever, since, just, recently, lately", ex: "They have already left." }

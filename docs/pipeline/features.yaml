@@ -17,7 +17,7 @@ features:
   wh_be:          { all: [ { sent_start: true, lower: [what, where, who, when, why, how, which, whose] }, { lemma: be, tag: [VBZ, VBP, VBD] } ] }
   poss_adj:       { tag: PRP$ }
   art_indefinite: { lower: [a, an], pos: DET }
-  noun_plural:    { tag: [NNS, NNPS] }
+  noun_plural:    { any: [ { tag: [NNS, NNPS], title: false }, { tag: NNS, sent_start: true, not_next: { tag: VBZ } } ] }
   demonstrative:  { lower: [this, that, these, those], pos: [DET, PRON] }
   art_definite:   { lower: the }
   prep_on:        { lower: "on", pos: ADP }
@@ -53,7 +53,8 @@ features:
   comparative:    { tag: [JJR, RBR] }
   superlative:    { tag: [JJS, RBS] }
   as_as:          { lower: as, next: { pos: [ADJ, ADV] } }
-  conj_simple:    { any: [ { lower: [because, so, then, before, after], pos: [SCONJ, CCONJ, ADV, ADP] }, { lower: when, pos: [SCONJ, ADV], sent_start: false } ] }
+  multi_clause:   { any: [ { count: { dep: [nsubj, nsubjpass] }, min: 2 }, { doc_re: ',\s*(and|but|or|so)\s' } ] }
+  conj_simple:    { any: [ { lower: [because, so, then, before, after, but], pos: [SCONJ, CCONJ, ADV, ADP] }, { lower: when, pos: [SCONJ, ADV], sent_start: false } ] }
 
   # ---------- B1 ----------
   pres_perfect:   { tag: VBN, not_lower: got, child: { lemma: have, tag: [VBZ, VBP], dep: aux } }
@@ -66,7 +67,7 @@ features:
   modal_epistemic: { lemma: [may, might, could], tag: MD }
   if_clause:      { lower: if, dep: mark }
   would:          { lemma: would, tag: MD }
-  passive:        { any: [ { tag: VBN, not_lower: used, child: { dep: auxpass } }, { lower: used, tag: VBN, child: { dep: auxpass }, not_next: { lower: to } }, { all: [ { lemma: be, sent_start: true }, { tag: VBN, not_lower: [got, tired, used] } ] } ] }
+  passive:        { any: [ { tag: VBN, not_lower: [used, done, finished, gone, lost, tired, bored, excited, worried, interested, surprised, married, stuck, scared, pleased, relaxed, confused, embarrassed, shocked, annoyed, amazed, disappointed, satisfied, prepared, crowded, closed, broken], child: { dep: auxpass } }, { lower: used, tag: VBN, child: { dep: auxpass }, not_next: { lower: to } }, { all: [ { lemma: be, sent_start: true }, { tag: VBN, not_lower: [got, used, done, finished, gone, lost, tired, bored, excited, worried, interested, surprised, married, stuck, scared, pleased, relaxed, confused, embarrassed, shocked, annoyed, amazed, disappointed, satisfied, prepared, crowded, closed, broken] } ] } ] }
   relative_clause: { dep: relcl }
   reported_verb:  { lemma: [say, tell, ask, explain, answer], tag: VBD, child: { dep: ccomp } }
   phrasal_verb:   { dep: prt, head: { not_lemma: [sit, stand, wake, get, come, go, turn] } }

@@ -6,7 +6,7 @@ Cada estrutura tem uma regra spaCy e uma frase de exemplo. O exemplo precisa: se
 
 | Nível | # | Tópico | Estruturas | Frases por estrutura (100) | Só novo | Novo + anterior | Revisão | Detectadas | Com erro |
 |---|---|---|---|---|---|---|---|---|---|
-| A1 | 1 | `subject-pronouns-and-verb-to-be` | 10 | ~10 | 10 | 0 | 0 | 10 | 0 |
+| A1 | 1 | `subject-pronouns-and-verb-to-be` | 11 | ~9 | 11 | 0 | 0 | 11 | 0 |
 | A1 | 2 | `to-be-negative-questions-and-possessives` | 11 | ~9 | 0 | 11 | 0 | 11 | 0 |
 | A1 | 3 | `articles-a-an` | 8 | ~12 | 0 | 8 | 0 | 8 | 0 |
 | A1 | 4 | `plurals-and-demonstratives` | 9 | ~11 | 0 | 9 | 0 | 9 | 0 |
@@ -30,7 +30,7 @@ Cada estrutura tem uma regra spaCy e uma frase de exemplo. O exemplo precisa: se
 | A2 | 10 | `past-of-to-be` | 9 | ~11 | 0 | 9 | 0 | 9 | 0 |
 | A2 | 11 | `past-simple` | 13 | ~8 | 0 | 13 | 0 | 13 | 0 |
 | A2 | 12 | `comparatives-and-superlatives` | 11 | ~9 | 0 | 11 | 0 | 11 | 0 |
-| A2 | 13 | `simple-connectors` | 9 | ~11 | 0 | 7 | 2 | 9 | 0 |
+| A2 | 13 | `simple-connectors` | 9 | ~11 | 0 | 8 | 1 | 9 | 0 |
 | B1 | 1 | `present-perfect` | 14 | ~7 | 0 | 14 | 0 | 14 | 0 |
 | B1 | 2 | `present-perfect-vs-past-simple` | 8 | ~12 | 0 | 0 | 8 | 8 | 0 |
 | B1 | 3 | `past-continuous-vs-past-simple` | 8 | ~12 | 0 | 8 | 0 | 8 | 0 |
@@ -56,7 +56,7 @@ Cada estrutura tem uma regra spaCy e uma frase de exemplo. O exemplo precisa: se
 | B2 | 11 | `formal-connectors` | 14 | ~7 | 0 | 14 | 0 | 14 | 0 |
 | B2 | 12 | `advanced-phrasal-verbs-and-collocations` | 14 | ~7 | 0 | 10 | 4 | 14 | 0 |
 | B2 | 13 | `formal-vs-informal-register` | 11 | ~9 | 0 | 9 | 2 | 11 | 0 |
-| | | **Total** | **502** | | **12** | **442** | **48** | **502** | **0** |
+| | | **Total** | **503** | | **13** | **443** | **47** | **503** | **0** |
 
 **Só novo** = o exemplo usa o recurso do tópico e nada de tópicos anteriores. **Novo + anterior** = combina o recurso novo com algo já ensinado (incremental). **Revisão** = só usa o que já foi ensinado.
 
@@ -68,7 +68,7 @@ Regras largas não distinguem bem a estrutura. Servem para contagem de cobertura
 - `plurals-and-demonstratives/plural-s`: 69 exemplos de outros tópicos (14%)
 - `articles-a-an/a-consonant`: 66 exemplos de outros tópicos (13%)
 - `past-simple/regular-ed`: 52 exemplos de outros tópicos (11%)
-- `present-simple/i-you-we-they`: 51 exemplos de outros tópicos (10%)
+- `present-simple/i-you-we-they`: 50 exemplos de outros tópicos (10%)
 
 ## A1 · 1. Subject pronouns and the verb to be (affirmative) (`subject-pronouns-and-verb-to-be`)
 
@@ -79,9 +79,10 @@ Regras largas não distinguem bem a estrutura. Servem para contagem de cobertura
 - ✔ `we-they-are` (novo) “They are at home now.”
 - ✔ `name-is` (novo) “Maria is at home now.”
 - ✔ `be-place` (novo) “We are in London today.”
-- ✔ `be-from` (novo) “I am from Brazil, and you?”
+- ✔ `be-from` (novo) “He is from Chile today.”
 - ✔ `contraction` (novo) “We're very happy today.”
-- ✔ `coordinated` (novo) “He is tired, but we are ready.”
+- ✔ `compound-subject` (novo) “Tom and Ana are ready now.”
+- ✔ `joined-adjectives` (novo) “She is very kind and smart.”
 
 ## A1 · 2. The verb to be (negative and questions) and possessives (`to-be-negative-questions-and-possessives`)
 
@@ -205,7 +206,7 @@ Regras largas não distinguem bem a estrutura. Servem para contagem de cobertura
 - ✔ `can-object` (novo+anterior) “They can play the guitar.”
 - ✔ `can-two-verbs` (novo+anterior) “He can sing and dance.”
 - ✔ `can-3rd-person` (novo+anterior) “She can speak three languages.”
-- ✔ `cant-but-can` (novo+anterior) “I can't swim, but I can run.”
+- ✔ `cant-or` (novo+anterior) “I can't swim or run.”
 
 ## A1 · 12. The imperative (`imperative`)
 
@@ -246,7 +247,7 @@ Aprofunda `subject-pronouns-and-verb-to-be`.
 - ✔ `genitive-family` (novo+anterior) “My sister's name is Ana.”
 - ✔ `genitive-plural` (novo+anterior) “The kids' room is very small.”
 - ✔ `whose` (revisão) “Whose bag is this?”
-- ✔ `adj-and-pronoun` (novo+anterior) “This is my book, and that is yours.”
+- ✔ `adj-and-pronoun` (novo+anterior) “Is this your pen or mine?”
 - ✔ `genitive-place` (novo+anterior) “We are at Ana's house.”
 - ✔ `of-mine` (novo+anterior) “She is a friend of mine.”
 
@@ -278,7 +279,7 @@ Aprofunda `subject-pronouns-and-verb-to-be`.
 - ✔ `future-arrangement` (novo+anterior) “I am meeting my friend on Friday.”
 - ✔ `at-the-moment` (novo+anterior) “He is working at the moment.”
 - ✔ `wh-question` (novo+anterior) “What is she doing now?”
-- ✔ `contrast-simple` (novo+anterior) “I usually walk, but today I am driving.”
+- ✔ `today-now` (novo+anterior) “Today they are playing football.”
 
 ## A2 · 5. Countable and uncountable nouns (some, any, much, many) (`countable-uncountable`)
 
@@ -351,7 +352,7 @@ Aprofunda `to-be-negative-questions-and-possessives`.
 - ✔ `shouldnt` (novo+anterior) “He shouldn't eat late at night.”
 - ✔ `should-question` (novo+anterior) “Should I call him?”
 - ✔ `wh-should` (novo+anterior) “What should I do?”
-- ✔ `must-vs-have-to` (novo+anterior) “I must go, but you don't have to.”
+- ✔ `wh-have-to` (novo+anterior) “When do we have to leave?”
 
 ## A2 · 10. Past of the verb to be (was / were) (`past-of-to-be`)
 
@@ -402,7 +403,7 @@ Aprofunda `subject-pronouns-and-verb-to-be`.
 - ✔ `because` (novo+anterior) “I am tired because I worked late.”
 - ✔ `so` (novo+anterior) “It was cold, so we stayed home.”
 - ✔ `or` (revisão) “Do you want tea or coffee?”
-- ✔ `and-but` (revisão) “I like tea, but she likes coffee.”
+- ✔ `and-but` (novo+anterior) “I like tea, but she likes coffee.”
 - ✔ `when` (novo+anterior) “I call her when I arrive.”
 - ✔ `before` (novo+anterior) “Wash your hands before you eat.”
 - ✔ `after` (novo+anterior) “We watched TV after we ate.”

@@ -46,7 +46,7 @@ topics:
       - { id: genitive-family, ex: "My sister's name is Ana.", rule: { tag: POS, head: { lemma: [sister, brother, mother, father, friend, wife, husband] } } }
       - { id: genitive-plural, ex: "The kids' room is very small.", rule: { tag: POS, lower: "'" } }
       - { id: whose, ex: "Whose bag is this?", rule: { lower: whose } }
-      - { id: adj-and-pronoun, ex: "This is my book, and that is yours.", rule: { all: [ { feature: poss_adj }, { feature: poss_pron } ] } }
+      - { id: adj-and-pronoun, ex: "Is this your pen or mine?", rule: { all: [ { feature: poss_adj }, { feature: poss_pron } ] } }
       - { id: genitive-place, ex: "We are at Ana's house.", rule: { all: [ { tag: POS }, { lower: at } ] } }
       - { id: of-mine, ex: "She is a friend of mine.", rule: { lower: mine, prev: { lower: of } } }
 
@@ -84,7 +84,7 @@ topics:
       - { id: future-arrangement, ex: "I am meeting my friend on Friday.", rule: { all: [ { feature: pres_continuous }, { feature: date_word } ] } }
       - { id: at-the-moment, ex: "He is working at the moment.", rule: { lower: moment, prev: { lower: the } } }
       - { id: wh-question, ex: "What is she doing now?", rule: { all: [ { feature: wh_be }, { feature: pres_continuous } ] } }
-      - { id: contrast-simple, ex: "I usually walk, but today I am driving.", rule: { all: [ { feature: present_simple }, { feature: pres_continuous } ] } }
+      - { id: today-now, ex: "Today they are playing football.", rule: { all: [ { feature: pres_continuous }, { lower: today } ] } }
 
   - slug: countable-uncountable
     name: Countable and uncountable nouns (some, any, much, many)
@@ -171,7 +171,7 @@ topics:
       - { id: shouldnt, ex: "He shouldn't eat late at night.", rule: { lemma: should, next: { lower: "n't" } } }
       - { id: should-question, ex: "Should I call him?", rule: { lemma: should, sent_start: true } }
       - { id: wh-should, ex: "What should I do?", rule: { all: [ { feature: wh_other }, { lemma: should } ] } }
-      - { id: must-vs-have-to, ex: "I must go, but you don't have to.", rule: { all: [ { lemma: must }, { feature: have_to } ] } }
+      - { id: wh-have-to, ex: "When do we have to leave?", rule: { all: [ { feature: wh_other }, { feature: have_to } ] } }
 
   - slug: past-of-to-be
     name: Past of the verb to be (was / were)
@@ -229,7 +229,7 @@ topics:
   - slug: simple-connectors
     name: Simple connectors (and, but, because, so)
     order: 13
-    introduces: [conj_simple]
+    introduces: [conj_simple, multi_clause]
     structures:
       - { id: because, ex: "I am tired because I worked late.", rule: { lower: because } }
       - { id: so, ex: "It was cold, so we stayed home.", rule: { lower: so, pos: [CCONJ, SCONJ, ADV] } }
