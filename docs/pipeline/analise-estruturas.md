@@ -6,56 +6,56 @@ Cada estrutura tem uma regra spaCy e uma frase de exemplo. O exemplo precisa: se
 
 | Nível | # | Tópico | Estruturas | Frases por estrutura (100) | Só novo | Novo + anterior | Revisão | Detectadas | Com erro |
 |---|---|---|---|---|---|---|---|---|---|
-| A1 | 1 | `pronomes-e-verbo-to-be` | 10 | ~10 | 10 | 0 | 0 | 10 | 0 |
-| A1 | 2 | `to-be-negativo-perguntas-e-possessivos` | 11 | ~9 | 0 | 11 | 0 | 11 | 0 |
-| A1 | 3 | `artigo-a-an` | 8 | ~12 | 0 | 8 | 0 | 8 | 0 |
-| A1 | 4 | `plural-e-demonstrativos` | 9 | ~11 | 0 | 9 | 0 | 9 | 0 |
-| A1 | 5 | `artigo-the` | 8 | ~12 | 0 | 8 | 0 | 8 | 0 |
-| A1 | 6 | `preposicoes-in-on-at` | 9 | ~11 | 0 | 5 | 4 | 9 | 0 |
+| A1 | 1 | `subject-pronouns-and-verb-to-be` | 10 | ~10 | 10 | 0 | 0 | 10 | 0 |
+| A1 | 2 | `to-be-negative-questions-and-possessives` | 11 | ~9 | 0 | 11 | 0 | 11 | 0 |
+| A1 | 3 | `articles-a-an` | 8 | ~12 | 0 | 8 | 0 | 8 | 0 |
+| A1 | 4 | `plurals-and-demonstratives` | 9 | ~11 | 0 | 9 | 0 | 9 | 0 |
+| A1 | 5 | `article-the` | 8 | ~12 | 0 | 8 | 0 | 8 | 0 |
+| A1 | 6 | `prepositions-in-on-at` | 9 | ~11 | 0 | 5 | 4 | 9 | 0 |
 | A1 | 7 | `there-is-there-are` | 8 | ~12 | 0 | 8 | 0 | 8 | 0 |
-| A1 | 8 | `numeros-datas-e-horas` | 12 | ~8 | 0 | 11 | 1 | 12 | 0 |
+| A1 | 8 | `numbers-dates-and-times` | 12 | ~8 | 0 | 11 | 1 | 12 | 0 |
 | A1 | 9 | `have-got` | 8 | ~12 | 0 | 6 | 2 | 8 | 0 |
-| A1 | 10 | `presente-simples` | 13 | ~8 | 0 | 13 | 0 | 13 | 0 |
-| A1 | 11 | `can-habilidade` | 8 | ~12 | 0 | 8 | 0 | 8 | 0 |
-| A1 | 12 | `imperativo` | 9 | ~11 | 2 | 7 | 0 | 9 | 0 |
-| A2 | 1 | `pronomes-objeto` | 12 | ~8 | 0 | 12 | 0 | 12 | 0 |
-| A2 | 2 | `possessivos-pronomes-e-genitivo` | 11 | ~9 | 0 | 10 | 1 | 11 | 0 |
-| A2 | 3 | `adverbios-de-frequencia-e-modo` | 13 | ~8 | 0 | 13 | 0 | 13 | 0 |
+| A1 | 10 | `present-simple` | 13 | ~8 | 0 | 13 | 0 | 13 | 0 |
+| A1 | 11 | `can-ability` | 8 | ~12 | 0 | 8 | 0 | 8 | 0 |
+| A1 | 12 | `imperative` | 9 | ~11 | 2 | 7 | 0 | 9 | 0 |
+| A2 | 1 | `object-pronouns` | 12 | ~8 | 0 | 12 | 0 | 12 | 0 |
+| A2 | 2 | `possessive-pronouns-and-genitive` | 11 | ~9 | 0 | 10 | 1 | 11 | 0 |
+| A2 | 3 | `adverbs-of-frequency-and-manner` | 13 | ~8 | 0 | 13 | 0 | 13 | 0 |
 | A2 | 4 | `present-continuous` | 11 | ~9 | 0 | 11 | 0 | 11 | 0 |
 | A2 | 5 | `countable-uncountable` | 12 | ~8 | 0 | 12 | 0 | 12 | 0 |
 | A2 | 6 | `question-words` | 12 | ~8 | 0 | 12 | 0 | 12 | 0 |
-| A2 | 7 | `verbo-ing-ou-to` | 10 | ~10 | 0 | 10 | 0 | 10 | 0 |
-| A2 | 8 | `futuro-going-to-e-will` | 11 | ~9 | 0 | 11 | 0 | 11 | 0 |
+| A2 | 7 | `verb-ing-or-to` | 10 | ~10 | 0 | 10 | 0 | 10 | 0 |
+| A2 | 8 | `future-going-to-and-will` | 11 | ~9 | 0 | 11 | 0 | 11 | 0 |
 | A2 | 9 | `have-to-must-should` | 11 | ~9 | 0 | 11 | 0 | 11 | 0 |
-| A2 | 10 | `passado-do-to-be` | 9 | ~11 | 0 | 9 | 0 | 9 | 0 |
+| A2 | 10 | `past-of-to-be` | 9 | ~11 | 0 | 9 | 0 | 9 | 0 |
 | A2 | 11 | `past-simple` | 13 | ~8 | 0 | 13 | 0 | 13 | 0 |
-| A2 | 12 | `comparativos-e-superlativos` | 11 | ~9 | 0 | 11 | 0 | 11 | 0 |
-| A2 | 13 | `conectores-simples` | 9 | ~11 | 0 | 7 | 2 | 9 | 0 |
+| A2 | 12 | `comparatives-and-superlatives` | 11 | ~9 | 0 | 11 | 0 | 11 | 0 |
+| A2 | 13 | `simple-connectors` | 9 | ~11 | 0 | 7 | 2 | 9 | 0 |
 | B1 | 1 | `present-perfect` | 14 | ~7 | 0 | 14 | 0 | 14 | 0 |
 | B1 | 2 | `present-perfect-vs-past-simple` | 8 | ~12 | 0 | 0 | 8 | 8 | 0 |
 | B1 | 3 | `past-continuous-vs-past-simple` | 8 | ~12 | 0 | 8 | 0 | 8 | 0 |
 | B1 | 4 | `used-to-be-used-to` | 10 | ~10 | 0 | 8 | 2 | 10 | 0 |
-| B1 | 5 | `gerundio-vs-infinitivo` | 10 | ~10 | 0 | 4 | 6 | 10 | 0 |
-| B1 | 6 | `modais-possibilidade-e-deducao` | 9 | ~11 | 0 | 7 | 2 | 9 | 0 |
-| B1 | 7 | `primeira-e-segunda-condicional` | 10 | ~10 | 0 | 10 | 0 | 10 | 0 |
-| B1 | 8 | `voz-passiva-presente-e-passado` | 9 | ~11 | 0 | 9 | 0 | 9 | 0 |
-| B1 | 9 | `oracoes-relativas` | 8 | ~12 | 0 | 8 | 0 | 8 | 0 |
-| B1 | 10 | `discurso-indireto-basico` | 9 | ~11 | 0 | 9 | 0 | 9 | 0 |
-| B1 | 11 | `phrasal-verbs-comuns` | 10 | ~10 | 0 | 8 | 2 | 10 | 0 |
-| B1 | 12 | `conectores-b1` | 8 | ~12 | 0 | 5 | 3 | 8 | 0 |
+| B1 | 5 | `gerund-vs-infinitive` | 10 | ~10 | 0 | 4 | 6 | 10 | 0 |
+| B1 | 6 | `modals-of-possibility-and-deduction` | 9 | ~11 | 0 | 7 | 2 | 9 | 0 |
+| B1 | 7 | `first-and-second-conditional` | 10 | ~10 | 0 | 10 | 0 | 10 | 0 |
+| B1 | 8 | `passive-voice-present-and-past` | 9 | ~11 | 0 | 9 | 0 | 9 | 0 |
+| B1 | 9 | `relative-clauses` | 8 | ~12 | 0 | 8 | 0 | 8 | 0 |
+| B1 | 10 | `reported-speech-basic` | 9 | ~11 | 0 | 9 | 0 | 9 | 0 |
+| B1 | 11 | `common-phrasal-verbs` | 10 | ~10 | 0 | 8 | 2 | 10 | 0 |
+| B1 | 12 | `connectors-b1` | 8 | ~12 | 0 | 5 | 3 | 8 | 0 |
 | B2 | 1 | `present-perfect-continuous` | 9 | ~11 | 0 | 9 | 0 | 9 | 0 |
-| B2 | 2 | `past-perfect-e-past-perfect-continuous` | 9 | ~11 | 0 | 9 | 0 | 9 | 0 |
-| B2 | 3 | `terceira-condicional-e-mistas` | 8 | ~12 | 0 | 7 | 1 | 8 | 0 |
+| B2 | 2 | `past-perfect-and-past-perfect-continuous` | 9 | ~11 | 0 | 9 | 0 | 9 | 0 |
+| B2 | 3 | `third-and-mixed-conditionals` | 8 | ~12 | 0 | 7 | 1 | 8 | 0 |
 | B2 | 4 | `wish-if-only` | 9 | ~11 | 0 | 9 | 0 | 9 | 0 |
-| B2 | 5 | `modais-no-passado` | 9 | ~11 | 0 | 8 | 1 | 9 | 0 |
-| B2 | 6 | `voz-passiva-avancada` | 10 | ~10 | 0 | 7 | 3 | 10 | 0 |
-| B2 | 7 | `discurso-indireto-completo` | 11 | ~9 | 0 | 9 | 2 | 11 | 0 |
-| B2 | 8 | `oracoes-relativas-nao-restritivas` | 8 | ~12 | 0 | 6 | 2 | 8 | 0 |
-| B2 | 9 | `future-continuous-e-future-perfect` | 9 | ~11 | 0 | 9 | 0 | 9 | 0 |
-| B2 | 10 | `inversao-para-enfase` | 10 | ~10 | 0 | 10 | 0 | 10 | 0 |
-| B2 | 11 | `conectores-formais` | 14 | ~7 | 0 | 14 | 0 | 14 | 0 |
-| B2 | 12 | `phrasal-verbs-e-collocations-avancados` | 14 | ~7 | 0 | 10 | 4 | 14 | 0 |
-| B2 | 13 | `registro-formal-vs-informal` | 11 | ~9 | 0 | 9 | 2 | 11 | 0 |
+| B2 | 5 | `past-modals` | 9 | ~11 | 0 | 8 | 1 | 9 | 0 |
+| B2 | 6 | `passive-voice-advanced` | 10 | ~10 | 0 | 7 | 3 | 10 | 0 |
+| B2 | 7 | `reported-speech-full` | 11 | ~9 | 0 | 9 | 2 | 11 | 0 |
+| B2 | 8 | `non-defining-relative-clauses` | 8 | ~12 | 0 | 6 | 2 | 8 | 0 |
+| B2 | 9 | `future-continuous-and-future-perfect` | 9 | ~11 | 0 | 9 | 0 | 9 | 0 |
+| B2 | 10 | `inversion-for-emphasis` | 10 | ~10 | 0 | 10 | 0 | 10 | 0 |
+| B2 | 11 | `formal-connectors` | 14 | ~7 | 0 | 14 | 0 | 14 | 0 |
+| B2 | 12 | `advanced-phrasal-verbs-and-collocations` | 14 | ~7 | 0 | 10 | 4 | 14 | 0 |
+| B2 | 13 | `formal-vs-informal-register` | 11 | ~9 | 0 | 9 | 2 | 11 | 0 |
 | | | **Total** | **502** | | **12** | **442** | **48** | **502** | **0** |
 
 **Só novo** = o exemplo usa o recurso do tópico e nada de tópicos anteriores. **Novo + anterior** = combina o recurso novo com algo já ensinado (incremental). **Revisão** = só usa o que já foi ensinado.
@@ -64,13 +64,13 @@ Cada estrutura tem uma regra spaCy e uma frase de exemplo. O exemplo precisa: se
 
 Regras largas não distinguem bem a estrutura. Servem para contagem de cobertura, mas não para provar que a frase é *daquela* estrutura.
 
-- `artigo-the/the-after-prep`: 89 exemplos de outros tópicos (18%)
-- `plural-e-demonstrativos/plural-s`: 69 exemplos de outros tópicos (14%)
-- `artigo-a-an/a-consonant`: 66 exemplos de outros tópicos (13%)
+- `article-the/the-after-prep`: 89 exemplos de outros tópicos (18%)
+- `plurals-and-demonstratives/plural-s`: 69 exemplos de outros tópicos (14%)
+- `articles-a-an/a-consonant`: 66 exemplos de outros tópicos (13%)
 - `past-simple/regular-ed`: 52 exemplos de outros tópicos (11%)
-- `presente-simples/i-you-we-they`: 51 exemplos de outros tópicos (10%)
+- `present-simple/i-you-we-they`: 51 exemplos de outros tópicos (10%)
 
-## A1 · 1. Pronomes pessoais e verbo to be (afirmativo) (`pronomes-e-verbo-to-be`)
+## A1 · 1. Subject pronouns and the verb to be (affirmative) (`subject-pronouns-and-verb-to-be`)
 
 - ✔ `i-am` (novo) “I am very tired today.”
 - ✔ `you-are` (novo) “You are very kind today.”
@@ -83,7 +83,7 @@ Regras largas não distinguem bem a estrutura. Servem para contagem de cobertura
 - ✔ `contraction` (novo) “We're very happy today.”
 - ✔ `coordinated` (novo) “He is tired, but we are ready.”
 
-## A1 · 2. Verbo to be (negativo e perguntas) e possessivos (`to-be-negativo-perguntas-e-possessivos`)
+## A1 · 2. The verb to be (negative and questions) and possessives (`to-be-negative-questions-and-possessives`)
 
 - ✔ `negative-full` (novo+anterior) “I am not late today.”
 - ✔ `negative-contraction` (novo+anterior) “She isn't at home now.”
@@ -97,7 +97,7 @@ Regras largas não distinguem bem a estrutura. Servem para contagem de cobertura
 - ✔ `poss-our-their` (novo+anterior) “Their house is in Paris.”
 - ✔ `poss-negative` (novo+anterior) “Your bag isn't here now.”
 
-## A1 · 3. Artigos a e an (`artigo-a-an`)
+## A1 · 3. Articles a and an (`articles-a-an`)
 
 - ✔ `a-consonant` (novo+anterior) “He is a good cook.”
 - ✔ `an-vowel` (novo+anterior) “It is an apple.”
@@ -108,7 +108,7 @@ Regras largas não distinguem bem a estrutura. Servem para contagem de cobertura
 - ✔ `a-after-prep` (novo+anterior) “He is in a small town.”
 - ✔ `a-or-a` (novo+anterior) “Is he a doctor or a nurse?”
 
-## A1 · 4. Plural e this / that / these / those (`plural-e-demonstrativos`)
+## A1 · 4. Plural nouns and this / that / these / those (`plurals-and-demonstratives`)
 
 - ✔ `plural-s` (novo+anterior) “They are good friends.”
 - ✔ `plural-es-ies` (novo+anterior) “Her babies are very happy.”
@@ -120,7 +120,7 @@ Regras largas não distinguem bem a estrutura. Servem para contagem de cobertura
 - ✔ `demonstrative-noun` (novo+anterior) “This bag is very heavy.”
 - ✔ `demonstrative-question` (novo+anterior) “Are these your keys?”
 
-## A1 · 5. Artigo the (`artigo-the`)
+## A1 · 5. The article the (`article-the`)
 
 - ✔ `the-subject` (novo+anterior) “The park is very big.”
 - ✔ `the-after-prep` (novo+anterior) “We are at the station.”
@@ -131,7 +131,7 @@ Regras largas não distinguem bem a estrutura. Servem para contagem de cobertura
 - ✔ `the-attribute` (novo+anterior) “This is the right room.”
 - ✔ `the-same` (novo+anterior) “We are in the same room.”
 
-## A1 · 6. Preposições in, on, at (`preposicoes-in-on-at`)
+## A1 · 6. Prepositions in, on, at (`prepositions-in-on-at`)
 
 - ✔ `in-place` (revisão) “They are in the kitchen.”
 - ✔ `on-surface` (novo+anterior) “The book is on the table.”
@@ -154,7 +154,7 @@ Regras largas não distinguem bem a estrutura. Servem para contagem de cobertura
 - ✔ `there-number` (novo+anterior) “There are seven days in a week.”
 - ✔ `there-adj` (novo+anterior) “There is an old tree here.”
 
-## A1 · 8. Números, datas e horas (`numeros-datas-e-horas`)
+## A1 · 8. Numbers, dates and times (`numbers-dates-and-times`)
 
 - ✔ `cardinal-11-99` (novo+anterior) “There are twenty books here.”
 - ✔ `hundred-thousand` (novo+anterior) “There are two hundred people here.”
@@ -180,7 +180,7 @@ Regras largas não distinguem bem a estrutura. Servem para contagem de cobertura
 - ✔ `have-got-number` (novo+anterior) “She has got two brothers.”
 - ✔ `has-got-poss` (novo+anterior) “My sister has got long hair.”
 
-## A1 · 10. Presente simples (`presente-simples`)
+## A1 · 10. Present Simple (`present-simple`)
 
 - ✔ `i-you-we-they` (novo+anterior) “We play football on Sunday.”
 - ✔ `he-she-s` (novo+anterior) “She works in a hospital.”
@@ -196,7 +196,7 @@ Regras largas não distinguem bem a estrutura. Servem para contagem de cobertura
 - ✔ `at-time` (novo+anterior) “The shop opens at nine.”
 - ✔ `two-verbs` (novo+anterior) “She gets up and drinks tea.”
 
-## A1 · 11. Can (habilidade) (`can-habilidade`)
+## A1 · 11. Can (ability) (`can-ability`)
 
 - ✔ `can-affirmative` (novo+anterior) “I can swim and run.”
 - ✔ `cant` (novo+anterior) “She can't drive a car.”
@@ -207,7 +207,7 @@ Regras largas não distinguem bem a estrutura. Servem para contagem de cobertura
 - ✔ `can-3rd-person` (novo+anterior) “She can speak three languages.”
 - ✔ `cant-but-can` (novo+anterior) “I can't swim, but I can run.”
 
-## A1 · 12. Imperativo (`imperativo`)
+## A1 · 12. The imperative (`imperative`)
 
 - ✔ `affirmative` (novo+anterior) “Open the door, please.”
 - ✔ `negative-dont` (novo+anterior) “Don't open the window now.”
@@ -219,7 +219,7 @@ Regras largas não distinguem bem a estrutura. Servem para contagem de cobertura
 - ✔ `two-imperatives` (novo+anterior) “Open your book and read.”
 - ✔ `dont-be` (novo+anterior) “Please don't be late again.”
 
-## A2 · 1. Pronomes objeto (me, you, him, her, it, us, them) (`pronomes-objeto`)
+## A2 · 1. Object pronouns (me, you, him, her, it, us, them) (`object-pronouns`)
 
 - ✔ `me` (novo+anterior) “She calls me on Sunday.”
 - ✔ `you` (novo+anterior) “I can see you at the door.”
@@ -234,9 +234,9 @@ Regras largas não distinguem bem a estrutura. Servem para contagem de cobertura
 - ✔ `question` (novo+anterior) “Do you know them?”
 - ✔ `negative` (novo+anterior) “I don't know her.”
 
-## A2 · 2. Pronomes possessivos (mine, yours...) e 's (`possessivos-pronomes-e-genitivo`)
+## A2 · 2. Possessive pronouns (mine, yours...) and 's (`possessive-pronouns-and-genitive`)
 
-Aprofunda `pronomes-e-verbo-to-be`.
+Aprofunda `subject-pronouns-and-verb-to-be`.
 
 - ✔ `mine` (novo+anterior) “This bag is mine.”
 - ✔ `yours` (novo+anterior) “Is this pen yours?”
@@ -250,7 +250,7 @@ Aprofunda `pronomes-e-verbo-to-be`.
 - ✔ `genitive-place` (novo+anterior) “We are at Ana's house.”
 - ✔ `of-mine` (novo+anterior) “She is a friend of mine.”
 
-## A2 · 3. Advérbios de frequência e de modo (`adverbios-de-frequencia-e-modo`)
+## A2 · 3. Adverbs of frequency and manner (`adverbs-of-frequency-and-manner`)
 
 - ✔ `always` (novo+anterior) “I always drink tea in the morning.”
 - ✔ `usually` (novo+anterior) “She usually works at home.”
@@ -280,7 +280,7 @@ Aprofunda `pronomes-e-verbo-to-be`.
 - ✔ `wh-question` (novo+anterior) “What is she doing now?”
 - ✔ `contrast-simple` (novo+anterior) “I usually walk, but today I am driving.”
 
-## A2 · 5. Countable e uncountable (some, any, much, many) (`countable-uncountable`)
+## A2 · 5. Countable and uncountable nouns (some, any, much, many) (`countable-uncountable`)
 
 - ✔ `some-plural` (novo+anterior) “I have some friends in London.”
 - ✔ `some-uncountable` (novo+anterior) “We need some water.”
@@ -297,7 +297,7 @@ Aprofunda `pronomes-e-verbo-to-be`.
 
 ## A2 · 6. Question words (what, where, who, when, why, how, which) (`question-words`)
 
-Aprofunda `to-be-negativo-perguntas-e-possessivos`.
+Aprofunda `to-be-negative-questions-and-possessives`.
 
 - ✔ `what` (novo+anterior) “What do you do on Sunday?”
 - ✔ `where` (novo+anterior) “Where does she live?”
@@ -312,7 +312,7 @@ Aprofunda `to-be-negativo-perguntas-e-possessivos`.
 - ✔ `how-long` (novo+anterior) “How long does the class take?”
 - ✔ `wh-can` (novo+anterior) “What can you cook?”
 
-## A2 · 7. Verbo + -ing / to (`verbo-ing-ou-to`)
+## A2 · 7. Verb + -ing / to (`verb-ing-or-to`)
 
 - ✔ `like-ing` (novo+anterior) “I like swimming in the sea.”
 - ✔ `enjoy-ing` (novo+anterior) “She enjoys cooking for friends.”
@@ -325,7 +325,7 @@ Aprofunda `to-be-negativo-perguntas-e-possessivos`.
 - ✔ `question` (novo+anterior) “Do you enjoy cooking?”
 - ✔ `go-ing` (novo+anterior) “We go shopping on Saturday.”
 
-## A2 · 8. Futuro com going to e will (`futuro-going-to-e-will`)
+## A2 · 8. Future with going to and will (`future-going-to-and-will`)
 
 - ✔ `going-to` (novo+anterior) “I am going to learn Spanish.”
 - ✔ `going-to-negative` (novo+anterior) “She isn't going to come today.”
@@ -339,7 +339,7 @@ Aprofunda `to-be-negativo-perguntas-e-possessivos`.
 - ✔ `offer` (novo+anterior) “I will help you with that.”
 - ✔ `wh-going-to` (novo+anterior) “What are you going to do?”
 
-## A2 · 9. Have to, must e should (`have-to-must-should`)
+## A2 · 9. Have to, must and should (`have-to-must-should`)
 
 - ✔ `have-to` (novo+anterior) “I have to work on Saturday.”
 - ✔ `has-to` (novo+anterior) “She has to wake up early.”
@@ -353,9 +353,9 @@ Aprofunda `to-be-negativo-perguntas-e-possessivos`.
 - ✔ `wh-should` (novo+anterior) “What should I do?”
 - ✔ `must-vs-have-to` (novo+anterior) “I must go, but you don't have to.”
 
-## A2 · 10. Passado do verbo to be (was / were) (`passado-do-to-be`)
+## A2 · 10. Past of the verb to be (was / were) (`past-of-to-be`)
 
-Aprofunda `pronomes-e-verbo-to-be`.
+Aprofunda `subject-pronouns-and-verb-to-be`.
 
 - ✔ `was` (novo+anterior) “I was at home yesterday.”
 - ✔ `were` (novo+anterior) “We were in London last week.”
@@ -367,7 +367,7 @@ Aprofunda `pronomes-e-verbo-to-be`.
 - ✔ `short-answer` (novo+anterior) “Yes, I was, my friend.”
 - ✔ `profession` (novo+anterior) “My father was a teacher.”
 
-## A2 · 11. Past Simple (regulares e irregulares) (`past-simple`)
+## A2 · 11. Past Simple (regular and irregular) (`past-simple`)
 
 - ✔ `regular-ed` (novo+anterior) “I walked to school yesterday.”
 - ✔ `regular-d` (novo+anterior) “She lived in Paris last year.”
@@ -383,7 +383,7 @@ Aprofunda `pronomes-e-verbo-to-be`.
 - ✔ `ago` (novo+anterior) “They arrived two days ago.”
 - ✔ `two-verbs` (novo+anterior) “She woke up and made tea.”
 
-## A2 · 12. Comparativos e superlativos (`comparativos-e-superlativos`)
+## A2 · 12. Comparatives and superlatives (`comparatives-and-superlatives`)
 
 - ✔ `er-than` (novo+anterior) “My bag is smaller than yours.”
 - ✔ `more-than` (novo+anterior) “This book is more interesting than that one.”
@@ -397,7 +397,7 @@ Aprofunda `pronomes-e-verbo-to-be`.
 - ✔ `question` (novo+anterior) “Is this bag cheaper than that one?”
 - ✔ `adverb-comparative` (novo+anterior) “She runs faster than me.”
 
-## A2 · 13. Conectores simples (and, but, because, so) (`conectores-simples`)
+## A2 · 13. Simple connectors (and, but, because, so) (`simple-connectors`)
 
 - ✔ `because` (novo+anterior) “I am tired because I worked late.”
 - ✔ `so` (novo+anterior) “It was cold, so we stayed home.”
@@ -429,7 +429,7 @@ Aprofunda `pronomes-e-verbo-to-be`.
 ## B1 · 2. Present Perfect vs. Past Simple (`present-perfect-vs-past-simple`)
 
 - ✔ `unfinished-vs-finished` (revisão) “I saw that film last week, but she has not seen it.”
-- ✔ `since-while-ago` (revisão) “She has lived in this town since she was a child.”
+- ✔ `since-clause` (revisão) “She has lived in this town since she was a child.”
 - ✔ `past-with-when` (revisão) “She lived in this town when she was a child.”
 - ✔ `result-now` (revisão) “I have lost my keys, so I cannot open the door.”
 - ✔ `past-ago` (revisão) “We bought this house about three years ago, and we love it.”
@@ -461,9 +461,9 @@ Aprofunda `pronomes-e-verbo-to-be`.
 - ✔ `negative-be-used` (novo+anterior) “I am not used to the cold weather here yet.”
 - ✔ `with-when` (novo+anterior) “When I was young, I used to climb trees all the time.”
 
-## B1 · 5. Gerúndio vs. infinitivo (`gerundio-vs-infinitivo`)
+## B1 · 5. Gerund vs. infinitive (`gerund-vs-infinitive`)
 
-Aprofunda `verbo-ing-ou-to`.
+Aprofunda `verb-ing-or-to`.
 
 - ✔ `gerund-subject` (novo+anterior) “Swimming every morning is very good for your health.”
 - ✔ `after-preposition` (novo+anterior) “She is good at solving problems and explaining ideas to people.”
@@ -476,7 +476,7 @@ Aprofunda `verbo-ing-ou-to`.
 - ✔ `verbs-plus-to` (revisão) “We managed to arrive early because the road was empty.”
 - ✔ `adjective-to` (revisão) “It is important to drink enough water every day.”
 
-## B1 · 6. Modais de possibilidade e dedução (`modais-possibilidade-e-deducao`)
+## B1 · 6. Modals of possibility and deduction (`modals-of-possibility-and-deduction`)
 
 - ✔ `may` (novo+anterior) “It may rain this afternoon, so take an umbrella with you.”
 - ✔ `might` (novo+anterior) “She might be at home because her car is outside.”
@@ -488,7 +488,7 @@ Aprofunda `verbo-ing-ou-to`.
 - ✔ `question` (novo+anterior) “Could this be the right address for the party tonight?”
 - ✔ `certainty-scale` (novo+anterior) “It is probably true, but it could also be a mistake.”
 
-## B1 · 7. Primeira e segunda condicional (`primeira-e-segunda-condicional`)
+## B1 · 7. First and second conditional (`first-and-second-conditional`)
 
 - ✔ `first` (novo+anterior) “If it rains tomorrow, we will stay at home and watch films.”
 - ✔ `first-can` (novo+anterior) “If you need help, you can call me at any time.”
@@ -501,7 +501,7 @@ Aprofunda `verbo-ing-ou-to`.
 - ✔ `would-advice` (novo+anterior) “I would take the train because it is cheaper and faster.”
 - ✔ `would-like` (novo+anterior) “I would like a table for two near the window, please.”
 
-## B1 · 8. Voz passiva (presente e passado) (`voz-passiva-presente-e-passado`)
+## B1 · 8. Passive voice (present and past) (`passive-voice-present-and-past`)
 
 - ✔ `present` (novo+anterior) “English is spoken in many countries around the world.”
 - ✔ `past` (novo+anterior) “This bridge was built more than a hundred years ago.”
@@ -513,7 +513,7 @@ Aprofunda `verbo-ing-ou-to`.
 - ✔ `was-born` (novo+anterior) “I was born in a small town near the sea.”
 - ✔ `wh-passive` (novo+anterior) “Where was this photo taken during your last summer holiday?”
 
-## B1 · 9. Orações relativas (who, which, that, where, whose) (`oracoes-relativas`)
+## B1 · 9. Relative clauses (who, which, that, where, whose) (`relative-clauses`)
 
 - ✔ `who` (novo+anterior) “The woman who lives next door is a very kind nurse.”
 - ✔ `which` (novo+anterior) “I bought a phone which has a very good camera.”
@@ -524,7 +524,7 @@ Aprofunda `verbo-ing-ou-to`.
 - ✔ `who-be` (novo+anterior) “People who are late must wait outside the room.”
 - ✔ `in-question` (novo+anterior) “Do you know the girl who is sitting over there?”
 
-## B1 · 10. Discurso indireto básico (`discurso-indireto-basico`)
+## B1 · 10. Reported speech (basic) (`reported-speech-basic`)
 
 - ✔ `said-that` (novo+anterior) “She said that she was very tired after the long trip.”
 - ✔ `said-without-that` (novo+anterior) “He said he didn't like the film at all.”
@@ -536,7 +536,7 @@ Aprofunda `verbo-ing-ou-to`.
 - ✔ `said-to` (novo+anterior) “He said to me that he was happy with it.”
 - ✔ `negative` (novo+anterior) “She said that she didn't know him at all.”
 
-## B1 · 11. Phrasal verbs comuns (`phrasal-verbs-comuns`)
+## B1 · 11. Common phrasal verbs (`common-phrasal-verbs`)
 
 - ✔ `separable-noun` (novo+anterior) “She picked up the phone and called her mother.”
 - ✔ `separable-pronoun` (novo+anterior) “I picked it up and put it in my bag.”
@@ -549,7 +549,7 @@ Aprofunda `verbo-ing-ou-to`.
 - ✔ `question` (novo+anterior) “Can you help me fill in this form, please?”
 - ✔ `past` (novo+anterior) “They set up a small company about five years ago.”
 
-## B1 · 12. Conectores (although, however, while, in order to) (`conectores-b1`)
+## B1 · 12. Connectors (although, however, while, in order to) (`connectors-b1`)
 
 - ✔ `although` (novo+anterior) “Although it was raining, we decided to walk to the station.”
 - ✔ `though` (novo+anterior) “He passed the exam, though he did not study much.”
@@ -574,7 +574,7 @@ Aprofunda `present-perfect`.
 - ✔ `since` (novo+anterior) “He has been feeling much better since last week.”
 - ✔ `all-day` (novo+anterior) “It has been raining all day, so we stayed inside.”
 
-## B2 · 2. Past Perfect e Past Perfect Continuous (`past-perfect-e-past-perfect-continuous`)
+## B2 · 2. Past Perfect and Past Perfect Continuous (`past-perfect-and-past-perfect-continuous`)
 
 - ✔ `affirmative` (novo+anterior) “When we arrived, the film had already started.”
 - ✔ `negative` (novo+anterior) “She hadn't eaten anything before the long journey began.”
@@ -586,9 +586,9 @@ Aprofunda `present-perfect`.
 - ✔ `continuous-wh` (novo+anterior) “How long had they been waiting when the bus finally came?”
 - ✔ `never-before` (novo+anterior) “He had never seen snow before he moved to Canada.”
 
-## B2 · 3. Terceira condicional e condicionais mistas (`terceira-condicional-e-mistas`)
+## B2 · 3. Third conditional and mixed conditionals (`third-and-mixed-conditionals`)
 
-Aprofunda `primeira-e-segunda-condicional`.
+Aprofunda `first-and-second-conditional`.
 
 - ✔ `third` (novo+anterior) “If I had known about the problem, I would have helped you.”
 - ✔ `third-negative` (novo+anterior) “If she hadn't missed the bus, she wouldn't have been late.”
@@ -599,7 +599,7 @@ Aprofunda `primeira-e-segunda-condicional`.
 - ✔ `regret` (novo+anterior) “I would have called you, but I lost my phone.”
 - ✔ `contraction` (novo+anterior) “If they had left earlier, they'd have arrived on time.”
 
-## B2 · 4. Wish e if only (`wish-if-only`)
+## B2 · 4. Wish and if only (`wish-if-only`)
 
 - ✔ `wish-past` (novo+anterior) “I wish I had a bigger house near the beach.”
 - ✔ `wish-were` (novo+anterior) “I wish I were taller, but I am not.”
@@ -611,9 +611,9 @@ Aprofunda `primeira-e-segunda-condicional`.
 - ✔ `wish-negative` (novo+anterior) “I wish I didn't have to work on Saturdays.”
 - ✔ `hope-vs-wish` (novo+anterior) “I hope you can come, but I wish you could stay longer.”
 
-## B2 · 5. Modais no passado (should have, could have, must have...) (`modais-no-passado`)
+## B2 · 5. Past modals (should have, could have, must have...) (`past-modals`)
 
-Aprofunda `modais-possibilidade-e-deducao`.
+Aprofunda `modals-of-possibility-and-deduction`.
 
 - ✔ `should-have` (novo+anterior) “You should have told me about the problem earlier.”
 - ✔ `shouldnt-have` (novo+anterior) “He shouldn't have left the window open during the storm.”
@@ -625,9 +625,9 @@ Aprofunda `modais-possibilidade-e-deducao`.
 - ✔ `would-have` (revisão) “I would have gone to the party, but I was ill.”
 - ✔ `question` (novo+anterior) “Could they have made a mistake with the dates?”
 
-## B2 · 6. Voz passiva avançada (`voz-passiva-avancada`)
+## B2 · 6. Passive voice (advanced) (`passive-voice-advanced`)
 
-Aprofunda `voz-passiva-presente-e-passado`.
+Aprofunda `passive-voice-present-and-past`.
 
 - ✔ `perfect` (novo+anterior) “The new road has been built by a local company.”
 - ✔ `modal` (novo+anterior) “All passengers must be checked before they board the plane.”
@@ -640,9 +640,9 @@ Aprofunda `voz-passiva-presente-e-passado`.
 - ✔ `causative-get` (novo+anterior) “She got her hair cut at the new salon.”
 - ✔ `passive-infinitive` (revisão) “He was asked to leave the meeting room immediately.”
 
-## B2 · 7. Discurso indireto completo (`discurso-indireto-completo`)
+## B2 · 7. Reported speech (full) (`reported-speech-full`)
 
-Aprofunda `discurso-indireto-basico`.
+Aprofunda `reported-speech-basic`.
 
 - ✔ `ask-if` (novo+anterior) “She asked me if I had finished the report.”
 - ✔ `ask-whether` (novo+anterior) “He asked whether the train had already left the station.”
@@ -656,9 +656,9 @@ Aprofunda `discurso-indireto-basico`.
 - ✔ `warn` (revisão) “They warned us that the roads were dangerous.”
 - ✔ `backshift-past-perfect` (revisão) “He said that he had already seen the film.”
 
-## B2 · 8. Orações relativas não restritivas (`oracoes-relativas-nao-restritivas`)
+## B2 · 8. Non-defining relative clauses (`non-defining-relative-clauses`)
 
-Aprofunda `oracoes-relativas`.
+Aprofunda `relative-clauses`.
 
 - ✔ `who` (novo+anterior) “My brother, who lives in Canada, is visiting us next month.”
 - ✔ `which` (novo+anterior) “The hotel, which was built long ago, is very expensive.”
@@ -669,7 +669,7 @@ Aprofunda `oracoes-relativas`.
 - ✔ `whom` (novo+anterior) “My teacher, whom I respect a lot, is retiring soon.”
 - ✔ `of-whom` (revisão) “Many of the students, most of whom were young, left early.”
 
-## B2 · 9. Future Continuous e Future Perfect (`future-continuous-e-future-perfect`)
+## B2 · 9. Future Continuous and Future Perfect (`future-continuous-and-future-perfect`)
 
 - ✔ `continuous` (novo+anterior) “This time next week, I will be lying on a beach.”
 - ✔ `continuous-question` (novo+anterior) “Will you be using the car this evening?”
@@ -681,7 +681,7 @@ Aprofunda `oracoes-relativas`.
 - ✔ `for-duration` (novo+anterior) “Next month, I will have worked here for five years.”
 - ✔ `at-this-time` (novo+anterior) “At this time tomorrow, we will be flying to Paris.”
 
-## B2 · 10. Inversão para ênfase (`inversao-para-enfase`)
+## B2 · 10. Inversion for emphasis (`inversion-for-emphasis`)
 
 - ✔ `never` (novo+anterior) “Never have I seen such a beautiful sunset in my life.”
 - ✔ `rarely` (novo+anterior) “Rarely does he complain about his heavy workload at the office.”
@@ -694,9 +694,9 @@ Aprofunda `oracoes-relativas`.
 - ✔ `conditional-should` (novo+anterior) “Should you need any help, please call me at once.”
 - ✔ `conditional-were` (novo+anterior) “Were I in your position, I would accept the offer.”
 
-## B2 · 11. Conectores formais (`conectores-formais`)
+## B2 · 11. Formal connectors (`formal-connectors`)
 
-Aprofunda `conectores-b1`.
+Aprofunda `connectors-b1`.
 
 - ✔ `moreover` (novo+anterior) “The plan is cheap; moreover, it is easy to put into practice.”
 - ✔ `furthermore` (novo+anterior) “The room is large; furthermore, it has a beautiful view of the sea.”
@@ -713,9 +713,9 @@ Aprofunda `conectores-b1`.
 - ✔ `as-a-result` (novo+anterior) “The factory closed; as a result, hundreds of workers lost their jobs.”
 - ✔ `in-addition` (novo+anterior) “In addition, the hotel offers free breakfast to all of its guests.”
 
-## B2 · 12. Phrasal verbs e collocations avançados (`phrasal-verbs-e-collocations-avancados`)
+## B2 · 12. Advanced phrasal verbs and collocations (`advanced-phrasal-verbs-and-collocations`)
 
-Aprofunda `phrasal-verbs-comuns`.
+Aprofunda `common-phrasal-verbs`.
 
 - ✔ `look-forward-to` (revisão) “I am looking forward to meeting you at the conference next week.”
 - ✔ `put-up-with` (novo+anterior) “I can't put up with the noise from the street any longer.”
@@ -732,7 +732,7 @@ Aprofunda `phrasal-verbs-comuns`.
 - ✔ `pay-attention` (novo+anterior) “Please pay attention to the instructions before you start the exam.”
 - ✔ `break-a-promise` (novo+anterior) “He broke his promise, and nobody trusted him after that.”
 
-## B2 · 13. Registro formal vs. informal (`registro-formal-vs-informal`)
+## B2 · 13. Formal vs. informal register (`formal-vs-informal-register`)
 
 - ✔ `formal-request` (novo+anterior) “I would be grateful if you could send me the documents.”
 - ✔ `shall` (novo+anterior) “Shall we begin the meeting now, ladies and gentlemen?”

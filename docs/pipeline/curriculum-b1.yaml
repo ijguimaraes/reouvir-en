@@ -38,7 +38,7 @@ topics:
     introduces: []
     structures:
       - { id: unfinished-vs-finished, ex: "I saw that film last week, but she has not seen it.", rule: { all: [ { feature: past_simple }, { feature: pres_perfect } ] } }
-      - { id: since-while-ago, ex: "She has lived in this town since she was a child.", rule: { all: [ { feature: pres_perfect }, { lower: since } ] } }
+      - { id: since-clause, ex: "She has lived in this town since she was a child.", rule: { all: [ { feature: pres_perfect }, { lower: since } ] } }
       - { id: past-with-when, ex: "She lived in this town when she was a child.", rule: { all: [ { feature: past_simple }, { lower: when } ] } }
       - { id: result-now, ex: "I have lost my keys, so I cannot open the door.", rule: { all: [ { feature: pres_perfect }, { lower: so } ] } }
       - { id: past-ago, ex: "We bought this house about three years ago, and we love it.", rule: { all: [ { feature: past_simple }, { lower: ago } ] } }
@@ -76,10 +76,10 @@ topics:
       - { id: negative-be-used, ex: "I am not used to the cold weather here yet.", rule: { all: [ { lower: used, next: { lower: to } }, { lemma: be }, { lower: not } ] } }
       - { id: with-when, ex: "When I was young, I used to climb trees all the time.", rule: { all: [ { feature: used_to }, { lower: when } ] } }
 
-  - slug: gerundio-vs-infinitivo
-    name: Gerúndio vs. infinitivo
+  - slug: gerund-vs-infinitive
+    name: Gerund vs. infinitive
     order: 5
-    deepens: verbo-ing-ou-to
+    deepens: verb-ing-or-to
     introduces: [ger_prep, ger_subject]
     structures:
       - { id: gerund-subject, ex: "Swimming every morning is very good for your health.", rule: { feature: ger_subject } }
@@ -93,8 +93,8 @@ topics:
       - { id: verbs-plus-to, ex: "We managed to arrive early because the road was empty.", rule: { lemma: [manage, afford, promise, refuse, learn, decide, agree, expect, offer], child: { tag: VB } } }
       - { id: adjective-to, ex: "It is important to drink enough water every day.", rule: { dep: xcomp, tag: VB, head: { child: { pos: ADJ, dep: acomp } } } }
 
-  - slug: modais-possibilidade-e-deducao
-    name: Modais de possibilidade e dedução
+  - slug: modals-of-possibility-and-deduction
+    name: Modals of possibility and deduction
     order: 6
     introduces: [modal_epistemic]
     structures:
@@ -108,8 +108,8 @@ topics:
       - { id: question, ex: "Could this be the right address for the party tonight?", rule: { lemma: could, sent_start: true } }
       - { id: certainty-scale, ex: "It is probably true, but it could also be a mistake.", rule: { all: [ { feature: modal_epistemic }, { lower: but } ] } }
 
-  - slug: primeira-e-segunda-condicional
-    name: Primeira e segunda condicional
+  - slug: first-and-second-conditional
+    name: First and second conditional
     order: 7
     introduces: [if_clause, would]
     structures:
@@ -124,8 +124,8 @@ topics:
       - { id: would-advice, ex: "I would take the train because it is cheaper and faster.", rule: { lemma: would } }
       - { id: would-like, ex: "I would like a table for two near the window, please.", rule: { lemma: would, next: { lower: like } } }
 
-  - slug: voz-passiva-presente-e-passado
-    name: Voz passiva (presente e passado)
+  - slug: passive-voice-present-and-past
+    name: Passive voice (present and past)
     order: 8
     introduces: [passive]
     structures:
@@ -139,8 +139,8 @@ topics:
       - { id: was-born, ex: "I was born in a small town near the sea.", rule: { lower: born } }
       - { id: wh-passive, ex: "Where was this photo taken during your last summer holiday?", rule: { all: [ { feature: wh_be }, { feature: passive } ] } }
 
-  - slug: oracoes-relativas
-    name: Orações relativas (who, which, that, where, whose)
+  - slug: relative-clauses
+    name: Relative clauses (who, which, that, where, whose)
     order: 9
     introduces: [relative_clause]
     structures:
@@ -153,8 +153,8 @@ topics:
       - { id: who-be, ex: "People who are late must wait outside the room.", rule: { all: [ { lower: who }, { lemma: be } ] } }
       - { id: in-question, ex: "Do you know the girl who is sitting over there?", rule: { all: [ { lower: who }, { feature: do_question } ] } }
 
-  - slug: discurso-indireto-basico
-    name: Discurso indireto básico
+  - slug: reported-speech-basic
+    name: Reported speech (basic)
     order: 10
     introduces: [reported_verb]
     structures:
@@ -168,8 +168,8 @@ topics:
       - { id: said-to, ex: "He said to me that he was happy with it.", rule: { lemma: say, child: { lower: to } } }
       - { id: negative, ex: "She said that she didn't know him at all.", rule: { all: [ { feature: reported_verb }, { lower: did, next: { lower: "n't" } } ] } }
 
-  - slug: phrasal-verbs-comuns
-    name: Phrasal verbs comuns
+  - slug: common-phrasal-verbs
+    name: Common phrasal verbs
     order: 11
     introduces: [phrasal_verb]
     structures:
@@ -184,8 +184,8 @@ topics:
       - { id: question, ex: "Can you help me fill in this form, please?", rule: { lemma: fill, child: { dep: prt } } }
       - { id: past, ex: "They set up a small company about five years ago.", rule: { dep: prt, head: { lemma: set } } }
 
-  - slug: conectores-b1
-    name: Conectores (although, however, while, in order to)
+  - slug: connectors-b1
+    name: Connectors (although, however, while, in order to)
     order: 12
     introduces: [connector_b1]
     structures:
@@ -199,4 +199,5 @@ topics:
       - { id: but-contrast, ex: "He studied a lot, but he still failed the final exam.", rule: { all: [ { lower: but }, { feature: past_simple } ] } }
 
 decisions:
+  - "Tópico com `introduces: []` (present-perfect-vs-past-simple) é uma revisão aprofundada: traz mais variantes das estruturas já ensinadas, sem gramática nova."
   - "B1 reaproveita assuntos do A1/A2 com mais profundidade (gerúndio vs infinitivo aprofunda verbo + -ing/to) usando slugs próprios e `deepens`."

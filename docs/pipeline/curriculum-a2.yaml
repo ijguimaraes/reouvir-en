@@ -13,8 +13,8 @@ level:
   candidates: 130
 
 topics:
-  - slug: pronomes-objeto
-    name: Pronomes objeto (me, you, him, her, it, us, them)
+  - slug: object-pronouns
+    name: Object pronouns (me, you, him, her, it, us, them)
     order: 1
     introduces: [obj_pron]
     structures:
@@ -31,11 +31,11 @@ topics:
       - { id: question, ex: "Do you know them?", rule: { all: [ { feature: do_question }, { feature: obj_pron } ] } }
       - { id: negative, ex: "I don't know her.", rule: { all: [ { feature: do_negative }, { feature: obj_pron } ] } }
 
-  - slug: possessivos-pronomes-e-genitivo
-    name: Pronomes possessivos (mine, yours...) e 's
+  - slug: possessive-pronouns-and-genitive
+    name: Possessive pronouns (mine, yours...) and 's
     order: 2
     added: true
-    deepens: pronomes-e-verbo-to-be
+    deepens: subject-pronouns-and-verb-to-be
     introduces: [poss_pron, genitive_s]
     structures:
       - { id: mine, ex: "This bag is mine.", rule: { lower: mine } }
@@ -50,8 +50,8 @@ topics:
       - { id: genitive-place, ex: "We are at Ana's house.", rule: { all: [ { tag: POS }, { lower: at } ] } }
       - { id: of-mine, ex: "She is a friend of mine.", rule: { lower: mine, prev: { lower: of } } }
 
-  - slug: adverbios-de-frequencia-e-modo
-    name: Advérbios de frequência e de modo
+  - slug: adverbs-of-frequency-and-manner
+    name: Adverbs of frequency and manner
     order: 3
     introduces: [freq_adverb, manner_adverb]
     structures:
@@ -87,7 +87,7 @@ topics:
       - { id: contrast-simple, ex: "I usually walk, but today I am driving.", rule: { all: [ { feature: present_simple }, { feature: pres_continuous } ] } }
 
   - slug: countable-uncountable
-    name: Countable e uncountable (some, any, much, many)
+    name: Countable and uncountable nouns (some, any, much, many)
     order: 5
     introduces: [quantifier]
     structures:
@@ -107,7 +107,7 @@ topics:
   - slug: question-words
     name: Question words (what, where, who, when, why, how, which)
     order: 6
-    deepens: to-be-negativo-perguntas-e-possessivos
+    deepens: to-be-negative-questions-and-possessives
     introduces: [wh_other]
     structures:
       - { id: what, ex: "What do you do on Sunday?", rule: { all: [ { feature: wh_other }, { lower: what } ] } }
@@ -123,8 +123,8 @@ topics:
       - { id: how-long, ex: "How long does the class take?", rule: { all: [ { feature: wh_other }, { lower: long, prev: { lower: how } } ] } }
       - { id: wh-can, ex: "What can you cook?", rule: { all: [ { feature: wh_other }, { feature: modal_can } ] } }
 
-  - slug: verbo-ing-ou-to
-    name: Verbo + -ing / to
+  - slug: verb-ing-or-to
+    name: Verb + -ing / to
     order: 7
     introduces: [verb_xcomp]
     structures:
@@ -139,8 +139,8 @@ topics:
       - { id: question, ex: "Do you enjoy cooking?", rule: { all: [ { feature: do_question }, { feature: verb_xcomp } ] } }
       - { id: go-ing, ex: "We go shopping on Saturday.", rule: { lemma: go, child: { tag: VBG } } }
 
-  - slug: futuro-going-to-e-will
-    name: Futuro com going to e will
+  - slug: future-going-to-and-will
+    name: Future with going to and will
     order: 8
     introduces: [going_to, will_future]
     structures:
@@ -157,7 +157,7 @@ topics:
       - { id: wh-going-to, ex: "What are you going to do?", rule: { all: [ { feature: wh_be }, { feature: going_to } ] } }
 
   - slug: have-to-must-should
-    name: Have to, must e should
+    name: Have to, must and should
     order: 9
     introduces: [modal_obligation, have_to]
     structures:
@@ -173,11 +173,11 @@ topics:
       - { id: wh-should, ex: "What should I do?", rule: { all: [ { feature: wh_other }, { lemma: should } ] } }
       - { id: must-vs-have-to, ex: "I must go, but you don't have to.", rule: { all: [ { lemma: must }, { feature: have_to } ] } }
 
-  - slug: passado-do-to-be
-    name: Passado do verbo to be (was / were)
+  - slug: past-of-to-be
+    name: Past of the verb to be (was / were)
     order: 10
     added: true
-    deepens: pronomes-e-verbo-to-be
+    deepens: subject-pronouns-and-verb-to-be
     introduces: [be_past]
     structures:
       - { id: was, ex: "I was at home yesterday.", rule: { lower: was } }
@@ -191,7 +191,7 @@ topics:
       - { id: profession, ex: "My father was a teacher.", rule: { all: [ { lower: was }, { lower: [a, an] } ] } }
 
   - slug: past-simple
-    name: Past Simple (regulares e irregulares)
+    name: Past Simple (regular and irregular)
     order: 11
     introduces: [past_simple]
     structures:
@@ -209,8 +209,8 @@ topics:
       - { id: ago, ex: "They arrived two days ago.", rule: { all: [ { feature: past_simple }, { lower: ago } ] } }
       - { id: two-verbs, ex: "She woke up and made tea.", rule: { all: [ { feature: past_simple }, { dep: conj, tag: VBD } ] } }
 
-  - slug: comparativos-e-superlativos
-    name: Comparativos e superlativos
+  - slug: comparatives-and-superlatives
+    name: Comparatives and superlatives
     order: 12
     introduces: [comparative, superlative, as_as]
     structures:
@@ -226,8 +226,8 @@ topics:
       - { id: question, ex: "Is this bag cheaper than that one?", rule: { all: [ { feature: comparative }, { feature: be_question } ] } }
       - { id: adverb-comparative, ex: "She runs faster than me.", rule: { tag: RBR } }
 
-  - slug: conectores-simples
-    name: Conectores simples (and, but, because, so)
+  - slug: simple-connectors
+    name: Simple connectors (and, but, because, so)
     order: 13
     introduces: [conj_simple]
     structures:

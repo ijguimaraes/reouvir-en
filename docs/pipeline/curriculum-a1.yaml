@@ -32,17 +32,28 @@ level:
   playlist_size: 100                    # alvo final
   candidates: 130                       # gerados para sobrar após filtros
 
+# Versão legível por máquina do baseline acima (entra no prompt de geração).
+baseline:
+  - "proper names (people, cities, brands)"
+  - "common A1 adjectives (tired, ready, late, happy, cold, big...)"
+  - "the prepositions in, at, from, used with proper names and with home / school / work"
+  - "the conjunctions and, but, or"
+  - "the adverbs very, here, now, today"
+  - "numbers written as words, from one to ten"
+  - "contractions (I'm, she's, isn't, aren't...)"
+  - "the fixed phrasal verbs sit down, stand up, wake up, get up, come in, go out, turn on / off"
+
 topics:
-  - slug: pronomes-e-verbo-to-be
-    name: Pronomes pessoais e verbo to be (afirmativo)
+  - slug: subject-pronouns-and-verb-to-be
+    name: Subject pronouns and the verb to be (affirmative)
     order: 1
     introduces: [pron_subject, be_present]
-    predicates: "adjetivo, lugar (in/at/from + nome próprio) ou nome próprio"
+    predicates: "adjective, place (in/at/from + proper name) or proper name"
     bad:
-      - { text: "I am a teacher.", why: "a/an é do tópico 3" }
-      - { text: "We are teachers.", why: "plural é do tópico 4; profissões só no singular, com a/an" }
-      - { text: "He is my brother.", why: "possessivo é do tópico 2" }
-      - { text: "Are you ready?", why: "pergunta é do tópico 2" }
+      - { text: "I am a teacher.", why: "a/an is topic 3" }
+      - { text: "We are teachers.", why: "plural is topic 4; professions only in the singular, with a/an" }
+      - { text: "He is my brother.", why: "possessives are topic 2" }
+      - { text: "Are you ready?", why: "questions are topic 2" }
     structures:
       - { id: i-am, ex: "I am very tired today.", rule: { all: [ { lower: i, dep: nsubj }, { lemma: be, tag: VBP } ] } }
       - { id: you-are, ex: "You are very kind today.", rule: { all: [ { lower: you, dep: nsubj }, { lemma: be } ] } }
@@ -55,8 +66,8 @@ topics:
       - { id: contraction, ex: "We're very happy today.", rule: { lower: ["'m", "'re", "'s"], lemma: be } }
       - { id: coordinated, ex: "He is tired, but we are ready.", rule: { all: [ { lower: [and, but], pos: CCONJ }, { lemma: be } ] } }
 
-  - slug: to-be-negativo-perguntas-e-possessivos
-    name: Verbo to be (negativo e perguntas) e possessivos
+  - slug: to-be-negative-questions-and-possessives
+    name: The verb to be (negative and questions) and possessives
     order: 2
     introduces: [be_negative, be_question, wh_be, poss_adj]
     structures:
@@ -72,12 +83,12 @@ topics:
       - { id: poss-our-their, ex: "Their house is in Paris.", rule: { lower: [our, their, its], tag: PRP$ } }
       - { id: poss-negative, ex: "Your bag isn't here now.", rule: { all: [ { feature: poss_adj }, { feature: be_negative } ] } }
 
-  - slug: artigo-a-an
-    name: Artigos a e an
+  - slug: articles-a-an
+    name: Articles a and an
     order: 3
     introduces: [art_indefinite]
     bad:
-      - { text: "I am a teacher at the school.", why: "the é do tópico 5" }
+      - { text: "I am a teacher at the school.", why: "the is topic 5" }
     structures:
       - { id: a-consonant, ex: "He is a good cook.", rule: { lower: a } }
       - { id: an-vowel, ex: "It is an apple.", rule: { lower: an } }
@@ -88,8 +99,8 @@ topics:
       - { id: a-after-prep, ex: "He is in a small town.", rule: { lower: [a, an], dep: det, head: { dep: pobj } } }
       - { id: a-or-a, ex: "Is he a doctor or a nurse?", rule: { all: [ { lower: or }, { lower: [a, an] } ] } }
 
-  - slug: plural-e-demonstrativos
-    name: Plural e this / that / these / those
+  - slug: plurals-and-demonstratives
+    name: Plural nouns and this / that / these / those
     order: 4
     introduces: [noun_plural, demonstrative]
     structures:
@@ -103,8 +114,8 @@ topics:
       - { id: demonstrative-noun, ex: "This bag is very heavy.", rule: { lower: [this, that, these, those], pos: DET } }
       - { id: demonstrative-question, ex: "Are these your keys?", rule: { all: [ { feature: demonstrative }, { feature: be_question } ] } }
 
-  - slug: artigo-the
-    name: Artigo the
+  - slug: article-the
+    name: The article the
     order: 5
     introduces: [art_definite]
     structures:
@@ -117,8 +128,8 @@ topics:
       - { id: the-attribute, ex: "This is the right room.", rule: { lower: the, head: { dep: attr } } }
       - { id: the-same, ex: "We are in the same room.", rule: { lower: same, prev: { lower: the } } }
 
-  - slug: preposicoes-in-on-at
-    name: Preposições in, on, at
+  - slug: prepositions-in-on-at
+    name: Prepositions in, on, at
     order: 6
     introduces: [prep_on]
     structures:
@@ -146,8 +157,8 @@ topics:
       - { id: there-number, ex: "There are seven days in a week.", rule: { all: [ { feature: there_be }, { pos: NUM } ] } }
       - { id: there-adj, ex: "There is an old tree here.", rule: { all: [ { feature: there_be }, { lower: [a, an], next: { pos: ADJ } } ] } }
 
-  - slug: numeros-datas-e-horas
-    name: Números, datas e horas
+  - slug: numbers-dates-and-times
+    name: Numbers, dates and times
     order: 8
     introduces: [number_big, ordinal, date_word, time_expr]
     structures:
@@ -178,8 +189,8 @@ topics:
       - { id: have-got-number, ex: "She has got two brothers.", rule: { all: [ { lower: has, next: { lower: got } }, { pos: NUM } ] } }
       - { id: has-got-poss, ex: "My sister has got long hair.", rule: { all: [ { feature: poss_adj }, { lower: has } ] } }
 
-  - slug: presente-simples
-    name: Presente simples
+  - slug: present-simple
+    name: Present Simple
     order: 10
     introduces: [present_simple, do_negative, do_question]
     structures:
@@ -197,8 +208,8 @@ topics:
       - { id: at-time, ex: "The shop opens at nine.", rule: { all: [ { feature: present_simple }, { lower: at, next: { pos: NUM } } ] } }
       - { id: two-verbs, ex: "She gets up and drinks tea.", rule: { tag: [VBZ, VBP], child: { dep: conj, tag: [VBZ, VBP] } } }
 
-  - slug: can-habilidade
-    name: Can (habilidade)
+  - slug: can-ability
+    name: Can (ability)
     order: 11
     introduces: [modal_can]
     structures:
@@ -211,8 +222,8 @@ topics:
       - { id: can-3rd-person, ex: "She can speak three languages.", rule: { all: [ { feature: modal_can }, { lower: [he, she, it], dep: nsubj } ] } }
       - { id: cant-but-can, ex: "I can't swim, but I can run.", rule: { all: [ { lemma: can, next: { lower: ["n't", not] } }, { lower: but } ] } }
 
-  - slug: imperativo
-    name: Imperativo
+  - slug: imperative
+    name: The imperative
     order: 12
     introduces: [imperative, lets]
     structures:

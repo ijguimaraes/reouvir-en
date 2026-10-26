@@ -28,8 +28,8 @@ topics:
       - { id: since, ex: "He has been feeling much better since last week.", rule: { all: [ { feature: pres_perf_cont }, { lower: since } ] } }
       - { id: all-day, ex: "It has been raining all day, so we stayed inside.", rule: { all: [ { feature: pres_perf_cont }, { lower: all } ] } }
 
-  - slug: past-perfect-e-past-perfect-continuous
-    name: Past Perfect e Past Perfect Continuous
+  - slug: past-perfect-and-past-perfect-continuous
+    name: Past Perfect and Past Perfect Continuous
     order: 2
     introduces: [past_perfect, past_perf_cont]
     structures:
@@ -43,10 +43,10 @@ topics:
       - { id: continuous-wh, ex: "How long had they been waiting when the bus finally came?", rule: { all: [ { feature: past_perf_cont }, { feature: wh_other } ] } }
       - { id: never-before, ex: "He had never seen snow before he moved to Canada.", rule: { all: [ { feature: past_perfect }, { lower: never } ] } }
 
-  - slug: terceira-condicional-e-mistas
-    name: Terceira condicional e condicionais mistas
+  - slug: third-and-mixed-conditionals
+    name: Third conditional and mixed conditionals
     order: 3
-    deepens: primeira-e-segunda-condicional
+    deepens: first-and-second-conditional
     introduces: [would_have]
     structures:
       - { id: third, ex: "If I had known about the problem, I would have helped you.", rule: { all: [ { feature: if_clause }, { feature: would_have } ] } }
@@ -59,7 +59,7 @@ topics:
       - { id: contraction, ex: "If they had left earlier, they'd have arrived on time.", rule: { all: [ { feature: past_perfect }, { lower: "'d" } ] } }
 
   - slug: wish-if-only
-    name: Wish e if only
+    name: Wish and if only
     order: 4
     introduces: [wish]
     structures:
@@ -73,10 +73,10 @@ topics:
       - { id: wish-negative, ex: "I wish I didn't have to work on Saturdays.", rule: { all: [ { feature: wish }, { feature: have_to } ] } }
       - { id: hope-vs-wish, ex: "I hope you can come, but I wish you could stay longer.", rule: { all: [ { feature: wish }, { lemma: hope } ] } }
 
-  - slug: modais-no-passado
-    name: Modais no passado (should have, could have, must have...)
+  - slug: past-modals
+    name: Past modals (should have, could have, must have...)
     order: 5
-    deepens: modais-possibilidade-e-deducao
+    deepens: modals-of-possibility-and-deduction
     introduces: [modal_perfect]
     structures:
       - { id: should-have, ex: "You should have told me about the problem earlier.", rule: { tag: VBN, child: [ { lemma: should }, { lemma: have } ] } }
@@ -89,10 +89,10 @@ topics:
       - { id: would-have, ex: "I would have gone to the party, but I was ill.", rule: { feature: would_have } }
       - { id: question, ex: "Could they have made a mistake with the dates?", rule: { all: [ { lemma: could, sent_start: true }, { lemma: have } ] } }
 
-  - slug: voz-passiva-avancada
-    name: Voz passiva avançada
+  - slug: passive-voice-advanced
+    name: Passive voice (advanced)
     order: 6
-    deepens: voz-passiva-presente-e-passado
+    deepens: passive-voice-present-and-past
     introduces: [passive_complex, causative]
     structures:
       - { id: perfect, ex: "The new road has been built by a local company.", rule: { tag: VBN, child: [ { dep: auxpass, lower: been }, { lemma: have, dep: aux } ] } }
@@ -106,10 +106,10 @@ topics:
       - { id: causative-get, ex: "She got her hair cut at the new salon.", rule: { all: [ { feature: causative }, { lemma: get } ] } }
       - { id: passive-infinitive, ex: "He was asked to leave the meeting room immediately.", rule: { tag: VBN, child: [ { dep: auxpass }, { dep: xcomp } ] } }
 
-  - slug: discurso-indireto-completo
-    name: Discurso indireto completo
+  - slug: reported-speech-full
+    name: Reported speech (full)
     order: 7
-    deepens: discurso-indireto-basico
+    deepens: reported-speech-basic
     introduces: [reported_question, reported_command, reported_verb_adv]
     structures:
       - { id: ask-if, ex: "She asked me if I had finished the report.", rule: { feature: reported_question } }
@@ -124,10 +124,10 @@ topics:
       - { id: warn, ex: "They warned us that the roads were dangerous.", rule: { lemma: warn } }
       - { id: backshift-past-perfect, ex: "He said that he had already seen the film.", rule: { all: [ { feature: reported_verb }, { feature: past_perfect } ] } }
 
-  - slug: oracoes-relativas-nao-restritivas
-    name: Orações relativas não restritivas
+  - slug: non-defining-relative-clauses
+    name: Non-defining relative clauses
     order: 8
-    deepens: oracoes-relativas
+    deepens: relative-clauses
     introduces: [relcl_nondef]
     structures:
       - { id: who, ex: "My brother, who lives in Canada, is visiting us next month.", rule: { lower: who, prev: { lower: "," } } }
@@ -139,8 +139,8 @@ topics:
       - { id: whom, ex: "My teacher, whom I respect a lot, is retiring soon.", rule: { lower: whom } }
       - { id: of-whom, ex: "Many of the students, most of whom were young, left early.", rule: { lower: whom, prev: { lower: of } } }
 
-  - slug: future-continuous-e-future-perfect
-    name: Future Continuous e Future Perfect
+  - slug: future-continuous-and-future-perfect
+    name: Future Continuous and Future Perfect
     order: 9
     introduces: [future_adv]
     structures:
@@ -154,8 +154,8 @@ topics:
       - { id: for-duration, ex: "Next month, I will have worked here for five years.", rule: { all: [ { feature: future_adv }, { lower: for } ] } }
       - { id: at-this-time, ex: "At this time tomorrow, we will be flying to Paris.", rule: { all: [ { feature: future_adv }, { lower: tomorrow } ] } }
 
-  - slug: inversao-para-enfase
-    name: Inversão para ênfase
+  - slug: inversion-for-emphasis
+    name: Inversion for emphasis
     order: 10
     introduces: [inversion_neg, inversion_cond]
     structures:
@@ -170,10 +170,10 @@ topics:
       - { id: conditional-should, ex: "Should you need any help, please call me at once.", rule: { all: [ { feature: inversion_cond }, { sent_start: true, lower: should } ] } }
       - { id: conditional-were, ex: "Were I in your position, I would accept the offer.", rule: { all: [ { feature: inversion_cond }, { sent_start: true, lower: were } ] } }
 
-  - slug: conectores-formais
-    name: Conectores formais
+  - slug: formal-connectors
+    name: Formal connectors
     order: 11
-    deepens: conectores-b1
+    deepens: connectors-b1
     introduces: [connector_formal]
     structures:
       - { id: moreover, ex: "The plan is cheap; moreover, it is easy to put into practice.", rule: { lower: moreover } }
@@ -191,10 +191,10 @@ topics:
       - { id: as-a-result, ex: "The factory closed; as a result, hundreds of workers lost their jobs.", rule: { lower: result, prev: { lower: a } } }
       - { id: in-addition, ex: "In addition, the hotel offers free breakfast to all of its guests.", rule: { lower: addition, prev: { lower: in } } }
 
-  - slug: phrasal-verbs-e-collocations-avancados
-    name: Phrasal verbs e collocations avançados
+  - slug: advanced-phrasal-verbs-and-collocations
+    name: Advanced phrasal verbs and collocations
     order: 12
-    deepens: phrasal-verbs-comuns
+    deepens: common-phrasal-verbs
     introduces: [phrasal_3part, collocation]
     structures:
       - { id: look-forward-to, ex: "I am looking forward to meeting you at the conference next week.", rule: { lemma: look, child: { lower: forward } } }
@@ -212,8 +212,8 @@ topics:
       - { id: pay-attention, ex: "Please pay attention to the instructions before you start the exam.", rule: { lemma: pay, child: { dep: dobj, lemma: attention } } }
       - { id: break-a-promise, ex: "He broke his promise, and nobody trusted him after that.", rule: { lemma: break, child: { dep: dobj, lemma: promise } } }
 
-  - slug: registro-formal-vs-informal
-    name: Registro formal vs. informal
+  - slug: formal-vs-informal-register
+    name: Formal vs. informal register
     order: 13
     introduces: [shall, formal_marker, informal_marker]
     structures:
