@@ -194,7 +194,7 @@ Acesso restrito a usuários com papel `admin`.
   - **Criar** um contexto gera, na mesma transação, uma playlist vazia (`draft`) para cada tópico ativo.
   - **Excluir** apaga o contexto e as playlists dele, **desde que todas estejam vazias**; se alguma tiver frases, a exclusão é recusada (desative o contexto em vez disso).
 - Itens inativos somem do app do aluno, sem apagar as playlists já criadas.
-- Não há seed de catálogo: o banco **nasce vazio** (só o administrador é criado por seed). Níveis e tópicos chegam pela pipeline (seção 8).
+- Seed de catálogo: `pnpm seed:catalog` grava os níveis (A1–B2) e os tópicos lendo `docs/pipeline/curriculum-*.yaml`, a mesma fonte da pipeline. É idempotente: cria o que falta e alinha nome e ordem dos existentes, sem mexer em `active`. Cada tópico novo ganha a playlist vazia em todos os contextos existentes (trigger). Contextos e frases **não** têm seed: contextos nascem no backoffice e as frases chegam pela pipeline (seção 8). A pipeline continua podendo gravar níveis e tópicos, e usa os mesmos YAML.
 
 ### 7.2 Playlists
 
@@ -564,7 +564,7 @@ reouvir-en/
 
 ## 15. Referência de conteúdo (não é carregada pelo sistema)
 
-Esta seção é só **referência para quem alimenta a pipeline**. O sistema **não carrega** níveis, tópicos, contextos nem frases: o banco nasce vazio, e a pipeline grava níveis e tópicos direto no banco (seção 8). Contextos são criados no backoffice.
+Esta seção é só **referência para quem alimenta a pipeline**. O sistema **não carrega** contextos nem frases: contextos são criados no backoffice e as frases chegam pela pipeline direto no banco (seção 8). Níveis e tópicos vêm do seed (`pnpm seed:catalog`), a partir dos mesmos YAML da pipeline.
 
 ### Níveis
 

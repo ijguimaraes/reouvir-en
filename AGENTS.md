@@ -14,7 +14,7 @@ Responder ao usuário sempre em **português** (com acentuação correta). Ident
 - **Fase 1 (Fundação) validada:** typecheck, testes (unitários e de integração contra Postgres real), migrações, seed do admin e build.
 - Fases 3 a 8 implementadas em seguida (ver `README.md` para o que foi validado e o que depende de teste manual).
 - **Fase 2 (spike do player) depende de teste manual** em iPhone/Android com a tela bloqueada e a regra de silêncio. Nenhum agente consegue validar isso.
-- Para rodar: `cp .env.example .env`, `pnpm install`, `pnpm db:up`, `pnpm db:migrate`, `pnpm seed:admin`, `pnpm dev`. **O banco nasce vazio:** não há seed de níveis, tópicos, contextos nem frases (só o admin). Testes de integração usam `DATABASE_URL_TEST`.
+- Para rodar: `cp .env.example .env`, `pnpm install`, `pnpm db:up`, `pnpm db:migrate`, `pnpm seed`, `pnpm dev`. **O seed cria o admin e o catálogo** (níveis A1–B2 e seus tópicos, lidos de `docs/pipeline/curriculum-*.yaml`, a mesma fonte da pipeline); `pnpm seed:admin` e `pnpm seed:catalog` rodam cada parte e são idempotentes. **Não há seed de contextos nem de frases:** contextos nascem no backoffice e as frases vêm da pipeline. Testes de integração usam `DATABASE_URL_TEST`.
 
 ## Decisões já tomadas
 
