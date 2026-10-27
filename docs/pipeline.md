@@ -99,6 +99,7 @@ O prompt existe e é **montado por código**, não escrito à mão por tópico:
 - Template versionado: [`pipeline/prompts/v1/generate.md`](../pipeline/prompts/v1/generate.md). Uma mudança de prompt vira `v2/`, e o `prompt_version` acompanha as frases geradas.
 - Montador: [`pipeline/src/build_prompt.py`](../pipeline/src/build_prompt.py). Preenche o template com o currículo, o catálogo de recursos, [`feature-descriptions.yaml`](pipeline/feature-descriptions.yaml) e o arquivo do contexto ([`pipeline/contexts/`](../pipeline/contexts/)). Também gera o JSON schema da **resposta do modelo**.
 - Uso: `python build_prompt.py --context ../contexts/entrevista-java.yaml --topic subject-pronouns-and-verb-to-be --count 40 --schema schema.json`.
+- O `details` do contexto vem do banco (tabela `contexts`, pelo slug do YAML), então uma edição no backoffice vale no próximo prompt. A saída de erro mostra a origem e o sha256 do texto usado (guarde-o ao registrar a rodada); `--offline` força o YAML.
 
 O que o prompt contém, nesta ordem:
 
@@ -122,13 +123,22 @@ Decisões de desenho que valem lembrar:
 A pipeline conecta direto no Postgres (string de conexão por variável de ambiente) e grava só o que a seção 8.1 do documento lista. **Não** calcula `text_hash`, `char_count` nem `version` (triggers), e **não** mexe em `status`.
 
 1. **Catálogo.** *Upsert* de `levels` (por `code`) e de `grammar_topics` (por `slug`) a partir dos currículos, com `sort_order` vindo do `order`. Cada tópico novo ganha, por trigger, uma playlist vazia (`draft`) em todos os contextos existentes. Mudar `sort_order` ou `level_id` de um tópico existente muda a ordem que o aluno vê; por isso essa atualização é explícita, nunca silenciosa.
-2. **Contexto.** O contexto precisa **existir** (criado no backoffice, que também cria as playlists vazias dele). A pipeline só o lê; o arquivo `contexts/*.yaml` espelha esse cadastro e acrescenta cenas e vocabulário.
+2. **Contexto.** O contexto precisa **existir** (criado no backoffice, que também cria as playlists vazias dele). A pipeline só o lê. O texto livre (`details`) vale o do **banco**, editado no backoffice: `build_prompt.py` o lê pelo slug (`PIPELINE_DATABASE_URL`) e usa o do YAML só como plano B (`--offline` ou sem conexão). Cenas, personagens e vocabulário (com nível mínimo) não existem no banco e vivem no arquivo `contexts/*.yaml`.
 3. **Playlist alvo.** Busca por `(grammar_topics.slug, contexts.slug)`.
 4. **Proteção.** Por padrão, só grava em playlist `draft`. Em `published`, recusa, a menos que se passe um flag explícito: trocar as frases vale na hora para os alunos e zera o `last_sentence_id` de quem estava nas frases removidas. Uma playlist `draft` que já tem frases também exige o flag de substituição.
-5. **Ordem e tamanho.** Ordena as frases aprovadas (progressão leve: curtas e simples primeiro, ou agrupadas por cena), corta em ~100 e numera `position` de 1 a n. Se sobrar menos de 90, a playlist volta para a geração.
+5. **Ordem e tamanho.** A playlist vem de `select_final.py` (~100 frases). A ordem é **agrupada por cena**, na ordem das cenas do contexto, como um roteiro; dentro da cena, as estruturas se alternam em rodízio e, em cada uma, as frases mais curtas vêm antes. `position` vai de 1 a n. Fora de 90 a 110 frases, avisa.
 6. **Diff por hash, não apagar tudo.** O áudio gerado custa crédito e é reaproveitado pelo hash do texto normalizado. Por isso a pipeline compara com as frases já gravadas e, numa só transação, remove as que saíram, renumera as que ficaram e insere as novas. Frase com texto alterado vira áudio órfão (custa de novo); frase idêntica não. A renumeração cabe numa transação porque `UNIQUE (playlist_id, position)` é `DEFERRABLE`.
 7. **Sem duplicatas.** Deduplica pelo texto normalizado antes do INSERT (ver seção 4).
-8. **`metadata`.** Guarda `scene`, `structure`, `prompt_version` e o modelo, para rastrear e reavaliar depois.
+8. **`metadata`.** Guarda `scene`, `structure`, `prompt_version`, o modelo e, se houver, as palavras com aviso de vocabulário (`vocab_flags`), para rastrear e reavaliar depois.
+9. **Última linha de defesa.** O gravador não confia que o arquivo passou pelo `validate.py`: aplica de novo as regras de texto (URL, emoji, dígito, caractere invisível ou não-ASCII, pontuação final, faixa de palavras do nível) e recusa o arquivo inteiro se alguma frase falhar. Gramática e vocabulário continuam sendo do `validate.py`.
+10. **Conferência antes do commit.** Depois de gravar, relê as frases no próprio banco e compara posições, textos e hashes com o esperado. Se algo divergir, desfaz tudo.
+
+### 7.1 Implementação
+
+- [`pipeline/src/write_db.py`](../pipeline/src/write_db.py): `python write_db.py --topic <slug> --context ../contexts/x.yaml --input final.json [--dry-run] [--replace] [--allow-published] [--update-catalog] [--model <id>]`. O **`--dry-run`** executa a gravação inteira, inclusive os triggers e as restrições do banco, e **desfaz no fim**: o relatório mostra exatamente o que aconteceria. Sem mudanças, nada é escrito e a `version` não sobe. Código de saída 2 em recusas esperadas.
+- [`pipeline/src/create_pipeline_role.py`](../pipeline/src/create_pipeline_role.py): cria a role `pipeline_writer` com o mínimo de permissões e grava a URL de conexão (modo 600) em `PIPELINE_DATA_DIR/pipeline-db.env`, fora do git. Rodar como administrador: `python create_pipeline_role.py --admin-url postgres://...`. Re-executar só reaplica as permissões; `--rotate` troca a senha. A role **não é superusuária nem dona de tabelas** e só pode: ler contextos e playlists, criar e alterar níveis e tópicos, gravar frases, inserir playlists (trigger de tópico novo) e subir a coluna `version`. Usuários, tokens, configurações e progresso de alunos ficam inacessíveis. O script confere isso conectando como a role.
+- Testes de integração (`test_write_db.py`, 21 casos) rodam contra um Postgres **descartável**, nunca o de desenvolvimento. Instruções no topo do arquivo.
+
 
 ## 8. Contexto como entrada
 
@@ -158,8 +168,8 @@ pipeline/
   validator/{rules.py,analyze.py}                  (já existe)
   prompts/v1/generate.md  (juiz e regeneração: ainda não escritos)
   contexts/entrevista-java.yaml
-  src/build_prompt.py validate.py vocab.py balance.py select_final.py fetch_cefrj.py   (já existem; testes: test_*.py)
-  src/ generate.py judge.py write_db.py
+  src/build_prompt.py validate.py vocab.py balance.py select_final.py fetch_cefrj.py write_db.py create_pipeline_role.py   (já existem; testes: test_*.py)
+  src/ generate.py judge.py
   runs/<context>/<level>/<topic>/{candidates,validated,judged}.jsonl
 ```
 
@@ -185,7 +195,7 @@ pipeline-data/
 4. Cada estrutura foi validada com **um** exemplo. Falta um conjunto maior de frases (positivas e negativas) para medir a precisão real dos detectores, e algumas regras são largas (ver a seção "Regras largas" da análise).
 5. Níveis da CEFR-J: ela foi feita para aprendizes japoneses e alguns níveis surpreendem (`friendly` = B2). Revisar com o professor, e registrar exceções no contexto se necessário.
 6. Calibrar o ciclo de rodadas com dados reais: tamanho do lote, cotas (70% e 60%) e o limite de rodadas.
-7. Acesso da pipeline ao banco: qual papel (role) do Postgres ela usa e como a conexão chega a ela (rede local ou Tailscale). Uma role própria, com permissão só em `levels`, `grammar_topics` e `sentences`, seria a opção mais segura.
+7. Como a conexão da pipeline chega ao Postgres de produção (rede local ou Tailscale). A role já existe (`create_pipeline_role.py`); falta só decidir o caminho de rede e onde guardar a URL fora da máquina de desenvolvimento.
 
 ## 11. Próximo passo
 

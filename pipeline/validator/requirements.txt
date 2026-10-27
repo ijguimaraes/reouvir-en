@@ -2,3 +2,4 @@ spacy>=3.8,<3.9
 pyyaml>=6
 regex>=2024.0
 openpyxl>=3.1   # só para fetch_cefrj.py
+psycopg[binary]>=3.2   # write_db.py e create_pipeline_role.py
