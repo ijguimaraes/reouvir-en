@@ -15,8 +15,7 @@
     "db:status": "dbmate --migrations-dir apps/api/src/db/migrations --no-dump-schema status",
     "db:new": "dbmate --migrations-dir apps/api/src/db/migrations new",
     "seed:admin": "pnpm --filter @reouvir/api seed:admin",
-    "seed:catalog": "pnpm --filter @reouvir/api seed:catalog",
-    "seed": "pnpm seed:admin && pnpm seed:catalog"
+    "seed": "pnpm seed:admin"
   },
   "devDependencies": {
     "dbmate": "^2.22.0",

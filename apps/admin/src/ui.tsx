@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type DragEvent, type KeyboardEvent, type ReactNode } from "react";
 import { ApiError } from "@reouvir/api-client";
 
 export const errMsg = (e: unknown): string => (e instanceof ApiError ? e.message : "Falha de conexão");
@@ -36,3 +36,50 @@ export const STATUS_LABEL: Record<string, string> = {
   create: "criar", replace: "substituir", unchanged: "sem mudanças", refused: "recusada", error: "erro",
   active: "ativo", blocked: "bloqueado",
 };
+
+/**
+ * Reordenar linhas de tabela arrastando, ou digitando a posição de destino e teclando Enter.
+ * Quem usa informa os ids na ordem atual e recebe, em `onReorder`, a lista completa na nova ordem.
+ */
+export function useReorderableRows(ids: string[], onReorder: (ids: string[]) => void) {
+  const [dragFrom, setDragFrom] = useState<number | null>(null);
+  const [dragOver, setDragOver] = useState<number | null>(null);
+  const end = () => {
+    setDragFrom(null);
+    setDragOver(null);
+  };
+  function move(from: number, to: number) {
+    if (from === to || to < 0 || to >= ids.length) return;
+    const next = [...ids];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved!);
+    onReorder(next);
+  }
+  /** Atributos da linha (`<tr {...rowProps(i)}>`). */
+  const rowProps = (i: number) => ({
+    className: dragOver === i && dragFrom !== null ? "dragover" : undefined,
+    draggable: true,
+    onDragStart: () => setDragFrom(i),
+    onDragOver: (e: DragEvent) => {
+      e.preventDefault();
+      setDragOver(i);
+    },
+    onDragEnd: end,
+    onDrop: () => {
+      if (dragFrom !== null) move(dragFrom, i);
+      end();
+    },
+  });
+  /** Atributos do campo "mover para" (`<input {...posInputProps(i)} />`). */
+  const posInputProps = (i: number) => ({
+    className: "pos",
+    type: "number" as const,
+    min: 1,
+    max: ids.length,
+    placeholder: String(i + 1),
+    onKeyDown: (e: KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") move(i, Number(e.currentTarget.value) - 1);
+    },
+  });
+  return { rowProps, posInputProps };
+}

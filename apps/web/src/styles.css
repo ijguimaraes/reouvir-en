@@ -24,8 +24,7 @@ button:disabled { opacity: .5; cursor: default; }
 .card, a.item { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 14px; margin: 8px 0; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
 .badge { font-size: 11px; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--border); white-space: nowrap; }
 .badge.offline { color: #2f9e44; border-color: #2f9e44; }
-details { margin: 8px 0; }
-summary { font-weight: 600; cursor: pointer; padding: 8px 2px; }
+.block { display: block; font-size: 0.85em; }
 .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .row.center { justify-content: center; }
 .now { font-size: 24px; line-height: 1.3; text-align: center; min-height: 110px; display: flex; align-items: center; justify-content: center; margin: 12px 0; }

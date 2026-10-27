@@ -2,13 +2,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { OfflineManifestDto, PlayerSettings, StudentPlaylistDto } from "@reouvir/shared";
 import { api } from "../api";
 import { downloadPlaylist, getManifest, removeDownload } from "../offline/download";
+import { manifestTitle } from "../offline/title";
 import { cachedSettings, loadSettings } from "../offline/settings";
 import { getLocalState } from "../offline/sync";
 import { offlineSource, onlineSource } from "../player/source";
 import { Player, type PlayerInit } from "../components/Player";
 
 interface Loaded {
-  title: { context: string; level: string; topic: string };
+  title: { context: string; title: string; description: string };
   manifest: OfflineManifestDto | undefined;
   online: StudentPlaylistDto | null;
   init: Omit<PlayerInit, "settings">;
@@ -40,8 +41,10 @@ export function PlaylistPage({ playlistId }: { playlistId: string }) {
       const settings = (await Promise.race([loadSettings(), new Promise<PlayerSettings>((r) => setTimeout(() => r(cachedSettings()), 2500))]));
       if (!alive) return;
       const t = manifest ?? online!;
+      // online, o título é o atual do servidor (uma renomeação não sobe a versão do download)
+      const playlistTitle = online?.title ?? manifestTitle(manifest!);
       setLoaded({
-        title: { context: t.contextName, level: t.levelCode, topic: t.topicName },
+        title: { context: t.contextName, title: playlistTitle, description: online?.description ?? manifest?.description ?? "" },
         manifest,
         online,
         settings,
@@ -51,7 +54,7 @@ export function PlaylistPage({ playlistId }: { playlistId: string }) {
           startIndex: Math.max(idx, 0),
           baseLoops: state?.loopsCompleted ?? 0,
           baseListenedSeconds: state?.listenedSeconds ?? 0,
-          title: `${t.topicName} · ${t.levelCode}`,
+          title: playlistTitle,
           context: t.contextName,
         },
       });
@@ -85,8 +88,9 @@ export function PlaylistPage({ playlistId }: { playlistId: string }) {
   const { title, manifest, online } = loaded;
   return (
     <main>
-      <h2>{title.topic}</h2>
-      <p className="muted">{title.context} · {title.level}</p>
+      <h2>{title.title}</h2>
+      <p className="muted">{title.context}</p>
+      {title.description && <p className="muted">{title.description}</p>}
 
       <div className="card">
         <span>

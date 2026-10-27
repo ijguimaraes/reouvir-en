@@ -3,8 +3,11 @@ import type { Pool } from "pg";
 import {
   checkSentenceText,
   normalizeText,
+  playlistInputSchema,
+  playlistUpdateSchema,
   reorderSchema,
   sentenceTextSchema,
+  slugify,
 } from "@reouvir/shared";
 import { withTransaction } from "../../db/pool";
 import { AppError } from "../../errors";
@@ -22,13 +25,63 @@ export function registerPlaylistAdminRoutes(
   const repo = new PlaylistsRepository(pool, tts);
   const notFound = () => new AppError(404, "Não encontrado", "not_found");
 
-  /** Texto normalizado e validado; nível opcional só gera avisos, que não bloqueiam edição manual. */
+  /** Texto normalizado e validado; só erros bloqueiam (avisos de faixa de palavras não bloqueiam edição manual). */
   function cleanText(raw: string): { text: string; hash: string } {
     const text = normalizeText(raw);
     const { errors } = checkSentenceText(text);
     if (errors.length) throw new AppError(400, `Frase inválida: ${errors.join(", ")}`, "invalid_sentence");
     return { text, hash: textHash(text) };
   }
+
+  const slugTaken = { unique: "Já existe uma playlist com esse slug neste contexto" };
+
+  /** Cria uma playlist no fim do contexto. Sem `slug`, ele vem do título. */
+  app.post("/admin/contexts/:id/playlists", opts, async (req, reply) => {
+    const contextId = paramId(req);
+    const body = playlistInputSchema.parse(req.body);
+    if (!(await repo.contextExists(contextId))) throw notFound();
+    const id = await withTransaction(pool, async (client) => {
+      const tx = new PlaylistsRepository(client, tts);
+      const slug = body.slug ?? (await tx.freeSlug(contextId, slugify(body.title) || "playlist"));
+      return tx.create(contextId, { title: body.title, slug, description: body.description });
+    }).catch((e) => mapPgError(e, slugTaken));
+    return reply.code(201).send(await repo.get(id));
+  });
+
+  /** Reordena as playlists do contexto: recebe todos os ids na nova ordem e renumera de 1 a n. */
+  app.put("/admin/contexts/:id/playlists/order", opts, async (req) => {
+    const contextId = paramId(req);
+    const { ids } = reorderSchema.parse(req.body);
+    if (!(await repo.contextExists(contextId))) throw notFound();
+    await withTransaction(pool, async (client) => {
+      const tx = new PlaylistsRepository(client, tts);
+      const current = await tx.playlistIds(contextId);
+      if (ids.length !== current.length || new Set(ids).size !== ids.length || !ids.every((i) => current.includes(i))) {
+        throw new AppError(400, "A lista precisa conter exatamente as playlists do contexto", "invalid_order");
+      }
+      await tx.renumberPlaylists(contextId, ids);
+    });
+    return repo.list(contextId);
+  });
+
+  /** Título, slug e descrição. Só muda o que vier no corpo. */
+  app.put("/admin/playlists/:id", opts, async (req) => {
+    const id = paramId(req);
+    const body = playlistUpdateSchema.parse(req.body);
+    const ok = await repo.update(id, body).catch((e) => mapPgError(e, slugTaken));
+    if (!ok) throw notFound();
+    return repo.get(id);
+  });
+
+  /** Só playlist vazia; com frases, arquive. */
+  app.delete("/admin/playlists/:id", opts, async (req, reply) => {
+    const result = await withTransaction(pool, (client) => new PlaylistsRepository(client, tts).delete(paramId(req)));
+    if (result === "not_found") throw notFound();
+    if (result === "has_sentences") {
+      throw new AppError(409, "A playlist tem frases. Arquive-a em vez de excluir.", "has_sentences");
+    }
+    return reply.code(204).send();
+  });
 
   app.get("/admin/playlists", opts, async (req) => {
     const { contextId } = (req.query ?? {}) as { contextId?: string };

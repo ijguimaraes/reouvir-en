@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import type { CatalogDto, OfflineManifestDto } from "@reouvir/shared";
 import { api } from "../api";
 import { listManifests } from "../offline/download";
+import { manifestTitle } from "../offline/title";
 import { useLoad } from "../useLoad";
 
 export function useCatalog() {
@@ -27,7 +28,7 @@ export function Home() {
           <h3>Baixadas (tocam offline)</h3>
           {downloads.data.map((m) => (
             <Link className="item" key={m.playlistId} to={`/p/${m.playlistId}`}>
-              <span>{m.contextName} · {m.levelCode} · {m.topicName}</span>
+              <span>{m.contextName} · {manifestTitle(m)}</span>
               <span className="badge offline">offline</span>
             </Link>
           ))}
@@ -43,7 +44,7 @@ export function Home() {
           {contexts.map((c) => (
             <Link className="item" key={c.id} to={`/c/${c.id}`}>
               <span>{c.name}</span>
-              <span className="muted">{c.levels.reduce((n, l) => n + l.topics.length, 0)} playlists</span>
+              <span className="muted">{c.playlists.length} playlists</span>
             </Link>
           ))}
         </section>
@@ -64,19 +65,17 @@ export function ContextPage({ contextId }: { contextId: string }) {
     <main>
       <h2>{ctx.name}</h2>
       {ctx.description && <p className="muted">{ctx.description}</p>}
-      {ctx.levels.map((l, i) => (
-        <details key={l.id} open={i === 0}>
-          <summary>{l.name}</summary>
-          {l.topics.map((t) => (
-            <Link className="item" key={t.playlistId} to={`/p/${t.playlistId}`}>
-              <span>{t.name}</span>
-              <span className="row">
-                <span className="muted">{t.sentenceCount}</span>
-                {offline.has(t.playlistId) && <span className="badge offline">offline</span>}
-              </span>
-            </Link>
-          ))}
-        </details>
+      {ctx.playlists.map((pl) => (
+        <Link className="item" key={pl.id} to={`/p/${pl.id}`}>
+          <span>
+            {pl.title}
+            {pl.description && <span className="muted block">{pl.description}</span>}
+          </span>
+          <span className="row">
+            <span className="muted">{pl.sentenceCount}</span>
+            {offline.has(pl.id) && <span className="badge offline">offline</span>}
+          </span>
+        </Link>
       ))}
     </main>
   );

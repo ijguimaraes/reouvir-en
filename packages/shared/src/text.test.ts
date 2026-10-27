@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { countWords, hasEmoji, hasUrl, normalizeText, slugify, wordRangeForLevel } from "./text";
+import { countWords, hasEmoji, hasUrl, checkSentenceText, normalizeText, slugify } from "./text";
 
 describe("text", () => {
   it("normaliza espaços e aspas", () => {
@@ -19,7 +19,11 @@ describe("text", () => {
   });
   it("conta palavras e faixas", () => {
     expect(countWords("I am a Java developer.")).toBe(5);
-    expect(wordRangeForLevel("a1")).toEqual([4, 10]);
-    expect(wordRangeForLevel("X")).toBeNull();
+  });
+  it("avisa da faixa de palavras só quando ela é informada", () => {
+    expect(checkSentenceText("I am a Java developer.").warnings).toEqual([]);
+    expect(checkSentenceText("I am a Java developer.", [4, 10]).warnings).toEqual([]);
+    expect(checkSentenceText("Hello.", [4, 10]).warnings).toEqual(["1 palavras (faixa: 4–10)"]);
+    expect(checkSentenceText("see https://x.com now").errors).toEqual(["contém URL"]);
   });
 });

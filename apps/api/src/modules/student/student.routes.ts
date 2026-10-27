@@ -49,7 +49,7 @@ export function registerStudentRoutes(
       }),
     );
     return {
-      id: p.id, version: p.version, contextName: p.context_name, levelCode: p.level_code, topicName: p.topic_name,
+      id: p.id, version: p.version, contextName: p.context_name, title: p.title, description: p.description,
       sentences: withAudio,
       state,
     };
@@ -69,7 +69,7 @@ export function registerStudentRoutes(
     const sentences = await repo.sentences(id);
     const audios = await mapPool(sentences, 4, (s) => deps.audio.ensure(s.text, req.authUser!.id));
     return {
-      playlistId: p.id, version: p.version, contextName: p.context_name, levelCode: p.level_code, topicName: p.topic_name,
+      playlistId: p.id, version: p.version, contextName: p.context_name, title: p.title, description: p.description,
       sentences: sentences.map((s, i) => ({ id: s.id, position: s.position, text: s.text, audioUrl: audios[i]!.url, durationMs: audios[i]!.durationMs })),
     };
   });

@@ -4,7 +4,7 @@ import type { PublicUser } from "@reouvir/shared";
 import { toggleTheme } from "@reouvir/shared/theme";
 import { api } from "./api";
 import { errMsg } from "./ui";
-import { ContextsPage, LevelsPage, TopicsPage } from "./pages/Catalog";
+import { ContextsPage } from "./pages/Contexts";
 import { DashboardPage } from "./pages/Dashboard";
 import { ContextDetailPage } from "./pages/ContextDetail";
 import { PlaylistDetailPage } from "./pages/Playlists";
@@ -45,8 +45,6 @@ function Login({ onUser }: { onUser: (u: PublicUser) => void }) {
 const NAV: [string, string][] = [
   ["/", "Painel"],
   ["/contexts", "Contextos"],
-  ["/levels", "Níveis"],
-  ["/topics", "Tópicos"],
   ["/users", "Usuários"],
 ];
 
@@ -79,8 +77,6 @@ export function App() {
             <Route path="/" element={<DashboardPage />} />
             <Route path="/contexts/:id" element={<ContextDetailPage />} />
             <Route path="/playlists/:id" element={<PlaylistDetailPage />} />
-            <Route path="/levels" element={<LevelsPage />} />
-            <Route path="/topics" element={<TopicsPage />} />
             <Route path="/contexts" element={<ContextsPage />} />
             <Route path="/users" element={<UsersPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />

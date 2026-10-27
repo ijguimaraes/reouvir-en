@@ -2,58 +2,45 @@ import type { CatalogDto, PlayerSettings, PlayerState } from "@reouvir/shared";
 import type { Queryable } from "../../db/pool";
 
 export interface PublishedPlaylistRow {
-  id: string; version: number; context_name: string; level_code: string; topic_name: string;
+  id: string; version: number; context_name: string; title: string; description: string;
 }
 export interface PublishedSentenceRow { id: string; position: number; text: string }
 
 export class StudentRepository {
   constructor(private db: Queryable) {}
 
-  /** Árvore contexto → nível → tópico; só playlists publicadas e itens ativos, na ordem do currículo. */
+  /** Contexto → playlists; só as publicadas, de contextos ativos, na ordem definida pelo administrador. */
   async catalog(): Promise<CatalogDto> {
     const { rows } = await this.db.query<{
-      playlist_id: string; sentence_count: number;
+      id: string; slug: string; title: string; description: string; position: number; sentence_count: number;
       context_id: string; context_slug: string; context_name: string; context_description: string; category: string;
-      level_id: string; level_code: string; level_name: string;
-      topic_id: string; topic_name: string;
     }>(
-      `SELECT p.id AS playlist_id,
+      `SELECT p.id, p.slug, p.title, p.description, p.position,
               (SELECT count(*)::int FROM sentences s WHERE s.playlist_id = p.id) AS sentence_count,
               c.id AS context_id, c.slug AS context_slug, c.name AS context_name,
-              c.description AS context_description, c.category,
-              l.id AS level_id, l.code AS level_code, l.name AS level_name,
-              t.id AS topic_id, t.name AS topic_name
+              c.description AS context_description, c.category
          FROM playlists p
          JOIN contexts c ON c.id = p.context_id AND c.active
-         JOIN grammar_topics t ON t.id = p.grammar_topic_id AND t.active
-         JOIN levels l ON l.id = t.level_id AND l.active
         WHERE p.status = 'published'
-        ORDER BY c.category, c.name, l.sort_order, l.name, t.sort_order, t.name`,
+        ORDER BY c.category, c.name, p.position`,
     );
     const contexts: CatalogDto["contexts"] = [];
     for (const r of rows) {
       let ctx = contexts.find((c) => c.id === r.context_id);
       if (!ctx) {
-        ctx = { id: r.context_id, slug: r.context_slug, name: r.context_name, description: r.context_description, category: r.category, levels: [] };
+        ctx = { id: r.context_id, slug: r.context_slug, name: r.context_name, description: r.context_description, category: r.category, playlists: [] };
         contexts.push(ctx);
       }
-      let lvl = ctx.levels.find((l) => l.id === r.level_id);
-      if (!lvl) {
-        lvl = { id: r.level_id, code: r.level_code, name: r.level_name, topics: [] };
-        ctx.levels.push(lvl);
-      }
-      lvl.topics.push({ playlistId: r.playlist_id, topicId: r.topic_id, name: r.topic_name, sentenceCount: r.sentence_count });
+      ctx.playlists.push({ id: r.id, slug: r.slug, title: r.title, description: r.description, position: r.position, sentenceCount: r.sentence_count });
     }
     return { contexts };
   }
 
   async publishedPlaylist(id: string): Promise<PublishedPlaylistRow | null> {
     const { rows } = await this.db.query<PublishedPlaylistRow>(
-      `SELECT p.id, p.version, c.name AS context_name, l.code AS level_code, t.name AS topic_name
+      `SELECT p.id, p.version, c.name AS context_name, p.title, p.description
          FROM playlists p
          JOIN contexts c ON c.id = p.context_id AND c.active
-         JOIN grammar_topics t ON t.id = p.grammar_topic_id AND t.active
-         JOIN levels l ON l.id = t.level_id AND l.active
         WHERE p.id = $1 AND p.status = 'published'`,
       [id],
     );
@@ -74,8 +61,6 @@ export class StudentRepository {
       `SELECT s.id, s.text FROM sentences s
          JOIN playlists p ON p.id = s.playlist_id AND p.status = 'published'
          JOIN contexts c ON c.id = p.context_id AND c.active
-         JOIN grammar_topics t ON t.id = p.grammar_topic_id AND t.active
-         JOIN levels l ON l.id = t.level_id AND l.active
         WHERE s.id = $1`,
       [id],
     );

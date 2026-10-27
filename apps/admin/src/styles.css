@@ -41,4 +41,5 @@ tr.dragover td { border-top: 2px solid var(--accent); }
 td.handle { cursor: grab; color: var(--text-muted); width: 24px; }
 td input.text { width: 100%; }
 td input.pos { width: 56px; }
+.stack { display: grid; gap: 6px; }
 .login { max-width: 360px; margin: 10vh auto; padding: 16px; display: grid; gap: 12px; }
