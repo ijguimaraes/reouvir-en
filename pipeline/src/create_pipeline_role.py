@@ -1,6 +1,6 @@
 """Cria (ou atualiza) a role do Postgres usada pela pipeline, com o mínimo de permissões.
 
-A pipeline só precisa de: ler contextos e playlists; criar e alterar níveis e tópicos; gravar frases. Nada de
+A pipeline só precisa de: ler contextos e playlists; gravar frases. Nada de
 usuários, tokens, configurações nem progresso de alunos. Esta role NÃO é superusuária e NÃO é dona de tabelas.
 
 Uso (conectado como um usuário administrador do banco):
@@ -11,8 +11,8 @@ Uso (conectado como um usuário administrador do banco):
 - Role já existente: só reaplica as permissões (idempotente). A senha só muda com --rotate.
 - Sempre termina verificando, conectado como a nova role, o que ela pode e o que NÃO pode fazer.
 
-Por que UPDATE em playlists e INSERT em playlists? Os triggers do banco rodam com o direito de quem grava:
-subir a `version` da playlist (UPDATE só na coluna version) e criar a playlist vazia de um tópico novo (INSERT).
+Por que UPDATE em playlists? Os triggers do banco rodam com o direito de quem grava: subir a `version` da playlist
+(UPDATE só na coluna version). Playlists e contextos são criados no backoffice, nunca pela pipeline.
 """
 import argparse
 import os
@@ -30,10 +30,8 @@ DEFAULT_ROLE = "pipeline_writer"
 
 # (tabela, privilégios). Tudo o que não está aqui é negado.
 GRANTS = [
-    ("levels", ["SELECT", "INSERT", "UPDATE"]),
-    ("grammar_topics", ["SELECT", "INSERT", "UPDATE"]),
     ("contexts", ["SELECT"]),
-    ("playlists", ["SELECT", "INSERT"]),
+    ("playlists", ["SELECT"]),
     ("sentences", ["SELECT", "INSERT", "UPDATE", "DELETE"]),
 ]
 COLUMN_GRANTS = [("playlists", "UPDATE", ["version"])]
@@ -51,8 +49,7 @@ SHOULD_FAIL = [
     "UPDATE playlists SET status = 'published' WHERE false",
     "DELETE FROM playlists WHERE false",
     "UPDATE contexts SET name = name WHERE false",
-    "DELETE FROM grammar_topics WHERE false",
-    "DELETE FROM levels WHERE false",
+    "INSERT INTO playlists (context_id, title, slug, position) SELECT NULL, 'x', 'x', 1 WHERE false",
     "CREATE TABLE pipeline_should_not_exist (id int)",
 ]
 

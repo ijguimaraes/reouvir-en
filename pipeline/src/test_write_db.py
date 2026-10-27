@@ -27,7 +27,7 @@ from build_prompt import ROOT
 ADMIN = os.environ.get("PIPELINE_TEST_ADMIN_URL")
 MIGRATIONS = ROOT / "apps" / "api" / "src" / "db" / "migrations"
 TEMPLATE = "tpl_reouvir_pipeline"
-TOPIC = "subject-pronouns-and-verb-to-be"
+PLAYLIST = "test-playlist"
 CTX = {"slug": "test-context", "scenes": [{"id": "intro"}, {"id": "work"}]}
 
 
@@ -76,6 +76,7 @@ class Base(unittest.TestCase):
         self.assertEqual(cpr.main(["--admin-url", self.admin_url, "--role", self.role, "--env-file", str(env)]), 0)
         self.url = env.read_text().split("=", 1)[1].strip()
         self.admin("INSERT INTO contexts (slug, name, category) VALUES (%s, 'Test', 'Test')", (CTX["slug"],))
+        self.add_playlist(CTX["slug"], PLAYLIST)
 
     def tearDown(self):
         with psycopg.connect(ADMIN, autocommit=True) as c:
@@ -88,8 +89,13 @@ class Base(unittest.TestCase):
             cur = c.execute(q, params)
             return cur.fetchall() if cur.description else None
 
+    def add_playlist(self, context_slug, slug, position=1):
+        """Playlists nascem no backoffice; aqui o teste faz o papel dele."""
+        self.admin("INSERT INTO playlists (context_id, title, slug, position) "
+                   "SELECT id, 'Playlist de teste', %s, %s FROM contexts WHERE slug = %s", (slug, position, context_slug))
+
     def run_w(self, its, **kw):
-        return w.run(self.url, TOPIC, CTX, its, **kw)
+        return w.run(self.url, PLAYLIST, CTX, its, **kw)
 
     def rows(self):
         return self.admin("SELECT s.position, s.text, s.id FROM sentences s ORDER BY s.position")
@@ -127,15 +133,12 @@ class RoleTests(Base):
 
 
 class WriteTests(Base):
-    def test_first_write_creates_catalog_and_playlist(self):
+    def test_first_write_fills_the_playlist(self):
         its = [sent("I am very happy today.", "i-am", "intro"), sent("She is at work now.", "he-she-is", "work"),
                sent("I'm ready for work.", "contraction", "intro")]
         rep = self.run_w(its, prompt_version="v9", model="m1")
         self.assertEqual((rep["added"], rep["kept"], rep["removed"]), (3, 0, 0))
-        self.assertTrue(any("nível A1 criado" in a for a in rep["actions"]))
-        self.assertEqual(self.admin("SELECT code, sort_order FROM levels"), [("A1", 1)])
-        self.assertEqual(self.admin("SELECT slug, sort_order FROM grammar_topics"), [(TOPIC, 1)])
-        self.assertEqual(self.admin("SELECT status FROM playlists"), [("draft",)])
+        self.assertEqual(self.admin("SELECT status, title, slug, position FROM playlists"), [("draft", "Playlist de teste", PLAYLIST, 1)])
         rows = self.rows()
         self.assertEqual([r[0] for r in rows], [1, 2, 3])
         self.assertEqual([r[1] for r in rows][2], "She is at work now.")   # cena 'work' depois da 'intro'
@@ -148,8 +151,6 @@ class WriteTests(Base):
         rep = self.run_w(items(5), dry_run=True)
         self.assertTrue(rep["dry_run"])
         self.assertEqual(rep["added"], 5)
-        self.assertEqual(self.admin("SELECT count(*) FROM levels")[0][0], 0)
-        self.assertEqual(self.admin("SELECT count(*) FROM grammar_topics")[0][0], 0)
         self.assertEqual(self.admin("SELECT count(*) FROM sentences")[0][0], 0)
 
     def test_rerun_with_same_input_is_a_noop_and_does_not_bump_version(self):
@@ -200,38 +201,48 @@ class WriteTests(Base):
         with self.assertRaises(w.Refusal) as e:
             self.run_w(items(3))
         self.assertIn("backoffice", str(e.exception))
-        self.assertEqual(self.admin("SELECT count(*) FROM levels")[0][0], 0)   # nem o catálogo ficou pela metade
+        self.assertEqual(self.admin("SELECT count(*) FROM sentences")[0][0], 0)
+
+    def test_missing_playlist_gives_a_clear_message_and_creates_nothing(self):
+        with self.assertRaises(w.Refusal) as e:
+            w.run(self.url, "nao-existe", CTX, items(3))
+        self.assertIn("nao-existe", str(e.exception))
+        self.assertIn("backoffice", str(e.exception))
+        self.assertEqual(self.admin("SELECT count(*) FROM playlists")[0][0], 1)    # a pipeline não cria playlist
+        self.assertEqual(self.admin("SELECT count(*) FROM sentences")[0][0], 0)
+
+    def test_playlist_slug_only_identifies_a_playlist_inside_its_context(self):
+        self.admin("INSERT INTO contexts (slug, name, category) VALUES ('other', 'Other', 'X')")
+        self.add_playlist("other", PLAYLIST)                         # mesmo slug, outro contexto
+        self.run_w(items(2))
+        per_context = self.admin("SELECT c.slug, count(s.id) FROM contexts c JOIN playlists p ON p.context_id = c.id "
+                                 "LEFT JOIN sentences s ON s.playlist_id = p.id GROUP BY c.slug ORDER BY c.slug")
+        self.assertEqual(per_context, [("other", 0), (CTX["slug"], 2)])
 
     def test_duplicate_after_normalization_is_refused_before_touching_the_db(self):
         with self.assertRaises(w.Refusal):
             self.run_w([sent("It's very nice here."), sent("It’s  very nice here.")])
-        self.assertEqual(self.admin("SELECT count(*) FROM levels")[0][0], 0)
+        self.assertEqual(self.admin("SELECT count(*) FROM sentences")[0][0], 0)
 
     def test_text_is_normalized_like_the_database_does(self):
         self.run_w([sent("  It’s   very nice here today.  ")])
         self.assertEqual(self.rows()[0][1], "It's very nice here today.")
 
-    def test_catalog_difference_warns_and_only_updates_with_flag(self):
-        self.run_w(items(3))
-        self.admin("UPDATE grammar_topics SET name = 'Old name'")
-        rep = self.run_w(items(3))
-        self.assertTrue(any("difere do currículo" in x for x in rep["warnings"]))
-        self.assertEqual(self.admin("SELECT name FROM grammar_topics"), [("Old name",)])
-        self.run_w(items(3), update_catalog=True)
-        self.assertNotEqual(self.admin("SELECT name FROM grammar_topics")[0][0], "Old name")
-
-    def test_topic_slug_in_another_level_is_refused(self):
-        self.run_w(items(3))
-        self.admin("INSERT INTO levels (code, name, sort_order) VALUES ('ZZ', 'ZZ', 9)")
-        self.admin("UPDATE grammar_topics SET level_id = (SELECT id FROM levels WHERE code = 'ZZ')")
+    def test_word_range_is_optional_and_enforced_when_given(self):
+        long_one = sent("This sentence has quite a few more words than the short range allows here.")
+        self.assertEqual(self.run_w(items(2) + [long_one])["added"], 3)           # sem faixa, vale
         with self.assertRaises(w.Refusal):
-            self.run_w(items(3))
+            self.run_w(items(2) + [long_one], word_range=(4, 10), replace=True)
+        self.assertEqual(w.parse_words("4-10"), (4, 10))
+        self.assertIsNone(w.parse_words(None))
+        with self.assertRaises(SystemExit):
+            w.parse_words("10-4")
 
     def test_failure_inside_the_transaction_rolls_everything_back(self):
         self.run_w(items(3))
         v, before = self.version(), self.rows()
         # força o gravador a errar DEPOIS de apagar e inserir: o hash esperado fica errado, e a conferência final
-        # no banco falha. Tudo (inclusive o catálogo e a versão) tem de voltar ao que era.
+        # no banco falha. Tudo (inclusive a versão) tem de voltar ao que era.
         wrong = lambda t: hashlib.sha256((t + "!").encode()).hexdigest()   # distintos entre si, mas diferentes dos do banco
         with mock.patch.object(w, "text_hash", wrong):
             with self.assertRaises(RuntimeError):
@@ -244,14 +255,8 @@ class WriteTests(Base):
         for bad in [invisible, "I am 20 years old now.", "Visit www.example.com now please.",
                     "I am very caf\u00e9 ready today.", "I am very happy today", "Ok."]:
             with self.assertRaises(w.Refusal, msg=repr(bad)):
-                self.run_w(items(2) + [sent(bad)])
+                self.run_w(items(2) + [sent(bad)], word_range=(4, 10))
         self.assertEqual(self.admin("SELECT count(*) FROM sentences")[0][0], 0)
-
-    def test_new_topic_creates_empty_playlists_in_every_existing_context(self):
-        self.admin("INSERT INTO contexts (slug, name, category) VALUES ('other', 'Other', 'X')")
-        self.run_w(items(2))
-        self.assertEqual(self.admin("SELECT count(*) FROM playlists")[0][0], 2)       # um por contexto, por trigger
-        self.assertEqual(self.admin("SELECT count(*) FROM sentences")[0][0], 2)        # frases só no contexto alvo
 
     def test_pipeline_role_cannot_touch_students_data_even_through_write_db(self):
         self.run_w(items(2))
@@ -260,16 +265,17 @@ class WriteTests(Base):
 
 
 class RealData(Base):
-    """Usa as 100 frases reais do tópico 1, se estiverem em PIPELINE_DATA_DIR."""
-    FINAL = (w.data_dir() / "runs" / "software-engineer-interview-java" / "A1" / TOPIC / "balanced" / "final100.json")
+    """Usa as 100 frases reais de uma execução antiga, se estiverem em PIPELINE_DATA_DIR."""
+    FINAL = (w.data_dir() / "runs" / "software-engineer-interview-java" / "A1" / "subject-pronouns-and-verb-to-be" / "balanced" / "final100.json")
 
     @unittest.skipUnless(FINAL.exists(), "final100.json não encontrado")
     def test_real_playlist_is_written_grouped_by_scene(self):
         import yaml
         ctx = yaml.safe_load((ROOT / "pipeline" / "contexts" / "entrevista-java.yaml").read_text())
         self.admin("INSERT INTO contexts (slug, name, category) VALUES (%s, 'Java', 'Work')", (ctx["slug"],))
+        self.add_playlist(ctx["slug"], PLAYLIST)
         data = json.loads(self.FINAL.read_text())["sentences"]
-        rep = w.run(self.url, TOPIC, ctx, data)
+        rep = w.run(self.url, PLAYLIST, ctx, data)
         self.assertEqual((rep["total"], rep["added"]), (100, 100))
         scenes = [m["scene"] for (m,) in self.admin("SELECT metadata FROM sentences ORDER BY position")]
         order = [s["id"] for s in ctx["scenes"]]

@@ -1,24 +1,25 @@
-"""Etapa 4: grava a playlist de um tópico, para um contexto, direto no Postgres.
+"""Grava as frases de uma playlist, num contexto, direto no Postgres.
 
 Uso:
-  python write_db.py --topic <slug> --context ../contexts/<x>.yaml --input final.json \
-      [--dry-run] [--replace] [--allow-published] [--update-catalog] [--prompt-version v1] [--model <id>]
+  python write_db.py --playlist <slug> --context ../contexts/<x>.yaml --input final.json \
+      [--dry-run] [--replace] [--allow-published] [--words MIN-MAX] [--prompt-version v1] [--model <id>]
+
+A playlist é identificada por (slug do contexto, slug da playlist) e PRECISA EXISTIR: contextos e playlists são
+criados no backoffice. O contexto vem do `slug` do arquivo --context (que também traz as cenas, usadas na ordem).
 
 Conexão: PIPELINE_DATABASE_URL (variável de ambiente ou PIPELINE_DATA_DIR/pipeline-db.env, criado por
 create_pipeline_role.py). Use a role da pipeline, não a do administrador.
 
 O que faz, numa única transação:
-  1. Catálogo: cria o nível e o tópico do currículo se faltarem (trigger cria a playlist vazia do tópico
-     em todos os contextos). Se já existem com nome ou ordem diferentes, só avisa; atualiza com --update-catalog.
-  2. Acha a playlist (tópico x contexto). O CONTEXTO PRECISA EXISTIR: ele é criado no backoffice.
-  3. Proteções: recusa playlist publicada (sem --allow-published) e playlist com frases (sem --replace).
-  4. Diff por hash do texto normalizado: remove as frases que saíram, renumera as que ficaram e insere as
+  1. Acha a playlist. Recusa se o contexto ou a playlist não existem.
+  2. Proteções: recusa playlist publicada (sem --allow-published) e playlist com frases (sem --replace).
+  3. Diff por hash do texto normalizado: remove as frases que saíram, renumera as que ficaram e insere as
      novas. Frases iguais mantêm o mesmo id (e, portanto, o áudio já gerado).
-  5. Confere o resultado no próprio banco (posições, textos, hashes) antes de confirmar.
+  4. Confere o resultado no próprio banco (posições, textos, hashes) antes de confirmar.
   --dry-run executa tudo isso e DESFAZ no fim: mostra exatamente o que aconteceria, inclusive os
   erros que só o banco detectaria.
 
-Não calcula text_hash, char_count nem version (triggers do banco) e não mexe em status.
+Não calcula text_hash, char_count nem version (triggers do banco) e não mexe em status, título nem posição.
 """
 import argparse
 import json
@@ -30,7 +31,7 @@ import yaml
 
 import balance
 from dbconn import connection_url
-from validate import load_curriculum, normalize_text, text_errors, text_hash
+from validate import normalize_text, text_errors, text_hash
 from vocab import data_dir
 
 
@@ -42,7 +43,7 @@ def build_rows(items, scene_ids, structure_ids, prompt_version, model, word_rang
     """Normaliza, recusa texto inválido e duplicatas, ordena por cena e monta as linhas (position, text, hash, metadata).
 
     O gravador é a última linha de defesa: não confia que o arquivo passou pelo validate.py. Aplica as regras de
-    texto (URL, emoji, dígito, caractere invisível ou não-ASCII, pontuação final, faixa de palavras do nível).
+    texto (URL, emoji, dígito, caractere invisível ou não-ASCII, pontuação final e, se informada, a faixa de palavras).
     A gramática e o vocabulário continuam sendo do validate.py."""
     seen, norm, bad = {}, [], []
     for x in items:
@@ -78,59 +79,24 @@ def _same_meta(a, b):
     return json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True)
 
 
-def apply(conn, topic, context, rows, *, replace, allow_published, update_catalog):
+def apply(conn, playlist_slug, context, rows, *, replace, allow_published):
     """Roda a gravação dentro da transação aberta. Devolve o relatório."""
     cur = conn.cursor()
-    level = topic["level"]
     rep = {"actions": [], "warnings": []}
 
-    # 1) catálogo -------------------------------------------------------------------------------
-    lv = cur.execute("SELECT id, name, sort_order FROM levels WHERE code = %s", (level["code"],)).fetchone()
-    if lv is None:
-        lv_id = cur.execute("INSERT INTO levels (code, name, sort_order) VALUES (%s, %s, %s) RETURNING id",
-                            (level["code"], level["name"], level["order"])).fetchone()[0]
-        rep["actions"].append(f"nível {level['code']} criado")
-    else:
-        lv_id = lv[0]
-        if (lv[1], lv[2]) != (level["name"], level["order"]):
-            if update_catalog:
-                cur.execute("UPDATE levels SET name = %s, sort_order = %s WHERE id = %s", (level["name"], level["order"], lv_id))
-                rep["actions"].append(f"nível {level['code']} atualizado")
-            else:
-                rep["warnings"].append(f"nível {level['code']} difere do currículo (banco: {lv[1]!r}/{lv[2]}; "
-                                       f"currículo: {level['name']!r}/{level['order']}); use --update-catalog")
-    tp = cur.execute("SELECT id, level_id, name, sort_order, active FROM grammar_topics WHERE slug = %s", (topic["slug"],)).fetchone()
-    if tp is None:
-        tp_id = cur.execute("INSERT INTO grammar_topics (level_id, slug, name, sort_order) VALUES (%s, %s, %s, %s) RETURNING id",
-                            (lv_id, topic["slug"], topic["name"], topic["order"])).fetchone()[0]
-        rep["actions"].append(f"tópico {topic['slug']} criado (playlists vazias nascem por trigger)")
-    else:
-        tp_id = tp[0]
-        if tp[1] != lv_id:
-            raise Refusal(f"o tópico {topic['slug']!r} já existe em OUTRO nível; o slug é único no catálogo")
-        if (tp[2], tp[3]) != (topic["name"], topic["order"]):
-            if update_catalog:
-                cur.execute("UPDATE grammar_topics SET name = %s, sort_order = %s WHERE id = %s", (topic["name"], topic["order"], tp_id))
-                rep["actions"].append(f"tópico {topic['slug']} atualizado (muda a ordem que o aluno vê)")
-            else:
-                rep["warnings"].append(f"tópico {topic['slug']} difere do currículo (banco: {tp[2]!r}/{tp[3]}; "
-                                       f"currículo: {topic['name']!r}/{topic['order']}); use --update-catalog")
-        if not tp[4]:
-            rep["warnings"].append("o tópico está INATIVO no banco; os alunos não o veem")
-
-    # 2) contexto e playlist --------------------------------------------------------------------
+    # 1) contexto e playlist --------------------------------------------------------------------
     cx = cur.execute("SELECT id FROM contexts WHERE slug = %s", (context["slug"],)).fetchone()
     if cx is None:
-        raise Refusal(f"o contexto {context['slug']!r} não existe no banco. Crie-o no backoffice "
-                      "(isso também cria as playlists vazias) e rode de novo.")
-    pl = cur.execute("SELECT id, status, version FROM playlists WHERE grammar_topic_id = %s AND context_id = %s",
-                     (tp_id, cx[0])).fetchone()
+        raise Refusal(f"o contexto {context['slug']!r} não existe no banco. Crie-o no backoffice e rode de novo.")
+    pl = cur.execute("SELECT id, status, version FROM playlists WHERE context_id = %s AND slug = %s",
+                     (cx[0], playlist_slug)).fetchone()
     if pl is None:
-        raise Refusal("a playlist (tópico x contexto) não existe; o trigger deveria tê-la criado. Confira as migrações.")
+        raise Refusal(f"a playlist {playlist_slug!r} não existe no contexto {context['slug']!r}. "
+                      "Crie-a no backoffice (Contextos > Playlists) e rode de novo.")
     pl_id, status, version_before = pl
     rep.update(playlist_id=str(pl_id), status=status, version_before=version_before)
 
-    # 3) diff por hash ------------------------------------------------------------------------------
+    # 2) diff por hash ------------------------------------------------------------------------------
     cur_rows = cur.execute("SELECT id, position, text_hash, metadata FROM sentences WHERE playlist_id = %s ORDER BY position",
                            (pl_id,)).fetchall()
     by_hash = {r[2]: r for r in cur_rows}
@@ -150,7 +116,7 @@ def apply(conn, topic, context, rows, *, replace, allow_published, update_catalo
         raise Refusal(f"a playlist já tem {len(cur_rows)} frases. Use --replace para substituir "
                       f"(+{len(added)} novas, -{len(removed)} removidas, {len(moved)} reordenadas/atualizadas).")
 
-    # 4) aplica (UNIQUE de position é DEFERRABLE: a renumeração cabe na transação) ----------------
+    # 3) aplica (UNIQUE de position é DEFERRABLE: a renumeração cabe na transação) ----------------
     if removed:
         cur.execute("DELETE FROM sentences WHERE id = ANY(%s)", ([r[0] for r in removed],))
     if moved:
@@ -163,7 +129,7 @@ def apply(conn, topic, context, rows, *, replace, allow_published, update_catalo
                     (pl_id, [r["position"] for r in added], [r["text"] for r in added],
                      [json.dumps(r["metadata"]) for r in added]))
 
-    # 5) confere no banco, antes de confirmar --------------------------------------------------------
+    # 4) confere no banco, antes de confirmar --------------------------------------------------------
     got = cur.execute("SELECT position, text, text_hash FROM sentences WHERE playlist_id = %s ORDER BY position", (pl_id,)).fetchall()
     want = [(r["position"], r["text"], r["hash"]) for r in rows]
     if got != want:
@@ -174,19 +140,18 @@ def apply(conn, topic, context, rows, *, replace, allow_published, update_catalo
     return rep
 
 
-def run(url, topic_slug, context, items, *, dry_run=False, replace=False, allow_published=False,
-        update_catalog=False, prompt_version="v1", model=None):
-    topic = next((t for t in load_curriculum() if t["slug"] == topic_slug), None)
-    if topic is None:
-        raise Refusal(f"tópico desconhecido no currículo: {topic_slug}")
+def run(url, playlist_slug, context, items, *, dry_run=False, replace=False, allow_published=False,
+        prompt_version="v1", model=None, word_range=None):
     if not items:
         raise Refusal("nenhuma frase para gravar")
     scene_ids = [s["id"] for s in context.get("scenes", [])]
-    wr = topic["level"]["sentence_words"]
-    rows = build_rows(items, scene_ids, [s["id"] for s in topic["structures"]], prompt_version, model, (wr["min"], wr["max"]))
+    # Sem currículo, a ordem das estruturas dentro de cada cena é a da primeira aparição no arquivo de entrada.
+    structure_ids = list(dict.fromkeys(
+        x.get("claimed") or x.get("structure") for x in items if isinstance(x, dict) and (x.get("claimed") or x.get("structure"))))
+    rows = build_rows(items, scene_ids, structure_ids, prompt_version, model, word_range or (0, 10**6))
     with psycopg.connect(url) as conn:
         try:
-            rep = apply(conn, topic, context, rows, replace=replace, allow_published=allow_published, update_catalog=update_catalog)
+            rep = apply(conn, playlist_slug, context, rows, replace=replace, allow_published=allow_published)
         except BaseException:
             conn.rollback()
             raise
@@ -194,17 +159,13 @@ def run(url, topic_slug, context, items, *, dry_run=False, replace=False, allow_
             conn.rollback()
         else:
             conn.commit()
-    rep.update(dry_run=dry_run, topic=topic_slug, context=context["slug"], level=topic["level"]["code"], total=len(rows))
-    if not 90 <= len(rows) <= 110:
-        rep["warnings"].append(f"{len(rows)} frases (a playlist costuma ter ~100)")
+    rep.update(dry_run=dry_run, playlist=playlist_slug, context=context["slug"], total=len(rows))
     return rep
 
 
 def print_report(r):
     tag = "[DRY RUN, nada foi gravado] " if r["dry_run"] else ""
-    print(f"{tag}{r['level']} / {r['topic']} / {r['context']}  (playlist {r['status']}, versão {r['version_before']} -> {r['version_after']})")
-    for a in r["actions"]:
-        print("  catálogo:", a)
+    print(f"{tag}{r['context']} / {r['playlist']}  (playlist {r['status']}, versão {r['version_before']} -> {r['version_after']})")
     print(f"  frases: {r['total']} no total | {r['kept']} mantidas (áudio reaproveitado), {r['added']} novas "
           f"(áudio gerado na primeira escuta), {r['removed']} removidas (áudio fica sem uso), {r['moved']} reordenadas/atualizadas")
     if not (r["added"] or r["removed"] or r["moved"]):
@@ -213,15 +174,28 @@ def print_report(r):
         print("  AVISO:", w)
 
 
+def parse_words(text):
+    """'4-10' -> (4, 10); sem valor, sem faixa."""
+    if not text:
+        return None
+    try:
+        lo, hi = (int(x) for x in text.split("-"))
+    except ValueError:
+        raise SystemExit(f"--words precisa ser MIN-MAX, por exemplo 4-10 (recebi {text!r})")
+    if not 0 < lo <= hi:
+        raise SystemExit(f"--words inválido: {text!r}")
+    return lo, hi
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--topic", required=True)
-    ap.add_argument("--context", required=True, help="arquivo contexts/*.yaml")
+    ap.add_argument("--playlist", required=True, help="slug da playlist, dentro do contexto")
+    ap.add_argument("--context", required=True, help="arquivo contexts/*.yaml (o slug dele é o do contexto no banco)")
     ap.add_argument("--input", required=True, help='JSON {"sentences": [...]} (saída de select_final.py)')
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--replace", action="store_true")
     ap.add_argument("--allow-published", action="store_true")
-    ap.add_argument("--update-catalog", action="store_true")
+    ap.add_argument("--words", help="faixa de palavras por frase, ex.: 4-10 (opcional; sem ela só vale o texto limpo)")
     ap.add_argument("--prompt-version", default="v1")
     ap.add_argument("--model")
     a = ap.parse_args(argv)
@@ -232,8 +206,8 @@ def main(argv=None):
     data = json.loads(Path(a.input).read_text())
     items = data["sentences"] if isinstance(data, dict) else data
     try:
-        rep = run(url, a.topic, context, items, dry_run=a.dry_run, replace=a.replace, allow_published=a.allow_published,
-                  update_catalog=a.update_catalog, prompt_version=a.prompt_version, model=a.model)
+        rep = run(url, a.playlist, context, items, dry_run=a.dry_run, replace=a.replace, allow_published=a.allow_published,
+                  prompt_version=a.prompt_version, model=a.model, word_range=parse_words(a.words))
     except Refusal as e:
         print("RECUSADO:", e)
         return 2
