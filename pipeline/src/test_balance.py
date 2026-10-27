@@ -89,5 +89,66 @@ class SelectFinal(unittest.TestCase):
         self.assertEqual(sum(1 for x in chosen if x["scene"] == "s1"), 5)
 
 
+class SameStartCap(unittest.TestCase):
+    def pool(self):
+        acc = [item(f"There is {i}.", "a", "s1") for i in range(30)]
+        acc += [item(f"In place {i}, there is one.", "a", "s2") for i in range(8)]
+        acc += [item(f"Is there one {i}?", "a", "s1") for i in range(8)]
+        acc += [item(f"Are there two {i}?", "a", "s2") for i in range(8)]
+        return acc
+
+    def count(self, chosen, word):
+        return sum(1 for x in chosen if b.first_word(x["text"]) == word)
+
+    def test_first_word_ignores_punctuation_and_contractions(self):
+        self.assertEqual(b.first_word("There's a bug."), "there")
+        self.assertEqual(b.first_word("Yes, there is."), "yes")
+        self.assertEqual(b.first_word("  The server is up."), "the")
+
+    def test_cap_limits_the_most_common_opening(self):
+        chosen = b.select_final(self.pool(), ["a"], SCENES, n=24, max_same_start=0.25)
+        self.assertEqual(len(chosen), 24)
+        self.assertEqual(self.count(chosen, "there"), 6)         # floor(.25 * 24)
+        self.assertLessEqual(max(self.count(chosen, w) for w in ("in", "is", "are")), 6)
+
+    def test_without_cap_nothing_changes(self):
+        chosen = b.select_final(self.pool(), ["a"], SCENES, n=24)
+        self.assertGreater(self.count(chosen, "there"), 6)
+
+    def test_infeasible_cap_still_fills_the_playlist(self):
+        pool = [item(f"There is {i}.", "a", "s1") for i in range(30)] + [item("Is there one?", "a", "s1")]
+        chosen = b.select_final(pool, ["a"], SCENES, n=20, max_same_start=0.25)
+        self.assertEqual(len(chosen), 20)                       # o teto cede quando o pool não tem alternativa
+
+    def test_cap_applies_to_every_opening_and_only_then_gives_in(self):
+        pool = [item(f"There is {i}.", "a", "s1") for i in range(30)] + [item(f"Is there one {i}?", "a", "s1") for i in range(9)]
+        chosen = b.select_final(pool, ["a"], SCENES, n=20, max_same_start=0.25)
+        self.assertEqual(len(chosen), 20)
+        self.assertEqual(self.count(chosen, "is"), 5)           # floor(.25 * 20): o teto vale para toda abertura
+        self.assertEqual(self.count(chosen, "there"), 15)       # esgotadas as alternativas, o teto cede e completa com o resto do pool
+
+
+class OrderPlaylist(unittest.TestCase):
+    def test_groups_by_scene_in_context_order(self):
+        items = [item("a one", "a", "s2"), item("a two", "a", "s1"), item("b one", "b", "s2"), item("b two", "b", "s1")]
+        out = b.order_playlist(items, ["s1", "s2"], ["a", "b"])
+        self.assertEqual([x["scene"] for x in out], ["s1", "s1", "s2", "s2"])
+
+    def test_alternates_structures_inside_a_scene(self):
+        items = [item(f"a {i}", "a", "s1") for i in range(3)] + [item(f"b {i}", "b", "s1") for i in range(3)]
+        out = b.order_playlist(items, ["s1"], ["a", "b"])
+        self.assertEqual([x["claimed"] for x in out], ["a", "b", "a", "b", "a", "b"])
+
+    def test_shorter_first_within_a_structure(self):
+        items = [item("a very long sentence here", "a", "s1"), item("a short one", "a", "s1")]
+        self.assertEqual(b.order_playlist(items, ["s1"], ["a"])[0]["text"], "a short one")
+
+    def test_unknown_or_missing_scene_goes_last_and_nothing_is_lost(self):
+        items = [item("x1", "a", None), item("x2", "a", "zzz"), item("x3", "a", "s1")]
+        out = b.order_playlist(items, ["s1"], ["a"])
+        self.assertEqual(out[0]["text"], "x3")
+        self.assertEqual(len(out), 3)
+
+
 if __name__ == "__main__":
     unittest.main()

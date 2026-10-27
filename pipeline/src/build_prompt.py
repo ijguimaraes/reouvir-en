@@ -7,18 +7,25 @@ Uso:
 Com --state (gerado por validate.py --update-state), o prompt inclui as frases já aceitas (para não repetir)
 e o que ainda falta por estrutura e por cena.
 
+O `details` do contexto vem do banco (tabela `contexts`, pelo slug do arquivo, via PIPELINE_DATABASE_URL); o do YAML
+é o plano B quando não há conexão, o contexto ou o texto (ou com --offline). Cenas, personagens e vocabulário
+continuam no YAML. A origem e o sha256 do texto vão para a saída de erro.
+
 Imprime o prompt na saída padrão. Com --schema, grava também o JSON schema da resposta
 (structure e scene viram enums). O template é pipeline/prompts/<versão>/generate.md.
 """
 import argparse
+import hashlib
 import json
 import math
+import sys
 from pathlib import Path
 
 import yaml
 
 import balance
 import vocab
+from dbconn import connection_url
 
 ROOT = Path(__file__).resolve().parents[2]
 DOCS = ROOT / "docs" / "pipeline"
@@ -170,6 +177,29 @@ def build(context, topic_slug, count=40, version="v1", state=None, pool=130):
     return text, schema
 
 
+def db_details(slug):
+    """`details` do contexto no banco (texto livre do admin). None sem conexão, sem o contexto ou sem texto."""
+    url = connection_url()
+    if not url:
+        return None
+    try:
+        import psycopg
+        with psycopg.connect(url, connect_timeout=5) as conn:
+            row = conn.execute("SELECT details FROM contexts WHERE slug = %s", (slug,)).fetchone()
+    except Exception as e:  # sem banco, o YAML segue valendo
+        print(f"aviso: não li o contexto no banco ({type(e).__name__})", file=sys.stderr)
+        return None
+    return (row[0].strip() or None) if row else None
+
+
+def with_db_details(context, fetch=db_details):
+    """Troca o `details` do YAML pelo do banco, quando há. Devolve (contexto, sha256 do texto do banco ou None)."""
+    details = fetch(context["slug"])
+    if not details:
+        return context, None
+    return {**context, "details": details}, hashlib.sha256(details.encode("utf-8")).hexdigest()
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--context", required=True)
@@ -179,9 +209,16 @@ if __name__ == "__main__":
     ap.add_argument("--schema")
     ap.add_argument("--state")
     ap.add_argument("--pool", type=int, default=130)
+    ap.add_argument("--offline", action="store_true", help="não lê o banco: usa o `details` do YAML")
     a = ap.parse_args()
     state = balance.load_state(a.state, a.topic) if a.state else None
-    prompt, schema = build(yaml.safe_load(Path(a.context).read_text()), a.topic, a.count, a.version, state, a.pool)
+    context = yaml.safe_load(Path(a.context).read_text())
+    if a.offline:
+        digest = None
+    else:
+        context, digest = with_db_details(context)
+    print(f"details: {'banco, sha256 ' + digest[:12] if digest else 'YAML'}", file=sys.stderr)
+    prompt, schema = build(context, a.topic, a.count, a.version, state, a.pool)
     print(prompt)
     if a.schema:
         Path(a.schema).write_text(json.dumps(schema, indent=2))
