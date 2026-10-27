@@ -1,5 +1,7 @@
 # Pipeline de geração de frases
 
+> **Estado atual (playlists livres).** O sistema **não tem mais níveis nem tópicos gramaticais**. As playlists são criadas e ordenadas no backoffice, dentro de cada contexto, e as frases são escritas fora do sistema (numa conversa com o Claude) e gravadas com [`write_db.py`](../pipeline/src/write_db.py): `python write_db.py --playlist <slug> --context ../contexts/x.yaml --input frases.json [--dry-run] [--replace] [--allow-published] [--words 4-10]` (ver a seção 7). **O que está descrito nas seções 2 a 6 e 8 (currículo por nível e tópico, validação de gramática por tópico, rodadas, prompt e seleção final) é o fluxo anterior e ficou como legado opcional**: `build_prompt.py`, `select_final.py`, `validate.py --topic`, os `curriculum-*.yaml` e o catálogo de recursos continuam no repositório, mas o sistema não depende deles.
+
 > Rascunho de desenho. A pipeline é um **projeto à parte** (decisão do `AGENTS.md`); este documento fica aqui só para guiar o contrato com o banco e o fluxo. Se virar outro repositório, mova-o junto.
 
 ## 1. Objetivo
@@ -118,27 +120,24 @@ Decisões de desenho que valem lembrar:
 - Em tópico de **revisão aprofundada**, a seção 1.3 pede mais variantes das estruturas já ensinadas.
 - **Ainda não foi testado com um modelo.** O montador roda para os 50 tópicos, mas a qualidade das frases só aparece no protótipo da etapa 1.
 
-## 7. Gravação no banco (etapa 4)
+## 7. Gravação no banco
 
-A pipeline conecta direto no Postgres (string de conexão por variável de ambiente) e grava só o que a seção 8.1 do documento lista. **Não** calcula `text_hash`, `char_count` nem `version` (triggers), e **não** mexe em `status`.
+`write_db.py` conecta direto no Postgres (string de conexão por variável de ambiente) e grava só as frases (seção 8.1 do documento). **Não** calcula `text_hash`, `char_count` nem `version` (triggers) e **não** mexe em `status`, título nem posição.
 
-1. **Catálogo.** *Upsert* de `levels` (por `code`) e de `grammar_topics` (por `slug`) a partir dos currículos, com `sort_order` vindo do `order`. Cada tópico novo ganha, por trigger, uma playlist vazia (`draft`) em todos os contextos existentes. Mudar `sort_order` ou `level_id` de um tópico existente muda a ordem que o aluno vê; por isso essa atualização é explícita, nunca silenciosa.
-2. **Contexto.** O contexto precisa **existir** (criado no backoffice, que também cria as playlists vazias dele). A pipeline só o lê. O texto livre (`details`) vale o do **banco**, editado no backoffice: `build_prompt.py` o lê pelo slug (`PIPELINE_DATABASE_URL`) e usa o do YAML só como plano B (`--offline` ou sem conexão). Cenas, personagens e vocabulário (com nível mínimo) não existem no banco e vivem no arquivo `contexts/*.yaml`.
-3. **Playlist alvo.** Busca por `(grammar_topics.slug, contexts.slug)`.
-4. **Proteção.** Por padrão, só grava em playlist `draft`. Em `published`, recusa, a menos que se passe um flag explícito: trocar as frases vale na hora para os alunos e zera o `last_sentence_id` de quem estava nas frases removidas. Uma playlist `draft` que já tem frases também exige o flag de substituição.
-5. **Ordem e tamanho.** A playlist vem de `select_final.py` (~100 frases). A ordem é **agrupada por cena**, na ordem das cenas do contexto, como um roteiro; dentro da cena, as estruturas se alternam em rodízio e, em cada uma, as frases mais curtas vêm antes. `position` vai de 1 a n. Fora de 90 a 110 frases, avisa.
-6. **Diff por hash, não apagar tudo.** O áudio gerado custa crédito e é reaproveitado pelo hash do texto normalizado. Por isso a pipeline compara com as frases já gravadas e, numa só transação, remove as que saíram, renumera as que ficaram e insere as novas. Frase com texto alterado vira áudio órfão (custa de novo); frase idêntica não. A renumeração cabe numa transação porque `UNIQUE (playlist_id, position)` é `DEFERRABLE`.
-7. **Sem duplicatas.** Deduplica pelo texto normalizado antes do INSERT (ver seção 4).
-8. **`metadata`.** Guarda `scene`, `structure`, `prompt_version`, o modelo e, se houver, as palavras com aviso de vocabulário (`vocab_flags`), para rastrear e reavaliar depois.
-9. **Última linha de defesa.** O gravador não confia que o arquivo passou pelo `validate.py`: aplica de novo as regras de texto (URL, emoji, dígito, caractere invisível ou não-ASCII, pontuação final, faixa de palavras do nível) e recusa o arquivo inteiro se alguma frase falhar. Gramática e vocabulário continuam sendo do `validate.py`.
-10. **Conferência antes do commit.** Depois de gravar, relê as frases no próprio banco e compara posições, textos e hashes com o esperado. Se algo divergir, desfaz tudo.
+1. **Contexto e playlist.** Ambos precisam **existir** (criados no backoffice). A playlist é buscada por `(contexts.slug, playlists.slug)`; se faltar uma delas, o gravador recusa e diz o que criar. Ele nunca cria playlist. O `slug` do contexto vem do arquivo `--context` (que também traz as cenas, usadas na ordem das frases). O texto livre do contexto (`details`) vale o do **banco**, editado no backoffice; `build_prompt.py` (legado) o lê pelo slug e usa o do YAML só como plano B (`--offline`).
+2. **Proteção.** Em playlist `published`, recusa, a menos que se passe `--allow-published`: trocar as frases vale na hora para os alunos e zera o `last_sentence_id` de quem estava nas frases removidas. Uma playlist que já tem frases também exige `--replace`.
+3. **Ordem.** As frases são **agrupadas por cena**, na ordem das cenas do contexto; dentro da cena, as estruturas se alternam em rodízio (na ordem em que aparecem no arquivo) e, em cada uma, as frases mais curtas vêm antes. `position` vai de 1 a n. Sem cenas nem estruturas no arquivo, a ordem é a de entrada.
+4. **Diff por hash, não apagar tudo.** O áudio gerado custa crédito e é reaproveitado pelo hash do texto normalizado. Por isso o gravador compara com as frases já gravadas e, numa só transação, remove as que saíram, renumera as que ficaram e insere as novas. Frase com texto alterado vira áudio órfão (custa de novo); frase idêntica não. A renumeração cabe numa transação porque `UNIQUE (playlist_id, position)` é `DEFERRABLE`.
+5. **Sem duplicatas.** Deduplica pelo texto normalizado antes do INSERT.
+6. **`metadata`.** Guarda `scene`, `structure` (se vierem no arquivo), `prompt_version`, o modelo e, se houver, as palavras com aviso de vocabulário (`vocab_flags`).
+7. **Última linha de defesa.** O gravador não confia no arquivo: aplica as regras de texto (URL, emoji, dígito, caractere invisível ou não-ASCII, pontuação final e, se `--words MIN-MAX` for dado, a faixa de palavras) e recusa o arquivo inteiro se alguma frase falhar.
+8. **Conferência antes do commit.** Depois de gravar, relê as frases no próprio banco e compara posições, textos e hashes com o esperado. Se algo divergir, desfaz tudo.
 
 ### 7.1 Implementação
 
-- [`pipeline/src/write_db.py`](../pipeline/src/write_db.py): `python write_db.py --topic <slug> --context ../contexts/x.yaml --input final.json [--dry-run] [--replace] [--allow-published] [--update-catalog] [--model <id>]`. O **`--dry-run`** executa a gravação inteira, inclusive os triggers e as restrições do banco, e **desfaz no fim**: o relatório mostra exatamente o que aconteceria. Sem mudanças, nada é escrito e a `version` não sobe. Código de saída 2 em recusas esperadas.
-- [`pipeline/src/create_pipeline_role.py`](../pipeline/src/create_pipeline_role.py): cria a role `pipeline_writer` com o mínimo de permissões e grava a URL de conexão (modo 600) em `PIPELINE_DATA_DIR/pipeline-db.env`, fora do git. Rodar como administrador: `python create_pipeline_role.py --admin-url postgres://...`. Re-executar só reaplica as permissões; `--rotate` troca a senha. A role **não é superusuária nem dona de tabelas** e só pode: ler contextos e playlists, criar e alterar níveis e tópicos, gravar frases, inserir playlists (trigger de tópico novo) e subir a coluna `version`. Usuários, tokens, configurações e progresso de alunos ficam inacessíveis. O script confere isso conectando como a role.
+- [`pipeline/src/write_db.py`](../pipeline/src/write_db.py): `python write_db.py --playlist <slug> --context ../contexts/x.yaml --input frases.json [--dry-run] [--replace] [--allow-published] [--words 4-10] [--model <id>]`. O **`--dry-run`** executa a gravação inteira, inclusive os triggers e as restrições do banco, e **desfaz no fim**: o relatório mostra exatamente o que aconteceria. Sem mudanças, nada é escrito e a `version` não sobe. Código de saída 2 em recusas esperadas.
+- [`pipeline/src/create_pipeline_role.py`](../pipeline/src/create_pipeline_role.py): cria a role `pipeline_writer` com o mínimo de permissões e grava a URL de conexão (modo 600) em `PIPELINE_DATA_DIR/pipeline-db.env`, fora do git. Rodar como administrador: `python create_pipeline_role.py --admin-url postgres://...`. Re-executar só reaplica as permissões; `--rotate` troca a senha. A role **não é superusuária nem dona de tabelas** e só pode: ler contextos e playlists, gravar frases e subir a coluna `version`. Usuários, tokens, configurações e progresso de alunos ficam inacessíveis. O script confere isso conectando como a role.
 - Testes de integração (`test_write_db.py`, 21 casos) rodam contra um Postgres **descartável**, nunca o de desenvolvimento. Instruções no topo do arquivo.
-
 
 ## 8. Contexto como entrada
 

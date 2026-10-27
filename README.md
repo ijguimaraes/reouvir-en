@@ -26,13 +26,13 @@ cp .env.example .env          # ajuste SESSION_SECRET, ADMIN_*, ELEVENLABS_API_K
 pnpm install
 pnpm db:up                    # Postgres em container
 pnpm db:migrate               # dbmate up
-pnpm seed                     # administrador (ADMIN_EMAIL / ADMIN_PASSWORD) + níveis e tópicos (docs/pipeline/curriculum-*.yaml); idempotente
+pnpm seed                     # só o administrador de ADMIN_EMAIL / ADMIN_PASSWORD (o banco nasce sem contextos, playlists e frases)
 pnpm dev                      # api :3711, web :5273, admin :5274/admin/
 ```
 
 Sem `ELEVENLABS_API_KEY`, tudo funciona menos gerar áudio novo (a API responde 503 nessa rota).
 
-Fluxo no backoffice (`http://localhost:5274/admin/`): crie um **Contexto** (com o detalhamento, se quiser); as playlists vazias dos tópicos nascem junto. Níveis e tópicos vêm do `pnpm seed`; as frases chegam pela pipeline, direto no banco (o ambiente local não carrega frases nem contextos de exemplo) (seção 8 do documento); depois revise no tópico e **publique**. Para testar sem a pipeline, adicione frases à mão na tela do tópico. Depois entre como aluno em `http://localhost:5273`.
+Fluxo no backoffice (`http://localhost:5274/admin/`): crie um **Contexto** (com o detalhamento, se quiser) e, dentro dele, as **Playlists** (título, descrição e ordem). As frases chegam direto no banco por `pipeline/src/write_db.py --playlist <slug>` (seção 8 do documento; o ambiente local não carrega frases de exemplo); depois revise na tela da playlist e **publique**. Para testar sem isso, adicione frases à mão na tela da playlist. Depois entre como aluno em `http://localhost:5273`.
 
 ## Testes
 
@@ -53,7 +53,7 @@ Os testes de integração rodam `TRUNCATE` no banco de teste: nunca aponte `DATA
 1. `cp .env.example .env` e defina segredos reais (`SESSION_SECRET`, senhas, `COOKIE_SECURE=true`).
 2. `pnpm build` (gera `apps/web/dist` e `apps/admin/dist`).
 3. `docker compose --env-file .env -f infra/docker-compose.yml up -d --build` sobe `postgres`, `migrate`, `api` e `caddy` (em `127.0.0.1:$CADDY_PORT`, padrão 8080).
-4. Uma vez: `docker compose --env-file .env -f infra/docker-compose.yml run --rm api pnpm exec tsx src/seed-admin.ts`. O catálogo (níveis e tópicos) sai do repositório, porque a imagem da API não leva `docs/`: com o Postgres do Compose em `127.0.0.1:5432`, rode `pnpm seed:catalog` com `DATABASE_URL` apontando para ele.
+4. Uma vez: `docker compose --env-file .env -f infra/docker-compose.yml run --rm api pnpm exec tsx src/seed-admin.ts`.
 5. HTTPS (obrigatório para o service worker no celular): habilite MagicDNS e certificados HTTPS no painel do Tailscale e rode `tailscale serve --bg 8080` (a porta de `CADDY_PORT`; o comando exato varia com a versão). Acesse `https://<maquina>.<tailnet>.ts.net`.
 
 Origem única: `/` (aluno), `/admin` (backoffice), `/api` (API), `/audio` (MP3, servido direto pelo Caddy).
