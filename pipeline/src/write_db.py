@@ -5,7 +5,8 @@ Uso:
       [--dry-run] [--replace] [--allow-published] [--words MIN-MAX] [--prompt-version v1] [--model <id>]
 
 A playlist é identificada por (slug do contexto, slug da playlist) e PRECISA EXISTIR: contextos e playlists são
-criados no backoffice. O contexto vem do `slug` do arquivo --context (que também traz as cenas, usadas na ordem).
+criados no backoffice. O contexto vem do `slug` do arquivo --context.
+A ORDEM DO ARQUIVO --input É A DA PLAYLIST (position 1 a n): quem escreve as frases decide a ordem.
 
 Conexão: PIPELINE_DATABASE_URL (variável de ambiente ou PIPELINE_DATA_DIR/pipeline-db.env, criado por
 create_pipeline_role.py). Use a role da pipeline, não a do administrador.
@@ -29,7 +30,6 @@ from pathlib import Path
 import psycopg
 import yaml
 
-import balance
 from dbconn import connection_url
 from validate import normalize_text, text_errors, text_hash
 from vocab import data_dir
@@ -39,8 +39,8 @@ class Refusal(Exception):
     """Recusa esperada: a mensagem diz ao usuário o que fazer."""
 
 
-def build_rows(items, scene_ids, structure_ids, prompt_version, model, word_range=(0, 10**6)):
-    """Normaliza, recusa texto inválido e duplicatas, ordena por cena e monta as linhas (position, text, hash, metadata).
+def build_rows(items, prompt_version, model, word_range=(0, 10**6)):
+    """Normaliza, recusa texto inválido e duplicatas e monta as linhas (position, text, hash, metadata) NA ORDEM DO ARQUIVO.
 
     O gravador é a última linha de defesa: não confia que o arquivo passou pelo validate.py. Aplica as regras de
     texto (URL, emoji, dígito, caractere invisível ou não-ASCII, pontuação final e, se informada, a faixa de palavras).
@@ -65,7 +65,7 @@ def build_rows(items, scene_ids, structure_ids, prompt_version, model, word_rang
         raise Refusal(f"{len(bad)} frase(s) do arquivo quebram as regras de texto (passe por validate.py):\n  - "
                       + "\n  - ".join(bad[:5]) + ("\n  ..." if len(bad) > 5 else ""))
     rows = []
-    for pos, x in enumerate(balance.order_playlist(norm, scene_ids, structure_ids), start=1):
+    for pos, x in enumerate(norm, start=1):
         meta = {"origin": "pipeline", "prompt_version": prompt_version}
         if x.get("scene"): meta["scene"] = x["scene"]
         if x.get("claimed"): meta["structure"] = x["claimed"]
@@ -144,11 +144,7 @@ def run(url, playlist_slug, context, items, *, dry_run=False, replace=False, all
         prompt_version="v1", model=None, word_range=None):
     if not items:
         raise Refusal("nenhuma frase para gravar")
-    scene_ids = [s["id"] for s in context.get("scenes", [])]
-    # Sem currículo, a ordem das estruturas dentro de cada cena é a da primeira aparição no arquivo de entrada.
-    structure_ids = list(dict.fromkeys(
-        x.get("claimed") or x.get("structure") for x in items if isinstance(x, dict) and (x.get("claimed") or x.get("structure"))))
-    rows = build_rows(items, scene_ids, structure_ids, prompt_version, model, word_range or (0, 10**6))
+    rows = build_rows(items, prompt_version, model, word_range or (0, 10**6))
     with psycopg.connect(url) as conn:
         try:
             rep = apply(conn, playlist_slug, context, rows, replace=replace, allow_published=allow_published)

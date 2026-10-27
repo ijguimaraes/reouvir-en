@@ -8,7 +8,6 @@ um superusuário, por exemplo
 Sem a variável, os testes são pulados. Cada teste usa um banco novo, clonado de um molde com as migrações.
 """
 import hashlib
-import json
 import os
 from unittest import mock
 import re
@@ -141,11 +140,26 @@ class WriteTests(Base):
         self.assertEqual(self.admin("SELECT status, title, slug, position FROM playlists"), [("draft", "Playlist de teste", PLAYLIST, 1)])
         rows = self.rows()
         self.assertEqual([r[0] for r in rows], [1, 2, 3])
-        self.assertEqual([r[1] for r in rows][2], "She is at work now.")   # cena 'work' depois da 'intro'
+        self.assertEqual([r[1] for r in rows], [x["text"] for x in its])   # a ordem do arquivo é a da playlist
         meta = self.admin("SELECT metadata FROM sentences ORDER BY position")
         self.assertEqual(meta[0][0], {"origin": "pipeline", "prompt_version": "v9", "model": "m1", "scene": "intro", "structure": "i-am"})
         self.assertGreater(self.version(), 1)
         self.assertTrue(all(h for (h,) in self.admin("SELECT text_hash FROM sentences")))   # trigger do banco
+
+    def test_playlist_order_is_exactly_the_input_order(self):
+        # tamanhos e cenas misturados de propósito: nada de reordenar por cena nem por comprimento
+        texts = ["This is the longest sentence of the whole list today.", "Short one here today.", "Medium length sentence is here.",
+                 "Another very long sentence goes right here for the test.", "Tiny one here ok."]
+        its = [sent(t, "i-am", scene) for t, scene in zip(texts, ["work", "intro", "work", "intro", "work"])]
+        self.run_w(its)
+        self.assertEqual([r[1] for r in self.rows()], texts)
+        self.assertEqual([r[0] for r in self.rows()], [1, 2, 3, 4, 5])
+        # trocar a ordem do arquivo troca a ordem da playlist, mantendo os ids (áudio) das mesmas frases
+        ids = {t: i for _, t, i in self.rows()}
+        rep = self.run_w(list(reversed(its)), replace=True)
+        self.assertEqual((rep["added"], rep["removed"], rep["kept"]), (0, 0, 5))
+        self.assertEqual([r[1] for r in self.rows()], list(reversed(texts)))
+        self.assertEqual({t: i for _, t, i in self.rows()}, ids)
 
     def test_dry_run_changes_nothing_but_reports_what_would_happen(self):
         rep = self.run_w(items(5), dry_run=True)
@@ -262,25 +276,6 @@ class WriteTests(Base):
         self.run_w(items(2))
         with psycopg.connect(self.url) as c, self.assertRaises(psycopg.errors.InsufficientPrivilege):
             c.execute("SELECT * FROM users")
-
-
-class RealData(Base):
-    """Usa as 100 frases reais de uma execução antiga, se estiverem em PIPELINE_DATA_DIR."""
-    FINAL = (w.data_dir() / "runs" / "software-engineer-interview-java" / "A1" / "subject-pronouns-and-verb-to-be" / "balanced" / "final100.json")
-
-    @unittest.skipUnless(FINAL.exists(), "final100.json não encontrado")
-    def test_real_playlist_is_written_grouped_by_scene(self):
-        import yaml
-        ctx = yaml.safe_load((ROOT / "pipeline" / "contexts" / "entrevista-java.yaml").read_text())
-        self.admin("INSERT INTO contexts (slug, name, category) VALUES (%s, 'Java', 'Work')", (ctx["slug"],))
-        self.add_playlist(ctx["slug"], PLAYLIST)
-        data = json.loads(self.FINAL.read_text())["sentences"]
-        rep = w.run(self.url, PLAYLIST, ctx, data)
-        self.assertEqual((rep["total"], rep["added"]), (100, 100))
-        scenes = [m["scene"] for (m,) in self.admin("SELECT metadata FROM sentences ORDER BY position")]
-        order = [s["id"] for s in ctx["scenes"]]
-        self.assertEqual(scenes, sorted(scenes, key=order.index))        # cenas em ordem, sem voltar atrás
-        self.assertEqual(self.admin("SELECT count(DISTINCT text_hash) FROM sentences")[0][0], 100)
 
 
 if __name__ == "__main__":

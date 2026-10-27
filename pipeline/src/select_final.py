@@ -35,4 +35,6 @@ if __name__ == "__main__":
     print("por cena:", {s: sc[s] for s in scenes})
     print("com aviso de vocabulário:", sum(1 for x in chosen if x.get("vocab")))
     if a.out:
-        Path(a.out).write_text(json.dumps({"sentences": chosen}, indent=1, ensure_ascii=False))
+        # o write_db.py respeita a ordem do arquivo: aqui ela vira um roteiro (cenas na ordem do contexto)
+        ordered = balance.order_playlist(chosen, scenes, sids)
+        Path(a.out).write_text(json.dumps({"sentences": ordered}, indent=1, ensure_ascii=False))
