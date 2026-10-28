@@ -38,6 +38,9 @@ export interface EngineOptions {
   onChange?: (s: EngineState) => void;
   /** Disparado ao entrar numa frase (primeira repetição), para salvar a posição. */
   onItem?: (index: number) => void;
+  /** Disparado quando uma audição termina de tocar (pular ou interromper não conta). */
+  onListen?: (index: number) => void;
+  /** Disparado quando a última frase termina: a playlist foi ouvida inteira (com ou sem loop). */
   onLoop?: () => void;
   onError?: (e: unknown) => void;
 }
@@ -123,15 +126,15 @@ export class PlayerEngine {
   next(): void {
     const last = this.index + 1 >= this.opts.length;
     if (last && !this.settings.loop) return;
-    this.jump(last ? 0 : this.index + 1, last);
+    this.jump(last ? 0 : this.index + 1);
   }
 
   prev(): void {
-    this.jump(Math.max(this.index - 1, 0), false);
+    this.jump(Math.max(this.index - 1, 0));
   }
 
   seek(index: number): void {
-    this.jump(Math.min(Math.max(index, 0), this.opts.length - 1), false);
+    this.jump(Math.min(Math.max(index, 0), this.opts.length - 1));
   }
 
   destroy(): void {
@@ -142,15 +145,11 @@ export class PlayerEngine {
 
   // ---- internos ----
 
-  /** Interrompe o que estiver tocando ou esperando (inclusive o silêncio) e vai para a frase. */
-  private jump(index: number, wrapped: boolean): void {
+  /** Interrompe o que estiver tocando ou esperando (inclusive o silêncio) e vai para a frase. Pular não conta como ouvir. */
+  private jump(index: number): void {
     this.gen++;
     this.clearTimer();
     this.opts.driver.stop();
-    if (wrapped) {
-      this.loops++;
-      this.opts.onLoop?.();
-    }
     this.index = index;
     this.repetition = 0;
     this.silenceMs = 0;
@@ -192,6 +191,7 @@ export class PlayerEngine {
       return;
     }
     if (gen !== this.gen) return;
+    this.opts.onListen?.(this.index);
     this.startSilence(actualMs && actualMs > 0 ? actualMs : audio.durationMs);
   }
 
@@ -229,6 +229,8 @@ export class PlayerEngine {
       this.loops++;
       this.opts.onLoop?.();
     } else {
+      this.loops++;
+      this.opts.onLoop?.();
       this.opts.driver.stop();
       this.phase = "stopped";
       this.paused = true;

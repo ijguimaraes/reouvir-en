@@ -35,19 +35,22 @@ export function registerStudentRoutes(
   const opts = { preHandler: deps.guards };
   const notFound = () => new AppError(404, "Não encontrado", "not_found");
 
-  app.get("/catalog", opts, () => repo.catalog());
+  app.get("/catalog", opts, (req) => repo.catalog(req.authUser!.id));
 
   app.get("/playlists/:id", opts, async (req): Promise<StudentPlaylistDto> => {
     const id = paramId(req);
     const p = await repo.publishedPlaylist(id);
     if (!p) throw notFound();
-    const [sentences, state] = await Promise.all([repo.sentences(id), repo.getState(req.authUser!.id, id)]);
+    const userId = req.authUser!.id;
+    const [sentences, state, counts] = await Promise.all([
+      repo.sentences(id), repo.getState(userId, id), repo.listenCounts(userId, id),
+    ]);
     const withAudio = await Promise.all(
       sentences.map(async (s) => {
         const a = await deps.audio.lookup(s.text);
         return {
           id: s.id, position: s.position, text: s.text, translationPt: s.translation_pt ?? undefined,
-          audioUrl: a?.url, durationMs: a?.durationMs,
+          audioUrl: a?.url, durationMs: a?.durationMs, listenCount: counts.get(s.id) ?? 0,
         };
       }),
     );
@@ -83,7 +86,9 @@ export function registerStudentRoutes(
   app.put("/playlists/:id/state", opts, async (req) => {
     const id = paramId(req);
     if (!(await repo.publishedPlaylist(id))) throw notFound();
-    await repo.saveState(req.authUser!.id, id, playerStateSchema.parse(req.body));
+    const { listenCounts, ...state } = playerStateSchema.parse(req.body);
+    await repo.saveState(req.authUser!.id, id, state);
+    if (listenCounts) await repo.saveListenCounts(req.authUser!.id, id, listenCounts);
     return repo.getState(req.authUser!.id, id);
   });
 

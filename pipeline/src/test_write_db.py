@@ -146,6 +146,16 @@ class WriteTests(Base):
         self.assertGreater(self.version(), 1)
         self.assertTrue(all(h for (h,) in self.admin("SELECT text_hash FROM sentences")))   # trigger do banco
 
+    def test_removing_a_sentence_also_drops_the_students_listen_counts(self):
+        first = items(3)
+        self.run_w(first)
+        sid = self.admin("SELECT id FROM sentences WHERE position = 1")[0][0]
+        self.admin("INSERT INTO users (email, name, password_hash) VALUES ('a@t.com', 'A', 'x')")
+        self.admin("INSERT INTO user_sentence_stats (user_id, sentence_id, listen_count) "
+                   "SELECT id, %s, 7 FROM users", (sid,))
+        self.run_w(first[1:], replace=True)                  # a frase 1 sai; o papel da pipeline não toca nas estatísticas
+        self.assertEqual(self.admin("SELECT count(*) FROM user_sentence_stats"), [(0,)])
+
     def test_translation_is_written_with_the_sentence_and_kept_when_omitted(self):
         its = [dict(sent("I am very happy today.", "i-am", "intro"), translation_pt="  Estou muito   feliz hoje. "),
                sent("She is at work now.", "he-she-is", "work")]

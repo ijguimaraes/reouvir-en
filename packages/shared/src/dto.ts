@@ -39,11 +39,19 @@ export interface PlaylistStatsDto {
 export interface CatalogDto {
   contexts: {
     id: string; slug: string; name: string; description: string; category: string;
-    playlists: { id: string; slug: string; title: string; description: string; position: number; sentenceCount: number }[];
+    playlists: {
+      id: string; slug: string; title: string; description: string; position: number; sentenceCount: number;
+      /** Quantas vezes o aluno ouviu a playlist inteira. */
+      loopsCompleted: number;
+    }[];
   }[];
 }
 
-export interface PlayerSentenceDto { id: string; position: number; text: string; translationPt?: string; audioUrl?: string; durationMs?: number }
+export interface PlayerSentenceDto {
+  id: string; position: number; text: string; translationPt?: string; audioUrl?: string; durationMs?: number;
+  /** Quantas vezes o aluno ouviu a frase. */
+  listenCount: number;
+}
 
 export interface StudentPlaylistDto {
   id: string; version: number; contextName: string; title: string; description: string;

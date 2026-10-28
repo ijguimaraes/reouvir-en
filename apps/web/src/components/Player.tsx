@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { PlayerSettings } from "@reouvir/shared";
 import { persistSettings } from "../offline/settings";
+import { times } from "../format";
 import { saveState } from "../offline/sync";
 import { bindMediaSession, HtmlAudioDriver } from "../player/driver";
 import { PlayerEngine, type EngineState } from "../player/engine";
@@ -14,6 +15,8 @@ export interface PlayerInit {
   startIndex: number;
   baseLoops: number;
   baseListenedSeconds: number;
+  /** Audições por frase já registradas (id → vezes). */
+  baseCounts: Record<string, number>;
   title: string;
   context: string;
   settings: PlayerSettings;
@@ -27,6 +30,7 @@ export function Player({ init }: { init: PlayerInit }) {
     index: init.startIndex, repetition: 0, phase: "stopped", paused: true, silenceMs: 0, silenceRemainingMs: 0, loops: 0,
   });
   const [settings, setSettings] = useState(init.settings);
+  const [counts, setCounts] = useState(init.baseCounts);
   const [error, setError] = useState("");
   const engineRef = useRef<PlayerEngine | null>(null);
   const listRef = useRef<HTMLOListElement>(null);
@@ -34,6 +38,7 @@ export function Player({ init }: { init: PlayerInit }) {
   useEffect(() => {
     const driver = new HtmlAudioDriver();
     let latestIndex = init.startIndex;
+    const heard = { ...init.baseCounts };
 
     const save = () => {
       const e = engineRef.current;
@@ -43,6 +48,7 @@ export function Player({ init }: { init: PlayerInit }) {
         lastSentenceId: source.items[latestIndex]?.id ?? null,
         loopsCompleted: init.baseLoops + e.state.loops,
         listenedSeconds: init.baseListenedSeconds + Math.round(e.getListenedMs() / 1000),
+        listenCounts: heard,
       });
     };
 
@@ -58,6 +64,13 @@ export function Player({ init }: { init: PlayerInit }) {
       onChange: setState,
       onItem: (i) => {
         latestIndex = i;
+        save();
+      },
+      onListen: (i) => {
+        const id = source.items[i]?.id;
+        if (!id) return;
+        heard[id] = (heard[id] ?? 0) + 1;
+        setCounts({ ...heard });
         save();
       },
       onLoop: save,
@@ -145,7 +158,9 @@ export function Player({ init }: { init: PlayerInit }) {
           </button>
           <button onClick={() => engine?.next()} aria-label="Próxima frase"><IconNext /></button>
         </div>
-        <p className="muted count num">Frase {state.index + 1} de {source.items.length}</p>
+        <p className="muted count num">
+          Frase {state.index + 1} de {source.items.length} · ouvida {times(current ? (counts[current.id] ?? 0) : 0)}
+        </p>
       </div>
 
       <h3 className="section-title">Configurações</h3>
@@ -183,7 +198,7 @@ export function Player({ init }: { init: PlayerInit }) {
       <p className="muted">O silêncio entre audições é automático: duração do áudio ÷ velocidade + 1,5 s.</p>
 
       <h3 className="section-title">Progresso</h3>
-      <div className="kv"><span>Voltas completas</span><b className="num">{init.baseLoops + state.loops}</b></div>
+      <div className="kv"><span>Playlist ouvida inteira</span><b className="num">{times(init.baseLoops + state.loops)}</b></div>
       <div className="kv"><span>Tempo ouvido</span><b className="num">{fmt(listened)}</b></div>
 
       <h3 className="section-title">Frases</h3>
@@ -196,6 +211,12 @@ export function Player({ init }: { init: PlayerInit }) {
                 {s.text}
                 {settings.showTranslation && s.translationPt && <span className="pt" lang="pt-BR">{s.translationPt}</span>}
               </span>
+              {(counts[s.id] ?? 0) > 0 && (
+                <span className="plays">
+                  <span aria-hidden="true">{counts[s.id]}×</span>
+                  <span className="sr-only">ouvida {times(counts[s.id]!)}</span>
+                </span>
+              )}
             </button>
           </li>
         ))}

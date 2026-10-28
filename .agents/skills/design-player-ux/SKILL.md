@@ -22,7 +22,7 @@ O app é um player de música para treinar escuta. O aluno corre, pedala, às ve
 
 1. Contexto · nível · tópico (pequeno, `meta`)
 2. **Frase atual** (`display`, ao centro, quebra balanceada) e, logo abaixo, a **tradução** em português (`title`, cor `--text-muted`, opcional; reserva altura para o layout não pular)
-3. Estado: tocando / silêncio / pausado, mais repetição (ex.: "2 de 2")
+3. Estado: tocando / silêncio / pausado, mais repetição (ex.: "2 de 2"). Na linha "Frase N de M", quantas vezes a frase já foi ouvida
 4. Progresso da playlist
 5. Controles (play, anterior, próxima)
 6. Configurações rápidas: repetições, velocidade (0,75x/1x), loop, tradução, tela ligada
