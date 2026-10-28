@@ -6,6 +6,8 @@ export interface LocalState {
   lastSentenceId: string | null;
   loopsCompleted: number;
   listenedSeconds: number;
+  /** Audições por frase (id → vezes), total acumulado; o servidor guarda o maior. */
+  listenCounts?: Record<string, number>;
   clientUpdatedAt: string;
   /** true enquanto o servidor ainda não recebeu esta versão. */
   pending: boolean;

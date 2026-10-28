@@ -10,19 +10,22 @@ export class StudentRepository {
   constructor(private db: Queryable) {}
 
   /** Contexto → playlists; só as publicadas, de contextos ativos, na ordem definida pelo administrador. */
-  async catalog(): Promise<CatalogDto> {
+  async catalog(userId: string): Promise<CatalogDto> {
     const { rows } = await this.db.query<{
       id: string; slug: string; title: string; description: string; position: number; sentence_count: number;
-      context_id: string; context_slug: string; context_name: string; context_description: string; category: string;
+      loops_completed: number; context_id: string; context_slug: string; context_name: string; context_description: string; category: string;
     }>(
       `SELECT p.id, p.slug, p.title, p.description, p.position,
               (SELECT count(*)::int FROM sentences s WHERE s.playlist_id = p.id) AS sentence_count,
+              COALESCE(st.loops_completed, 0) AS loops_completed,
               c.id AS context_id, c.slug AS context_slug, c.name AS context_name,
               c.description AS context_description, c.category
          FROM playlists p
          JOIN contexts c ON c.id = p.context_id AND c.active
+    LEFT JOIN user_playlist_state st ON st.playlist_id = p.id AND st.user_id = $1
         WHERE p.status = 'published'
         ORDER BY c.category, c.name, p.position`,
+      [userId],
     );
     const contexts: CatalogDto["contexts"] = [];
     for (const r of rows) {
@@ -31,7 +34,7 @@ export class StudentRepository {
         ctx = { id: r.context_id, slug: r.context_slug, name: r.context_name, description: r.context_description, category: r.category, playlists: [] };
         contexts.push(ctx);
       }
-      ctx.playlists.push({ id: r.id, slug: r.slug, title: r.title, description: r.description, position: r.position, sentenceCount: r.sentence_count });
+      ctx.playlists.push({ id: r.id, slug: r.slug, title: r.title, description: r.description, position: r.position, sentenceCount: r.sentence_count, loopsCompleted: r.loops_completed });
     }
     return { contexts };
   }
@@ -65,6 +68,31 @@ export class StudentRepository {
       [id],
     );
     return rows[0] ?? null;
+  }
+
+  /** Audições por frase da playlist (frases nunca ouvidas ficam de fora). */
+  async listenCounts(userId: string, playlistId: string): Promise<Map<string, number>> {
+    const { rows } = await this.db.query<{ sentence_id: string; listen_count: number }>(
+      `SELECT ss.sentence_id, ss.listen_count FROM user_sentence_stats ss
+         JOIN sentences s ON s.id = ss.sentence_id
+        WHERE ss.user_id = $1 AND s.playlist_id = $2`,
+      [userId, playlistId],
+    );
+    return new Map(rows.map((r) => [r.sentence_id, r.listen_count]));
+  }
+
+  /** Guarda o maior total entre o enviado e o gravado; ignora ids que não são frases da playlist. */
+  async saveListenCounts(userId: string, playlistId: string, counts: Record<string, number>): Promise<void> {
+    const ids = Object.keys(counts);
+    if (!ids.length) return;
+    await this.db.query(
+      `INSERT INTO user_sentence_stats (user_id, sentence_id, listen_count)
+       SELECT $1, s.id, v.n FROM unnest($3::uuid[], $4::int[]) AS v(id, n)
+         JOIN sentences s ON s.id = v.id AND s.playlist_id = $2
+       ON CONFLICT (user_id, sentence_id) DO UPDATE SET
+         listen_count = GREATEST(user_sentence_stats.listen_count, EXCLUDED.listen_count), updated_at = now()`,
+      [userId, playlistId, ids, ids.map((i) => counts[i])],
+    );
   }
 
   async getState(userId: string, playlistId: string) {

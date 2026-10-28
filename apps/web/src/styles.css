@@ -122,6 +122,7 @@ ol.sentences button {
 ol.sentences button[aria-current="true"] { background: var(--surface-2); font-weight: 600; }
 ol.sentences button .n { color: var(--text-muted); min-width: 1.75rem; font-variant-numeric: tabular-nums; }
 ol.sentences button[aria-current="true"] .n { color: var(--accent); }
+ol.sentences button .plays { margin-left: auto; padding-left: var(--space-2); color: var(--text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 ol.sentences button .pt { display: block; margin-top: var(--space-1); font-weight: 400; color: var(--text-muted); }
 
 @media (prefers-reduced-motion: reduce) {

@@ -67,5 +67,10 @@ export const playerStateSchema = z.object({
   loopsCompleted: z.number().int().min(0),
   listenedSeconds: z.number().int().min(0),
   clientUpdatedAt: z.string().datetime(),
+  /** Total de audições por frase (id → vezes). Opcional: clientes antigos não enviam. */
+  listenCounts: z
+    .record(z.string().uuid(), z.number().int().min(0).max(1_000_000))
+    .refine((r) => Object.keys(r).length <= 2000, "Frases demais")
+    .optional(),
 });
 export type PlayerState = z.infer<typeof playerStateSchema>;

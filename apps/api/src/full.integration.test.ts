@@ -412,6 +412,46 @@ describe.skipIf(!url)("admin + aluno (integração)", () => {
     expect(rows[1].translation_pt).toBeNull();
   });
 
+  it("contadores: audições por frase (maior total vence) e playlist ouvida inteira no catálogo", async () => {
+    const ctx = await makeContext();
+    const pl = await makePlaylist(ctx.id);
+    for (const text of ["Hello there my friend.", "See you tomorrow."]) {
+      await call("POST", `/admin/playlists/${pl.id}/sentences`, admin, { text });
+    }
+    await call("POST", `/admin/playlists/${pl.id}/publish`, admin);
+    const [a, b] = (await call("GET", `/playlists/${pl.id}`, student)).json().sentences as { id: string; listenCount: number }[];
+    expect([a!.listenCount, b!.listenCount]).toEqual([0, 0]);
+    const state = (listenCounts?: Record<string, number>, loopsCompleted = 0) => ({
+      lastSentenceId: a!.id, loopsCompleted, listenedSeconds: 10, clientUpdatedAt: new Date().toISOString(), listenCounts,
+    });
+
+    expect((await call("PUT", `/playlists/${pl.id}/state`, student, state({ [a!.id]: 4, [b!.id]: 1 }, 2))).statusCode).toBe(200);
+    // reenviar um total menor (cliente atrasado) ou o mesmo não reduz nem duplica
+    await call("PUT", `/playlists/${pl.id}/state`, student, state({ [a!.id]: 3, [b!.id]: 1 }, 2));
+    await call("PUT", `/playlists/${pl.id}/state`, student, state({ [b!.id]: 5 }, 2));
+    const after = (await call("GET", `/playlists/${pl.id}`, student)).json().sentences as { id: string; listenCount: number }[];
+    expect(after.map((s) => s.listenCount)).toEqual([4, 5]);
+
+    // id de outra playlist é ignorado; cliente antigo (sem listenCounts) continua válido
+    const other = await makePlaylist(ctx.id, "Outra");
+    await call("POST", `/admin/playlists/${other.id}/sentences`, admin, { text: "Another fine sentence." });
+    const foreign = (await call("GET", `/admin/playlists/${other.id}`, admin)).json().sentences[0].id;
+    expect((await call("PUT", `/playlists/${pl.id}/state`, student, state({ [foreign]: 9 }, 2))).statusCode).toBe(200);
+    expect((await call("PUT", `/playlists/${pl.id}/state`, student, state(undefined, 2))).statusCode).toBe(200);
+    expect((await pool.query("SELECT count(*)::int AS n FROM user_sentence_stats WHERE sentence_id = $1", [foreign])).rows[0].n).toBe(0);
+    expect((await call("PUT", `/playlists/${pl.id}/state`, student, state({ "não-é-uuid": 1 }))).statusCode).toBe(400);
+    expect((await call("PUT", `/playlists/${pl.id}/state`, student, state({ [a!.id]: -1 }))).statusCode).toBe(400);
+
+    const catalog = (await call("GET", "/catalog", student)).json();
+    expect(catalog.contexts[0].playlists[0].loopsCompleted).toBe(2);
+    // o contador é de cada aluno
+    const hash = await hashPassword("senha-boa-123");
+    await pool.query("INSERT INTO users (email, name, password_hash) VALUES ('outro@t.com','Outro',$1)", [hash]);
+    const outro = await login("outro@t.com", "senha-boa-123");
+    expect((await call("GET", "/catalog", outro)).json().contexts[0].playlists[0].loopsCompleted).toBe(0);
+    expect((await call("GET", `/playlists/${pl.id}`, outro)).json().sentences.map((s: { listenCount: number }) => s.listenCount)).toEqual([0, 0]);
+  });
+
   it("o catálogo do aluno segue a ordem das playlists definida pelo administrador", async () => {
     const ctx = await makeContext();
     const ids: string[] = [];

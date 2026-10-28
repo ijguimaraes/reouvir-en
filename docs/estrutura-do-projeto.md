@@ -54,7 +54,7 @@ O sistema tem dois apps de front-end, independentes, e uma API:
 - **Tema claro e escuro** no app do aluno e no backoffice: segue o sistema (`prefers-color-scheme`), com alternância manual lembrada no dispositivo.
 - Geração **lazy** do áudio (ElevenLabs) com cache global.
 - **Ouvir offline**: baixar a playlist inteira (frases e áudios) para o dispositivo e tocá-la localmente.
-- Estatísticas simples por playlist (voltas completas, tempo ouvido).
+- Estatísticas simples por playlist (vezes que ouviu a playlist inteira, tempo ouvido) e **contador de audições por frase**.
 
 **Backoffice (administrador)**
 - **Contextos:** cadastro com criar, editar e excluir, incluindo um campo de **detalhamento** livre.
@@ -301,7 +301,8 @@ Botão **"Baixar playlist"** na tela da playlist. Depois de baixada, a playlist 
 - Se a playlist mudou no servidor (versão diferente), o app oferece **"Atualizar download"** quando estiver online.
 
 **Sincronização do progresso**
-- Frase atual, voltas completas e tempo ouvido são gravados **localmente** a cada frase, com a marca `client_updated_at`.
+- Frase atual, voltas completas, tempo ouvido e audições por frase são gravados **localmente**, com a marca `client_updated_at`.
+- **Contadores:** uma audição por frase é contada quando o áudio termina de tocar (cada repetição conta; pular ou interromper não). A playlist conta como ouvida inteira quando a última frase termina naturalmente, com ou sem loop; pular com "próxima" não conta. O cliente envia o **total acumulado** por frase e o servidor guarda o maior (`GREATEST`), então reenviar não duplica; sem rede, o total fica no aparelho e o app usa o maior entre ele e o do servidor.
 - Online, o cliente envia `PUT /playlists/:id/state` direto. Offline, deixa o estado como **pendente**.
 - Na **primeira oportunidade de rede** (evento `online` ou próxima abertura do app), o cliente envia o estado pendente. Em conflito entre aparelhos, vale o `client_updated_at` mais recente.
 
@@ -376,6 +377,13 @@ user_playlist_state (
   updated_at,
   PRIMARY KEY (user_id, playlist_id)
 )
+
+user_sentence_stats (
+  user_id, sentence_id,              -- FKs ON DELETE CASCADE
+  listen_count,                      -- audições completas; o servidor guarda o maior total recebido
+  updated_at,
+  PRIMARY KEY (user_id, sentence_id)
+)
 ```
 
 O consumo de caracteres do TTS vem de `SUM(audios.char_count)` dos áudios `ready`, o que inclui os órfãos.
@@ -404,7 +412,7 @@ Convenções: tokens em cookies `httpOnly`, `Secure`, `SameSite=Lax`; erros de c
 | GET | `/playlists/:id` | Playlist publicada com as frases e o estado do aluno |
 | GET | `/sentences/:id/audio` | Garante o áudio (lazy) e devolve URL e duração |
 | POST | `/playlists/:id/prepare` | Garante todos os áudios e devolve o **manifesto offline**: frases (id, posição, texto, `translationPt`, `audioUrl`, `durationMs`) e a versão da playlist |
-| PUT | `/playlists/:id/state` | Salva frase atual, voltas e tempo ouvido (com `client_updated_at`; vale o mais recente) |
+| PUT | `/playlists/:id/state` | Salva frase atual, voltas e tempo ouvido (com `client_updated_at`; vale o mais recente) e, opcional, `listenCounts` (id da frase → total de audições; vale o maior) |
 | GET/PUT | `/me/settings` | Configurações do player |
 
 ### Backoffice (`admin`)
@@ -627,7 +635,7 @@ Pontos em que escolhi um padrão. Todos são fáceis de mudar.
 7. **"Baixar playlist" faz parte do produto**, porque correr com conexão instável é o caso de uso principal.
 8. **Cadastro aberto** pela tela de acesso (e-mail e senha), com access token + refresh token. O administrador inicial vem de seed. O backoffice só bloqueia usuários e redefine senhas (senha temporária, sem e-mail).
 9. **Sem nível nem tópico.** O administrador decide quantas playlists cada contexto tem, o nome e a ordem de cada uma; adequação de gramática e de dificuldade fica com quem escreve as frases.
-10. **Sem SRS.** O progresso é medido por voltas completas e tempo ouvido.
+10. **Sem SRS.** O progresso é medido por voltas completas, audições por frase e tempo ouvido.
 11. **Tudo local, uma única máquina**, acessada pela tailnet em um único nome (`<maquina>.<tailnet>.ts.net`). Não há bucket nem CDN.
 
 ## 19. Fases de implementação

@@ -40,6 +40,7 @@ function setup(opts: { length?: number; settings?: Partial<EngineSettings>; dura
   const driver = new FakeDriver(opts.durationMs ?? 1000);
   const items: number[] = [];
   const loops: number[] = [];
+  const listens: number[] = [];
   const engine = new PlayerEngine({
     length: opts.length ?? 2,
     resolve: async (i) => ({ url: `s${i}`, durationMs: opts.durationMs ?? 1000 }),
@@ -47,9 +48,10 @@ function setup(opts: { length?: number; settings?: Partial<EngineSettings>; dura
     settings: settings(opts.settings),
     startIndex: opts.startIndex,
     onItem: (i) => items.push(i),
+    onListen: (i) => listens.push(i),
     onLoop: () => loops.push(1),
   });
-  return { engine, driver, items, loops };
+  return { engine, driver, items, loops, listens };
 }
 
 describe("PlayerEngine", () => {
@@ -143,11 +145,41 @@ describe("PlayerEngine", () => {
     expect(loops).toHaveLength(1);
   });
 
-  it("sem loop, para no fim e volta ao início", async () => {
-    const { engine } = setup({ settings: { repeats: 1, loop: false } });
+  it("sem loop, para no fim, volta ao início e conta a playlist como ouvida", async () => {
+    const { engine, loops } = setup({ settings: { repeats: 1, loop: false } });
     engine.play();
     await vi.advanceTimersByTimeAsync(3500 * 2);
-    expect(engine.state).toMatchObject({ phase: "stopped", paused: true, index: 0, loops: 0 });
+    expect(engine.state).toMatchObject({ phase: "stopped", paused: true, index: 0, loops: 1 });
+    expect(loops).toHaveLength(1);
+  });
+
+  it("conta uma audição por clipe que termina de tocar, em cada repetição", async () => {
+    const { engine, listens } = setup({ settings: { repeats: 2 } });
+    engine.play();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(listens).toEqual([]);                       // ainda tocando a primeira
+    await vi.advanceTimersByTimeAsync(1000);           // 1ª audição da frase 0 terminou
+    expect(listens).toEqual([0]);
+    await vi.advanceTimersByTimeAsync(2500 + 1000);    // silêncio + 2ª audição
+    expect(listens).toEqual([0, 0]);
+    await vi.advanceTimersByTimeAsync(2500 + 1000);    // silêncio + 1ª audição da frase 1
+    expect(listens).toEqual([0, 0, 1]);
+  });
+
+  it("pular a frase no meio do clipe não conta como ouvida", async () => {
+    const { engine, listens } = setup({ settings: { repeats: 1 } });
+    engine.play();
+    await vi.advanceTimersByTimeAsync(500);
+    engine.next();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(listens).toEqual([]);
+  });
+
+  it("pular para o início pelo próximo na última frase não conta a playlist como ouvida", async () => {
+    const { engine, loops } = setup({ settings: { repeats: 1 }, startIndex: 1 });
+    engine.next();
+    expect(engine.state.index).toBe(0);
+    expect(loops).toHaveLength(0);
   });
 
   it("começa do ponto salvo e acumula o tempo ouvido sem contar a pausa", async () => {

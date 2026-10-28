@@ -4,6 +4,7 @@ import type { CatalogDto, OfflineManifestDto } from "@reouvir/shared";
 import { api } from "../api";
 import { listManifests } from "../offline/download";
 import { manifestTitle } from "../offline/title";
+import { times } from "../format";
 import { RetryError, SkeletonList } from "../components/Skeleton";
 import { useLoad } from "../useLoad";
 
@@ -80,6 +81,7 @@ export function ContextPage({ contextId }: { contextId: string }) {
             {pl.description && <span className="item-desc">{pl.description}</span>}
           </span>
           <span className="row">
+            {pl.loopsCompleted > 0 && <span className="muted num">ouvida {times(pl.loopsCompleted)}</span>}
             <span className="muted num">{pl.sentenceCount} frases</span>
             {offline.has(pl.id) && <span className="badge offline">offline</span>}
           </span>

@@ -39,6 +39,9 @@ export function PlaylistPage({ playlistId }: { playlistId: string }) {
       const useLocal = local && (!server || local.clientUpdatedAt >= server.clientUpdatedAt);
       const state = useLocal ? local : server;
       const idx = state?.lastSentenceId ? source.items.findIndex((s) => s.id === state.lastSentenceId) : 0;
+      // contagem por frase: vale o maior entre o servidor e este aparelho (o que ficou offline ainda não subiu)
+      const baseCounts: Record<string, number> = { ...(local?.listenCounts ?? {}) };
+      for (const s of online?.sentences ?? []) baseCounts[s.id] = Math.max(baseCounts[s.id] ?? 0, s.listenCount);
       const settings = (await Promise.race([loadSettings(), new Promise<PlayerSettings>((r) => setTimeout(() => r(cachedSettings()), 2500))]));
       if (!alive) return;
       const t = manifest ?? online!;
@@ -55,6 +58,7 @@ export function PlaylistPage({ playlistId }: { playlistId: string }) {
           startIndex: Math.max(idx, 0),
           baseLoops: state?.loopsCompleted ?? 0,
           baseListenedSeconds: state?.listenedSeconds ?? 0,
+          baseCounts,
           title: playlistTitle,
           context: t.contextName,
         },
