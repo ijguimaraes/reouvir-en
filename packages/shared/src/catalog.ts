@@ -47,17 +47,25 @@ export const sentenceTextSchema = z.object({ text: z.string().min(1).max(500) })
 /** Tradução da frase para o português. Não passa pelas regras de texto do inglês (aceita acento e dígito). */
 export const translationPtSchema = z.string().trim().min(1).max(1000);
 
-/** Criar frase: a tradução é opcional e pode vir junto. */
-export const sentenceInputSchema = sentenceTextSchema.extend({ translationPt: translationPtSchema.nullish() });
+/**
+ * Criar frase: a tradução é opcional e pode vir junto.
+ * Estrito: uma chave desconhecida (ex.: `translation_pt` em vez de `translationPt`) é recusada com 400
+ * em vez de ser descartada sem aviso, o que deixaria a frase gravada sem a tradução.
+ */
+export const sentenceInputSchema = sentenceTextSchema.extend({ translationPt: translationPtSchema.nullish() }).strict();
 export type SentenceInput = z.infer<typeof sentenceInputSchema>;
 
 /** Editar frase: só o que vier muda; `translationPt: null` apaga a tradução. */
-export const sentenceUpdateSchema = z
+export const sentenceUpdateBaseSchema = z
   .object({
     text: sentenceTextSchema.shape.text.optional(),
     translationPt: translationPtSchema.nullable().optional(),
   })
-  .refine((v) => v.text !== undefined || v.translationPt !== undefined, "Informe text ou translationPt");
+  .strict();
+export const sentenceUpdateSchema = sentenceUpdateBaseSchema.refine(
+  (v) => v.text !== undefined || v.translationPt !== undefined,
+  "Informe text ou translationPt",
+);
 export type SentenceUpdate = z.infer<typeof sentenceUpdateSchema>;
 
 export const reorderSchema = z.object({ ids: z.array(z.string().uuid()).min(1) });

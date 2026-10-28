@@ -427,7 +427,7 @@ Convenções: tokens em cookies `httpOnly`, `Secure`, `SameSite=Lax`; erros de c
 | GET | `/admin/playlists` | Listar (filtro `?contextId=`) |
 | PATCH/DELETE | `/admin/sentences/:id` | Editar (`text` e/ou `translationPt`; `null` apaga a tradução) ou remover uma frase |
 | PUT | `/admin/playlists/:id/order` | Reordenar: recebe a lista completa de ids na nova ordem e renumera de 1 a n |
-| POST | `/admin/playlists/:id/sentences` | Adicionar frase manual (última posição), com `translationPt` opcional |
+| POST | `/admin/playlists/:id/sentences` | Adicionar frase manual (última posição), com `translationPt` opcional. O corpo é **estrito**: chave desconhecida (ex.: `translation_pt`) responde 400 com o nome da chave, em vez de ser ignorada |
 | POST | `/admin/playlists/:id/translate` | Gera a tradução das frases sem tradução (`overwrite: true` refaz todas) com a API da Anthropic, em lotes de 40, e grava. Responde 503 sem `ANTHROPIC_API_KEY` |
 | POST | `/admin/playlists/:id/publish` | Publicar |
 | POST | `/admin/playlists/:id/unpublish` | Despublicar |

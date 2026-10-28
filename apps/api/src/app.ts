@@ -44,7 +44,12 @@ export async function buildApp({ config, pool, storage, tts, translator }: AppDe
     }
     if (err instanceof ZodError) {
       return reply.code(400).send({
-        error: { code: "validation", message: "Dados inválidos", issues: err.issues },
+        error: {
+          code: "validation",
+          // quem chama (inclusive o MCP) só vê a mensagem: ela precisa dizer o que está errado
+          message: `Dados inválidos: ${err.issues.map((i) => `${i.path.join(".") || "corpo"}: ${i.message}`).join("; ")}`,
+          issues: err.issues,
+        },
       });
     }
     const status = (err as { statusCode?: number }).statusCode;
