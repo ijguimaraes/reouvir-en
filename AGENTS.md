@@ -35,7 +35,7 @@ Regras de design system e layout ficam em `.agents/skills/` (Markdown puro, vale
 - **Configurações do aluno:** só repetições seguidas (padrão 2), velocidade (0,75x/1x) e loop.
 - **Tema claro e escuro** nos dois apps (segue o sistema, com alternância manual), feito com variáveis CSS.
 - **Sem tradução, sem SRS, sem texto livre de contexto** no MVP.
-- **Stack:** monorepo **pnpm** com `apps/web` (Vite + React, PWA), `apps/admin` (Vite + React, backoffice, sem service worker, servido em `/admin`), `apps/api` (Node + TypeScript + Fastify + zod), `packages/shared` e `packages/api-client`.
+- **Stack:** monorepo **pnpm** com `apps/web` (Vite + React, PWA), `apps/admin` (Vite + React, backoffice, sem service worker, servido em `/admin`), `apps/api` (Node + TypeScript + Fastify + zod), `apps/mcp` (servidor MCP stdio que expõe as rotas `/admin` da API; roda na máquina de quem usa o Claude Code, não faz parte do deploy), `packages/shared` e `packages/api-client`.
 - **Banco:** Postgres com **SQL nativo, sem ORM** (driver `pg`, repositórios `*.repository.ts`). Migrações em `.sql` com **dbmate** (`-- migrate:up` / `-- migrate:down`). Sem fila de jobs. Testes com Vitest, e os de repositório rodam contra Postgres real.
 - **Auth:** e-mail e senha na API, com **access token (JWT 15 min) + refresh token rotativo** em cookies httpOnly. Telas de entrar e criar conta (cadastro aberto, papel `student`). O backoffice só bloqueia usuários e redefine senhas (senha temporária). **Google fica fora do MVP.**
 - **Storage:** disco local atrás de uma interface com driver `local` (driver `s3` só no futuro). Sem bucket e sem CDN.

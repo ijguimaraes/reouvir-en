@@ -22,6 +22,7 @@ O sistema tem dois apps de front-end, independentes, e uma API:
 | **App do aluno** (`apps/web`, PWA) | Alunos | Escolher uma playlist publicada e ouvir. |
 | **Backoffice** (`apps/admin`) | Administrador | Gerenciar contextos e usuários, criar e ordenar as playlists de cada contexto, revisar as frases e publicar. |
 | **API** (`apps/api`) | Os dois apps | Regras de negócio, banco e geração de áudio. |
+| **MCP** (`apps/mcp`) | Administrador, via Claude Code | Expõe as rotas `/admin` da API como tools (contextos, playlists e frases). |
 
 ## 2. Princípios de design
 
@@ -440,11 +441,12 @@ apps/web (Vite + React, PWA)          apps/admin (Vite + React, backoffice)
                 └─ Storage (disco local)  arquivos MP3 em um volume
 ```
 
-- **Monorepo:** workspace **pnpm** com `apps/web`, `apps/admin`, `apps/api`, `packages/shared` e `packages/api-client`. Uma instalação, um lockfile e scripts na raiz (`pnpm dev` sobe os três apps juntos).
+- **Monorepo:** workspace **pnpm** com `apps/web`, `apps/admin`, `apps/api`, `apps/mcp`, `packages/shared` e `packages/api-client`. Uma instalação, um lockfile e scripts na raiz (`pnpm dev` sobe os três apps juntos).
 - **App do aluno (`apps/web`):** Vite + React + TypeScript, como SPA/PWA (`vite-plugin-pwa` para o service worker).
 - **Tema:** variáveis CSS (design tokens) para cores, com a paleta escura em `@media (prefers-color-scheme: dark)` e em `[data-theme="dark"]`. A escolha manual vai para o `localStorage`. O manifesto do PWA e a `theme-color` também precisam ter variante escura. Os tokens ficam compartilhados entre `web` e `admin`.
 - **Backoffice (`apps/admin`):** Vite + React + TypeScript, **sem service worker** (não precisa ser PWA nem funcionar offline). É um app à parte, com bundle e deploy próprios, então nada do backoffice pesa no app do aluno.
 - **API (`apps/api`):** Node + TypeScript com **Fastify**, validação com **zod**.
+- **MCP (`apps/mcp`):** servidor MCP por stdio (`@modelcontextprotocol/sdk`) que chama as rotas `/admin` da API. Não é implantado: roda na máquina de quem usa o Claude Code e fala com a API pela URL do Tailscale. A API só aceita sessão por cookie httpOnly, então ele reaproveita o `createApiClient` com um `fetch` que guarda os cookies e entra de novo se o refresh falhar. Variáveis: `REOUVIR_URL`, `REOUVIR_EMAIL` e `REOUVIR_PASSWORD` (de preferência um administrador dedicado). Tools: listar e criar contextos; listar, detalhar, criar e editar playlists; adicionar (uma ou várias), editar e remover frases; publicar. De propósito não expõe excluir contexto ou playlist, despublicar nem arquivar. Não há rota em lote para frases, então `add_sentences` faz uma chamada por frase; para lotes grandes o caminho continua sendo o `pipeline/src/write_db.py`.
 - **Código compartilhado:**
   - `packages/shared`: tipos, schemas zod dos contratos da API e regras usadas pelos dois lados, como a regra do silêncio (`calcularSilencioMs`) e o padding de 1,5 s.
   - `packages/api-client`: cliente HTTP tipado, usado pelo `web` e pelo `admin`.

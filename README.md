@@ -58,6 +58,10 @@ Os testes de integração rodam `TRUNCATE` no banco de teste: nunca aponte `DATA
 
 Origem única: `/` (aluno), `/admin` (backoffice), `/api` (API), `/audio` (MP3, servido direto pelo Caddy).
 
+### MCP (opcional)
+
+`apps/mcp` deixa o Claude Code administrar contextos, playlists e frases pela API. Ele não vai para o servidor: roda na máquina de quem o usa. Veja `apps/mcp/README.md` para o comando de registro.
+
 ### Operação
 
 - **Backup:** `BACKUP_DIR=/outro/disco/reouvir ./infra/backup.sh` (pg_dump + cópia dos MP3). Agende no cron.
