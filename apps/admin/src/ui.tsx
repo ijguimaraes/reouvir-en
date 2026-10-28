@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type DragEvent, type KeyboardEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type DragEvent, type KeyboardEvent, type ReactNode } from "react";
 import { ApiError } from "@reouvir/api-client";
 
 export const errMsg = (e: unknown): string => (e instanceof ApiError ? e.message : "Falha de conexão");
@@ -21,9 +21,28 @@ export function useLoad<T>(load: () => Promise<T>) {
   return { data, error, reload, setData };
 }
 
-export function Status({ error, loading }: { error: string; loading?: boolean }) {
-  if (error) return <p className="error">{error}</p>;
-  return loading ? <p className="muted">Carregando…</p> : null;
+/** Erro (com "Tentar de novo" quando há `onRetry`) ou esqueleto de carregamento. */
+export function Status({ error, loading, onRetry }: { error: string; loading?: boolean; onRetry?: () => void }) {
+  if (error) {
+    return (
+      <div role="alert">
+        <p className="error">{error}</p>
+        {onRetry && <button type="button" onClick={onRetry}>Tentar de novo</button>}
+      </div>
+    );
+  }
+  if (!loading) return null;
+  return (
+    <div role="status">
+      <span className="sr-only">Carregando…</span>
+      {[0, 1, 2].map((i) => <div key={i} className="skeleton" aria-hidden="true" />)}
+    </div>
+  );
+}
+
+/** Tabela dentro de um contêiner que rola na horizontal, para a página nunca rolar de lado. */
+export function TableWrap({ children }: { children: ReactNode }) {
+  return <div className="table-wrap"><table>{children}</table></div>;
 }
 
 export function Badge({ kind, children }: { kind: string; children: ReactNode }) {
@@ -36,6 +55,57 @@ export const STATUS_LABEL: Record<string, string> = {
   create: "criar", replace: "substituir", unchanged: "sem mudanças", refused: "recusada", error: "erro",
   active: "ativo", blocked: "bloqueado",
 };
+
+export interface ConfirmOptions {
+  title: string;
+  body?: string;
+  /** Verbo da ação, no botão ("Excluir", "Redefinir senha"). */
+  confirmLabel: string;
+  danger?: boolean;
+}
+
+interface Pending extends ConfirmOptions {
+  resolve: (ok: boolean) => void;
+}
+
+/**
+ * Confirmação em <dialog> no lugar de window.confirm: nomeia o objeto e a consequência,
+ * o botão diz a ação e o foco inicial fica em "Cancelar". Renderize `dialog` no JSX.
+ */
+export function useConfirm(): [(opts: ConfirmOptions) => Promise<boolean>, ReactNode] {
+  const [pending, setPending] = useState<Pending | null>(null);
+  const ref = useRef<HTMLDialogElement>(null);
+
+  const confirm = useCallback(
+    (opts: ConfirmOptions) => new Promise<boolean>((resolve) => setPending({ ...opts, resolve })),
+    [],
+  );
+
+  useEffect(() => {
+    if (pending && ref.current && !ref.current.open) ref.current.showModal();
+  }, [pending]);
+
+  function close(ok: boolean) {
+    ref.current?.close();
+    pending?.resolve(ok);
+    setPending(null);
+  }
+
+  const dialog = pending ? (
+    <dialog ref={ref} aria-labelledby="confirm-title" onCancel={(e) => { e.preventDefault(); close(false); }}>
+      <h2 id="confirm-title">{pending.title}</h2>
+      {pending.body && <p className="muted">{pending.body}</p>}
+      <div className="actions">
+        <button type="button" autoFocus onClick={() => close(false)}>Cancelar</button>
+        <button type="button" className={pending.danger ? "danger" : "primary"} onClick={() => close(true)}>
+          {pending.confirmLabel}
+        </button>
+      </div>
+    </dialog>
+  ) : null;
+
+  return [confirm, dialog];
+}
 
 /**
  * Reordenar linhas de tabela arrastando, ou digitando a posição de destino e teclando Enter.
@@ -81,5 +151,5 @@ export function useReorderableRows(ids: string[], onReorder: (ids: string[]) => 
       if (e.key === "Enter") move(i, Number(e.currentTarget.value) - 1);
     },
   });
-  return { rowProps, posInputProps };
+  return { rowProps, posInputProps, move };
 }

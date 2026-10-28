@@ -36,7 +36,7 @@ function Login({ onUser }: { onUser: (u: PublicUser) => void }) {
       <p className="muted">Reouvir EN</p>
       <label>E-mail<input name="email" type="email" required autoComplete="email" /></label>
       <label>Senha<input name="password" type="password" required autoComplete="current-password" /></label>
-      {error && <p className="error">{error}</p>}
+      {error && <p className="error" role="alert">{error}</p>}
       <button className="primary" type="submit">Entrar</button>
     </form>
   );
@@ -62,14 +62,14 @@ export function App() {
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, "")}>
       <div className="shell">
-        <nav className="side">
+        <nav className="side" aria-label="Principal">
           <h1>Reouvir EN</h1>
           {NAV.map(([to, label]) => (
             <NavLink key={to} to={to} end={to === "/"} className={({ isActive }) => (isActive ? "active" : "")}>{label}</NavLink>
           ))}
           <div className="spacer" />
-          <span className="muted">{user.email}</span>
-          <button onClick={() => toggleTheme()}>Alternar tema</button>
+          <span className="muted who">{user.email}</span>
+          <button type="button" onClick={() => toggleTheme()}>Alternar tema</button>
           <button onClick={async () => { await api.auth.logout(); setUser(null); }}>Sair</button>
         </nav>
         <main className="content">

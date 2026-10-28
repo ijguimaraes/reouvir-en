@@ -5,6 +5,7 @@ import { saveState } from "../offline/sync";
 import { bindMediaSession, HtmlAudioDriver } from "../player/driver";
 import { PlayerEngine, type EngineState } from "../player/engine";
 import type { PlaybackSource } from "../player/source";
+import { IconNext, IconPause, IconPlay, IconPrev } from "./Icons";
 
 export interface PlayerInit {
   playlistId: string;
@@ -27,6 +28,7 @@ export function Player({ init }: { init: PlayerInit }) {
   const [settings, setSettings] = useState(init.settings);
   const [error, setError] = useState("");
   const engineRef = useRef<PlayerEngine | null>(null);
+  const listRef = useRef<HTMLOListElement>(null);
 
   useEffect(() => {
     const driver = new HtmlAudioDriver();
@@ -87,6 +89,13 @@ export function Player({ init }: { init: PlayerInit }) {
     if ("mediaSession" in navigator) navigator.mediaSession.playbackState = state.paused ? "paused" : "playing";
   }, [state.paused]);
 
+  // mantém a frase atual visível na lista (rola só a lista, nunca a página)
+  useEffect(() => {
+    const list = listRef.current;
+    const item = list?.children[state.index] as HTMLElement | undefined;
+    if (list && item) list.scrollTop = item.offsetTop - list.clientHeight / 2 + item.clientHeight / 2;
+  }, [state.index]);
+
   // anima a barra do silêncio
   const [, force] = useState(0);
   useEffect(() => {
@@ -117,49 +126,54 @@ export function Player({ init }: { init: PlayerInit }) {
 
   return (
     <section>
-      <div className="now" aria-live="polite">{current?.text}</div>
-      <div className={`status ${state.paused ? "" : state.phase}`}>{label}</div>
-      <div className="bar" aria-hidden><i style={{ width: `${state.phase === "silence" ? silencePct : 0}%` }} /></div>
-      {error && <p className="error">{error}</p>}
-      <div className="controls">
-        <button onClick={() => engine?.prev()} aria-label="Frase anterior">⏮</button>
-        <button className="play" onClick={() => { setError(""); engine?.toggle(); }} aria-label={state.paused ? "Tocar" : "Pausar"}>
-          {state.paused ? "▶" : "⏸"}
-        </button>
-        <button onClick={() => engine?.next()} aria-label="Próxima frase">⏭</button>
-      </div>
-      <p className="muted" style={{ textAlign: "center" }}>Frase {state.index + 1} de {source.items.length}</p>
+      <div className="now" lang="en">{current?.text}</div>
 
-      <h3>Configurações</h3>
-      <div className="toggle">
-        <span>Repetições seguidas</span>
+      <div className="dock">
+        <div className={`status ${state.paused ? "" : state.phase}`} role="status">{label}</div>
+        <div className="bar" aria-hidden="true"><i style={{ width: `${state.phase === "silence" ? silencePct : 0}%` }} /></div>
+        {error && <p className="error" role="alert">{error}</p>}
+        <div className="controls">
+          <button onClick={() => engine?.prev()} aria-label="Frase anterior"><IconPrev /></button>
+          <button className="play" onClick={() => { setError(""); engine?.toggle(); }} aria-label={state.paused ? "Tocar" : "Pausar"}>
+            {state.paused ? <IconPlay /> : <IconPause />}
+          </button>
+          <button onClick={() => engine?.next()} aria-label="Próxima frase"><IconNext /></button>
+        </div>
+        <p className="muted count num">Frase {state.index + 1} de {source.items.length}</p>
+      </div>
+
+      <h3 className="section-title">Configurações</h3>
+      <label className="toggle">
+        Repetições seguidas
         <select value={settings.repeats} onChange={(e) => change({ repeats: Number(e.target.value) })}>
           {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}</option>)}
         </select>
-      </div>
-      <div className="toggle">
-        <span>Velocidade</span>
-        <span className="row">
+      </label>
+      <div className="toggle" role="group" aria-labelledby="speed-label">
+        <span id="speed-label">Velocidade</span>
+        <span className="segmented">
           {([0.75, 1] as const).map((v) => (
-            <button key={v} className={settings.speed === v ? "primary" : ""} onClick={() => change({ speed: v })}>{v}x</button>
+            <button key={v} type="button" aria-pressed={settings.speed === v} onClick={() => change({ speed: v })}>{v}x</button>
           ))}
         </span>
       </div>
-      <div className="toggle">
-        <span>Repetir a playlist (loop)</span>
-        <input type="checkbox" checked={settings.loop} onChange={(e) => change({ loop: e.target.checked })} />
-      </div>
+      <label className="toggle">
+        Repetir a playlist (loop)
+        <input type="checkbox" role="switch" checked={settings.loop} onChange={(e) => change({ loop: e.target.checked })} />
+      </label>
       <p className="muted">O silêncio entre audições é automático: duração do áudio ÷ velocidade + 1,5 s.</p>
 
-      <h3>Progresso</h3>
-      <div className="kv"><span>Voltas completas</span><b>{init.baseLoops + state.loops}</b></div>
-      <div className="kv"><span>Tempo ouvido</span><b>{fmt(listened)}</b></div>
+      <h3 className="section-title">Progresso</h3>
+      <div className="kv"><span>Voltas completas</span><b className="num">{init.baseLoops + state.loops}</b></div>
+      <div className="kv"><span>Tempo ouvido</span><b className="num">{fmt(listened)}</b></div>
 
-      <h3>Frases</h3>
-      <ol className="sentences">
+      <h3 className="section-title">Frases</h3>
+      <ol className="sentences" ref={listRef} lang="en">
         {source.items.map((s, i) => (
-          <li key={s.id} className={i === state.index ? "current" : ""} onClick={() => engine?.seek(i)}>
-            <span>{i + 1}</span>{s.text}
+          <li key={s.id}>
+            <button type="button" aria-current={i === state.index ? "true" : undefined} onClick={() => engine?.seek(i)}>
+              <span>{i + 1}</span>{s.text}
+            </button>
           </li>
         ))}
       </ol>
