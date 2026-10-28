@@ -365,6 +365,20 @@ describe.skipIf(!url)("admin + aluno (integração)", () => {
     expect(rows[0].text_hash).toBe(textHash("Hello there my friend."));
   });
 
+  it("tradução: chave desconhecida é recusada (400) e a mensagem diz qual", async () => {
+    const ctx = await makeContext();
+    const pl = await makePlaylist(ctx.id);
+    const bad = await call("POST", `/admin/playlists/${pl.id}/sentences`, admin, { text: "Hello there my friend.", translation_pt: "Olá." });
+    expect(bad.statusCode).toBe(400);
+    expect(bad.json().error.message).toContain("translation_pt");
+    expect((await call("GET", `/admin/playlists/${pl.id}`, admin)).json().sentences).toHaveLength(0); // nada foi gravado
+
+    const ok = (await call("POST", `/admin/playlists/${pl.id}/sentences`, admin, { text: "Hello there my friend." })).json();
+    const patch = await call("PATCH", `/admin/sentences/${ok.sentences[0].id}`, admin, { translation_pt: "Olá." });
+    expect(patch.statusCode).toBe(400);
+    expect(patch.json().error.message).toContain("translation_pt");
+  });
+
   it("tradução: o aluno recebe no player e no manifesto offline", async () => {
     const ctx = await makeContext();
     const pl = await makePlaylist(ctx.id);

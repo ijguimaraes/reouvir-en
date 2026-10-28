@@ -6,7 +6,7 @@ import {
   playlistInputSchema,
   playlistUpdateSchema,
   sentenceInputSchema,
-  sentenceUpdateSchema,
+  sentenceUpdateBaseSchema,
 } from "@reouvir/shared";
 import type { AdminSession } from "./session";
 
@@ -58,10 +58,13 @@ export function registerTools(server: McpServer, api: AdminSession): void {
     ({ playlistId, ...body }) => run(() => api.request("PUT", `/admin/playlists/${playlistId}`, body)),
   );
 
-  server.tool(
+  // Estritos (z.object, não o shape solto): chave desconhecida, como `translation_pt`, dá erro em vez de sumir.
+  server.registerTool(
     "add_sentence",
-    "Adiciona uma frase ao fim da playlist. `translationPt` (opcional) é a tradução para português.",
-    { playlistId: id, ...sentenceInputSchema.shape },
+    {
+      description: "Adiciona uma frase ao fim da playlist. `translationPt` (opcional) é a tradução para português.",
+      inputSchema: sentenceInputSchema.extend({ playlistId: id }),
+    },
     ({ playlistId, ...body }) => run(() => api.request("POST", `/admin/playlists/${playlistId}/sentences`, body)),
   );
 
@@ -83,10 +86,13 @@ export function registerTools(server: McpServer, api: AdminSession): void {
       }),
   );
 
-  server.tool(
+  server.registerTool(
     "update_sentence",
-    "Edita o texto e/ou a tradução de uma frase; só o que for enviado muda. `translationPt: null` apaga a tradução.",
-    { sentenceId: id, text: sentenceUpdateSchema.innerType().shape.text, translationPt: sentenceUpdateSchema.innerType().shape.translationPt },
+    {
+      description:
+        "Edita o texto e/ou a tradução de uma frase; só o que for enviado muda. `translationPt: null` apaga a tradução.",
+      inputSchema: sentenceUpdateBaseSchema.extend({ sentenceId: id }),
+    },
     ({ sentenceId, ...body }) => run(() => api.request("PATCH", `/admin/sentences/${sentenceId}`, body)),
   );
 
