@@ -11,6 +11,7 @@ import { hashPassword } from "./modules/auth/auth.service";
 import { normalizeText } from "@reouvir/shared";
 import { textHash } from "./modules/audio/audio-key";
 import type { TtsProvider } from "./modules/audio/tts";
+import type { TranslateRequest, Translator } from "./modules/translation/translator";
 
 const url = process.env.DATABASE_URL_TEST;
 const SENTENCES = [
@@ -27,9 +28,18 @@ class FakeTts implements TtsProvider {
   }
 }
 
+class FakeTranslator implements Translator {
+  calls: TranslateRequest[] = [];
+  async translate(req: TranslateRequest): Promise<string[]> {
+    this.calls.push(req);
+    return req.sentences.map((s) => `PT: ${s}`);
+  }
+}
+
 describe.skipIf(!url)("admin + aluno (integração)", () => {
   const pool = createPool(url ?? "postgres://invalid");
   const tts = new FakeTts();
+  const translator = new FakeTranslator();
   let app: FastifyInstance;
   let dir: string;
   let admin: Record<string, string>;
@@ -38,7 +48,7 @@ describe.skipIf(!url)("admin + aluno (integração)", () => {
 
   beforeAll(async () => {
     dir = await mkdtemp(path.join(os.tmpdir(), "reouvir-audio-"));
-    app = await buildApp({ config: testConfig(url!, { AUTH_LOGIN_MAX_PER_IP: "10000", AUTH_LOGIN_MAX_PER_EMAIL: "10000" }), pool, storage: new LocalStorage(dir), tts });
+    app = await buildApp({ config: testConfig(url!, { AUTH_LOGIN_MAX_PER_IP: "10000", AUTH_LOGIN_MAX_PER_EMAIL: "10000" }), pool, storage: new LocalStorage(dir), tts, translator });
   });
   afterAll(async () => {
     await app.close();
@@ -55,6 +65,7 @@ describe.skipIf(!url)("admin + aluno (integração)", () => {
   beforeEach(async () => {
     await pool.query("TRUNCATE users, contexts, audios CASCADE");
     tts.calls = 0;
+    translator.calls = [];
     const hash = await hashPassword("senha-boa-123");
     await pool.query("INSERT INTO users (email, name, password_hash, role) VALUES ('admin@t.com','Admin',$1,'admin')", [hash]);
     const s = await pool.query("INSERT INTO users (email, name, password_hash) VALUES ('aluno@t.com','Aluno',$1) RETURNING id", [hash]);
@@ -327,6 +338,80 @@ describe.skipIf(!url)("admin + aluno (integração)", () => {
     expect((await call("PUT", `/admin/playlists/${pl.id}/order`, admin, { ids: ids.slice(1) })).statusCode).toBe(400);
   });
 
+  it("tradução: entra junto da frase, edita sem mexer no texto e sobe a versão", async () => {
+    const ctx = await makeContext();
+    const pl = await makePlaylist(ctx.id);
+    const created = (
+      await call("POST", `/admin/playlists/${pl.id}/sentences`, admin, { text: "Hello there my friend.", translationPt: "  Olá,   meu amigo. " })
+    ).json();
+    expect(created.sentences[0].translationPt).toBe("Olá, meu amigo.");
+    expect(created.version).toBeGreaterThan(pl.version);
+
+    const semTraducao = (await call("POST", `/admin/playlists/${pl.id}/sentences`, admin, { text: "See you tomorrow." })).json();
+    expect(semTraducao.sentences[1].translationPt).toBeNull();
+
+    const [first, second] = semTraducao.sentences;
+    const before = semTraducao.version;
+    const edited = (await call("PATCH", `/admin/sentences/${first.id}`, admin, { translationPt: "Oi, amigo." })).json();
+    expect(edited.sentences[0]).toMatchObject({ text: "Hello there my friend.", translationPt: "Oi, amigo." });
+    expect(edited.version).toBeGreaterThan(before);
+
+    const cleared = (await call("PATCH", `/admin/sentences/${first.id}`, admin, { translationPt: null })).json();
+    expect(cleared.sentences[0].translationPt).toBeNull();
+    expect((await call("PATCH", `/admin/sentences/${second.id}`, admin, {})).statusCode).toBe(400);
+
+    // a tradução não entra na chave do áudio
+    const { rows } = await pool.query("SELECT text_hash FROM sentences WHERE id = $1", [first.id]);
+    expect(rows[0].text_hash).toBe(textHash("Hello there my friend."));
+  });
+
+  it("tradução: o aluno recebe no player e no manifesto offline", async () => {
+    const ctx = await makeContext();
+    const pl = await makePlaylist(ctx.id);
+    await call("POST", `/admin/playlists/${pl.id}/sentences`, admin, { text: "Hello there my friend.", translationPt: "Olá, meu amigo." });
+    await call("POST", `/admin/playlists/${pl.id}/sentences`, admin, { text: "See you tomorrow." });
+    await call("POST", `/admin/playlists/${pl.id}/publish`, admin);
+
+    const player = (await call("GET", `/playlists/${pl.id}`, student)).json();
+    expect(player.sentences.map((s: { translationPt?: string }) => s.translationPt)).toEqual(["Olá, meu amigo.", undefined]);
+    const manifest = (await call("POST", `/playlists/${pl.id}/prepare`, student)).json();
+    expect(manifest.sentences[0].translationPt).toBe("Olá, meu amigo.");
+  });
+
+  it("tradução: /translate preenche só as pendentes; overwrite refaz todas", async () => {
+    const ctx = await makeContext();
+    const pl = await makePlaylist(ctx.id, "Apresentação");
+    await call("POST", `/admin/playlists/${pl.id}/sentences`, admin, { text: "Hello there my friend.", translationPt: "Tradução manual." });
+    await call("POST", `/admin/playlists/${pl.id}/sentences`, admin, { text: "See you tomorrow." });
+    const versionBefore = (await call("GET", `/admin/playlists/${pl.id}`, admin)).json().version;
+
+    const res = (await call("POST", `/admin/playlists/${pl.id}/translate`, admin, {})).json();
+    expect(res).toMatchObject({ translated: 1, skipped: 0 });
+    expect(translator.calls).toHaveLength(1);
+    expect(translator.calls[0]).toMatchObject({ context: "Entrevista Java", playlist: "Apresentação", sentences: ["See you tomorrow."] });
+    expect(res.playlist.sentences.map((s: { translationPt: string }) => s.translationPt)).toEqual(["Tradução manual.", "PT: See you tomorrow."]);
+    expect(res.playlist.version).toBe(versionBefore + 1);
+
+    // nada pendente: não chama o tradutor
+    expect((await call("POST", `/admin/playlists/${pl.id}/translate`, admin, {})).json()).toMatchObject({ translated: 0 });
+    expect(translator.calls).toHaveLength(1);
+
+    const all = (await call("POST", `/admin/playlists/${pl.id}/translate`, admin, { overwrite: true })).json();
+    expect(all.translated).toBe(2);
+    expect(all.playlist.sentences[0].translationPt).toBe("PT: Hello there my friend.");
+
+    expect((await call("POST", `/admin/playlists/${pl.id}/translate`, student, {})).statusCode).toBe(403);
+  });
+
+  it("tradução: o banco normaliza e recusa tradução vazia, mesmo escrito direto", async () => {
+    const pl = await importedPlaylist();
+    await pool.query("UPDATE sentences SET translation_pt = '  Olá   mundo  ' WHERE playlist_id = $1 AND position = 1", [pl.id]);
+    await pool.query("UPDATE sentences SET translation_pt = '   ' WHERE playlist_id = $1 AND position = 2", [pl.id]).catch(() => undefined);
+    const { rows } = await pool.query("SELECT position, translation_pt FROM sentences WHERE playlist_id = $1 AND position <= 2 ORDER BY position", [pl.id]);
+    expect(rows[0].translation_pt).toBe("Olá mundo");
+    expect(rows[1].translation_pt).toBeNull();
+  });
+
   it("o catálogo do aluno segue a ordem das playlists definida pelo administrador", async () => {
     const ctx = await makeContext();
     const ids: string[] = [];
@@ -458,8 +543,15 @@ describe.skipIf(!url)("admin + aluno (integração)", () => {
   });
 
   it("configurações do aluno: padrão, validação e persistência", async () => {
-    expect((await call("GET", "/me/settings", student)).json()).toEqual({ repeats: 2, speed: 1, loop: true });
+    expect((await call("GET", "/me/settings", student)).json()).toEqual({
+      repeats: 2, speed: 1, loop: true, showTranslation: true, keepScreenOn: false,
+    });
     expect((await call("PUT", "/me/settings", student, { repeats: 9, speed: 1, loop: true })).statusCode).toBe(400);
-    expect((await call("PUT", "/me/settings", student, { repeats: 3, speed: 0.75, loop: false })).json()).toEqual({ repeats: 3, speed: 0.75, loop: false });
+    expect((await call("PUT", "/me/settings", student, { repeats: 3, speed: 0.75, loop: false })).json()).toEqual({
+      repeats: 3, speed: 0.75, loop: false, showTranslation: true, keepScreenOn: false,
+    });
+    expect(
+      (await call("PUT", "/me/settings", student, { repeats: 3, speed: 1, loop: false, showTranslation: false, keepScreenOn: true })).json(),
+    ).toEqual({ repeats: 3, speed: 1, loop: false, showTranslation: false, keepScreenOn: true });
   });
 });

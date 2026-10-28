@@ -18,4 +18,4 @@ claude mcp add reouvir \
 ```
 
 Não expõe de propósito: excluir playlist ou contexto, despublicar e arquivar.
-`add_sentences` faz uma chamada por frase (a API não tem rota em lote).
+`add_sentences` faz uma chamada por frase (a API não tem rota em lote); cada frase aceita `translationPt`. `translate_playlist` gera a tradução das frases que ainda não têm.

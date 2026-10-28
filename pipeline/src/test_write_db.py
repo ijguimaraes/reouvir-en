@@ -146,6 +146,21 @@ class WriteTests(Base):
         self.assertGreater(self.version(), 1)
         self.assertTrue(all(h for (h,) in self.admin("SELECT text_hash FROM sentences")))   # trigger do banco
 
+    def test_translation_is_written_with_the_sentence_and_kept_when_omitted(self):
+        its = [dict(sent("I am very happy today.", "i-am", "intro"), translation_pt="  Estou muito   feliz hoje. "),
+               sent("She is at work now.", "he-she-is", "work")]
+        self.run_w(its)
+        self.assertEqual(self.admin("SELECT translation_pt FROM sentences ORDER BY position"), [("Estou muito feliz hoje.",), (None,)])
+        # reenviar sem o campo não apaga a tradução; com o campo, atualiza (e sobe a versão)
+        before = self.version()
+        rep = self.run_w([sent("I am very happy today.", "i-am", "intro"), sent("She is at work now.", "he-she-is", "work")],
+                         replace=True)
+        self.assertEqual((rep["added"], rep["removed"], rep["moved"]), (0, 0, 0))
+        self.assertEqual(self.version(), before)
+        self.run_w([dict(sent("I am very happy today.", "i-am", "intro"), translationPt="Estou muito contente hoje."), its[1]], replace=True)
+        self.assertEqual(self.admin("SELECT translation_pt FROM sentences ORDER BY position")[0], ("Estou muito contente hoje.",))
+        self.assertGreater(self.version(), before)
+
     def test_playlist_order_is_exactly_the_input_order(self):
         # tamanhos e cenas misturados de propósito: nada de reordenar por cena nem por comprimento
         texts = ["This is the longest sentence of the whole list today.", "Short one here today.", "Medium length sentence is here.",

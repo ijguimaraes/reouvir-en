@@ -12,6 +12,8 @@ const envSchema = z.object({
   ELEVENLABS_API_KEY: z.string().optional(),
   ELEVENLABS_VOICE_ID: z.string().default("21m00Tcm4TlvDq8ikWAM"),
   ELEVENLABS_MODEL_ID: z.string().default("eleven_multilingual_v2"),
+  ANTHROPIC_API_KEY: z.string().optional(),
+  TRANSLATION_MODEL: z.string().default("claude-haiku-5-5"),
   AUDIO_DIR: z.string().default("./audio-data"),
   /** Limite de gerações de áudio por minuto, no total e por aluno (seção 16). */
   TTS_MAX_PER_MINUTE: z.coerce.number().int().default(60),

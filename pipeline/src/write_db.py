@@ -7,6 +7,8 @@ Uso:
 A playlist é identificada por (slug do contexto, slug da playlist) e PRECISA EXISTIR: contextos e playlists são
 criados no backoffice. O contexto vem do `slug` do arquivo --context.
 A ORDEM DO ARQUIVO --input É A DA PLAYLIST (position 1 a n): quem escreve as frases decide a ordem.
+Cada frase pode trazer a tradução em português no campo `translation_pt` (ou `translationPt`). Sem o campo, a
+tradução que a frase já tem no banco é mantida; ela nunca entra na chave do áudio.
 
 Conexão: PIPELINE_DATABASE_URL (variável de ambiente ou PIPELINE_DATA_DIR/pipeline-db.env, criado por
 create_pipeline_role.py). Use a role da pipeline, não a do administrador.
@@ -59,6 +61,8 @@ def build_rows(items, prompt_version, model, word_range=(0, 10**6)):
         seen[h] = text
         d = dict(x) if isinstance(x, dict) else {}
         d["text"] = text
+        tr = normalize_text(d.get("translation_pt") or d.get("translationPt") or "") if isinstance(x, dict) else ""
+        d["translation"] = tr or None
         d["claimed"] = d.get("claimed") or d.get("structure")
         norm.append(d)
     if bad:
@@ -71,7 +75,8 @@ def build_rows(items, prompt_version, model, word_range=(0, 10**6)):
         if x.get("claimed"): meta["structure"] = x["claimed"]
         if model: meta["model"] = model
         if x.get("vocab"): meta["vocab_flags"] = sorted({v[0] for v in x["vocab"]})
-        rows.append({"position": pos, "text": x["text"], "hash": text_hash(x["text"]), "metadata": meta})
+        rows.append({"position": pos, "text": x["text"], "hash": text_hash(x["text"]), "metadata": meta,
+                     "translation": x["translation"]})
     return rows
 
 
@@ -97,14 +102,15 @@ def apply(conn, playlist_slug, context, rows, *, replace, allow_published):
     rep.update(playlist_id=str(pl_id), status=status, version_before=version_before)
 
     # 2) diff por hash ------------------------------------------------------------------------------
-    cur_rows = cur.execute("SELECT id, position, text_hash, metadata FROM sentences WHERE playlist_id = %s ORDER BY position",
+    cur_rows = cur.execute("SELECT id, position, text_hash, metadata, translation_pt FROM sentences WHERE playlist_id = %s ORDER BY position",
                            (pl_id,)).fetchall()
     by_hash = {r[2]: r for r in cur_rows}
     new_hashes = {r["hash"] for r in rows}
     removed = [r for r in cur_rows if r[2] not in new_hashes]
     added = [r for r in rows if r["hash"] not in by_hash]
     moved = [(by_hash[r["hash"]][0], r) for r in rows if r["hash"] in by_hash
-             and (by_hash[r["hash"]][1] != r["position"] or not _same_meta(by_hash[r["hash"]][3], r["metadata"]))]
+             and (by_hash[r["hash"]][1] != r["position"] or not _same_meta(by_hash[r["hash"]][3], r["metadata"])
+                  or (r["translation"] is not None and r["translation"] != by_hash[r["hash"]][4]))]
     kept = len(rows) - len(added)
     rep.update(existing=len(cur_rows), kept=kept, added=len(added), removed=len(removed), moved=len(moved))
     changes = bool(added or removed or moved)
@@ -120,14 +126,18 @@ def apply(conn, playlist_slug, context, rows, *, replace, allow_published):
     if removed:
         cur.execute("DELETE FROM sentences WHERE id = ANY(%s)", ([r[0] for r in removed],))
     if moved:
-        cur.execute("UPDATE sentences s SET position = v.p, metadata = v.m::jsonb "
-                    "FROM unnest(%s::uuid[], %s::int[], %s::text[]) AS v(id, p, m) WHERE s.id = v.id",
-                    ([m[0] for m in moved], [m[1]["position"] for m in moved], [json.dumps(m[1]["metadata"]) for m in moved]))
+        # tradução ausente no arquivo ('') mantém a que já está no banco
+        cur.execute("UPDATE sentences s SET position = v.p, metadata = v.m::jsonb, "
+                    "translation_pt = COALESCE(NULLIF(v.t, ''), s.translation_pt) "
+                    "FROM unnest(%s::uuid[], %s::int[], %s::text[], %s::text[]) AS v(id, p, m, t) WHERE s.id = v.id",
+                    ([m[0] for m in moved], [m[1]["position"] for m in moved], [json.dumps(m[1]["metadata"]) for m in moved],
+                     [m[1]["translation"] or "" for m in moved]))
     if added:
-        cur.execute("INSERT INTO sentences (playlist_id, position, text, metadata) "
-                    "SELECT %s, v.p, v.t, v.m::jsonb FROM unnest(%s::int[], %s::text[], %s::text[]) AS v(p, t, m)",
+        cur.execute("INSERT INTO sentences (playlist_id, position, text, metadata, translation_pt) "
+                    "SELECT %s, v.p, v.t, v.m::jsonb, NULLIF(v.pt, '') "
+                    "FROM unnest(%s::int[], %s::text[], %s::text[], %s::text[]) AS v(p, t, m, pt)",
                     (pl_id, [r["position"] for r in added], [r["text"] for r in added],
-                     [json.dumps(r["metadata"]) for r in added]))
+                     [json.dumps(r["metadata"]) for r in added], [r["translation"] or "" for r in added]))
 
     # 4) confere no banco, antes de confirmar --------------------------------------------------------
     got = cur.execute("SELECT position, text, text_hash FROM sentences WHERE playlist_id = %s ORDER BY position", (pl_id,)).fetchall()

@@ -2,7 +2,9 @@ import type { PlayerSettings } from "@reouvir/shared";
 import { api } from "../api";
 
 const KEY = "reouvir-settings";
-export const DEFAULT_SETTINGS: PlayerSettings = { repeats: 2, speed: 1, loop: true };
+export const DEFAULT_SETTINGS: PlayerSettings = {
+  repeats: 2, speed: 1, loop: true, showTranslation: true, keepScreenOn: false,
+};
 
 export function cachedSettings(): PlayerSettings {
   try {

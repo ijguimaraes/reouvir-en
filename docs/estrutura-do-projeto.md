@@ -32,11 +32,11 @@ O sistema tem dois apps de front-end, independentes, e uma API:
 4. **Playlist, não frase solta.** A unidade de uso é a playlist inteira. O aluno configura só quantas vezes cada frase repete em sequência.
 5. **Ritmo fixo de escuta.** Depois de cada audição existe um silêncio proporcional à duração do áudio (seção 6), para o aluno repetir em voz alta ou processar o que ouviu.
 6. **Mãos livres.** O player precisa funcionar com a tela bloqueada e com conexão instável.
-7. **Custo previsível.** Frases curtas, cache global de áudio e um único modelo de voz no MVP.
+7. **Custo previsível.** Frases curtas, cache global de áudio e um único modelo de voz.
 
 ## 3. Escopo
 
-### Entra no MVP
+### Escopo atual
 
 **App do aluno**
 - Tela de acesso com duas opções: **entrar** com e-mail e senha ou **criar conta** (cadastro aberto, sempre com papel `student`). O administrador é criado por seed.
@@ -47,6 +47,8 @@ O sistema tem dois apps de front-end, independentes, e uma API:
   - silêncio entre audições calculado pela duração do áudio (regra fixa),
   - velocidade 0,75x / 1x,
   - loop da playlist,
+  - **tradução em português** abaixo da frase em inglês (pode ser ocultada nas configurações),
+  - opção de **manter a tela ligada** enquanto a playlist toca (Screen Wake Lock),
   - controles na tela de bloqueio (Media Session API),
   - retomar de onde parou.
 - **Tema claro e escuro** no app do aluno e no backoffice: segue o sistema (`prefers-color-scheme`), com alternância manual lembrada no dispositivo.
@@ -58,14 +60,14 @@ O sistema tem dois apps de front-end, independentes, e uma API:
 - **Contextos:** cadastro com criar, editar e excluir, incluindo um campo de **detalhamento** livre.
 - **Playlists:** criar, renomear, descrever, **reordenar** e excluir (só as vazias) dentro de cada contexto.
 - **Usuários:** listar, **bloquear/desbloquear** e **redefinir a senha**.
-- **Revisão das frases** por playlist: editar, remover, reordenar e adicionar à mão.
+- **Revisão das frases** por playlist: editar (texto e tradução), remover, reordenar e adicionar à mão.
+- **Tradução:** botão "Traduzir pendentes", que gera com a API da Anthropic a tradução das frases que ainda não têm; cada tradução pode ser editada. A frase também pode ser criada já com `translationPt`.
 - Publicar, despublicar e arquivar playlists.
 - Visão de cobertura de áudio por playlist (quantos áudios já foram gerados) e consumo de caracteres do TTS.
 
-### Fora do MVP
+### Fora do escopo
 
 - Geração de frases dentro do sistema (fica numa pipeline à parte).
-- Tradução para português.
 - Login com Google (entra depois, como provedor extra).
 - Storage em nuvem (S3/R2) e CDN.
 - Texto livre como contexto.
@@ -129,6 +131,8 @@ Login
 | Repetições seguidas por frase | 2 | 1–5 |
 | Velocidade | 1x | 0,75x / 1x |
 | Loop da playlist | ligado | — |
+| Mostrar a tradução | ligado | — |
+| Manter a tela ligada | desligado | — |
 
 O silêncio entre audições **não é configurável**: segue a regra abaixo.
 
@@ -215,7 +219,7 @@ O cadastro é feito pelo próprio aluno na tela de acesso. O backoffice **não c
 
 - **Listar** usuários (e-mail, papel, status, data de cadastro, último acesso).
 - **Bloquear/desbloquear:** o bloqueio muda `status` para `blocked` e revoga todos os refresh tokens do usuário. Ele perde o acesso assim que o access token expira (até 15 min) e não consegue mais entrar nem renovar a sessão.
-- **Redefinir a senha:** gera uma **senha temporária**, exibida uma única vez ao administrador, que a repassa ao aluno. A conta fica com `must_change_password = true` e todas as sessões são revogadas. No próximo login, o aluno é obrigado a trocar a senha. Não há e-mail transacional no MVP, então não existe "esqueci minha senha" automático.
+- **Redefinir a senha:** gera uma **senha temporária**, exibida uma única vez ao administrador, que a repassa ao aluno. A conta fica com `must_change_password = true` e todas as sessões são revogadas. No próximo login, o aluno é obrigado a trocar a senha. Não há e-mail transacional, então não existe "esqueci minha senha" automático.
 - Um administrador não pode bloquear a si mesmo. Papéis não são alterados pelo backoffice.
 
 ## 8. Carga de frases (direto no banco)
@@ -245,6 +249,7 @@ COMMIT;
 ### 8.2 O que o banco garante (triggers)
 
 - **Normalização e hash:** ao inserir ou alterar `text`, o banco aplica a mesma normalização do código (`normalizeText`: NFC, aspas retas, `...`, espaços únicos e sem bordas) e preenche `text_hash` (sha256 do texto normalizado) e `char_count`. Texto vazio é recusado. Há teste que compara a função SQL com a do código.
+- **Tradução:** quem grava direto pode incluir `translation_pt` no `INSERT`. O banco aplica a mesma normalização, converte vazio em `NULL` e a `version` da playlist sobe como em qualquer mudança de frase. A tradução não entra no `text_hash` nem na chave do áudio.
 - **Duplicatas:** `UNIQUE (playlist_id, text_hash)` recusa a mesma frase duas vezes na playlist, e `UNIQUE (playlist_id, position)` recusa posições repetidas.
 - **Versão:** qualquer INSERT, UPDATE ou DELETE em `sentences` sobe a `version` da playlist (uma vez por comando). É isso que faz o app do aluno oferecer "Atualizar download".
 - **Playlist publicada:** trocar as frases de uma playlist publicada vale na hora para os alunos. Frases removidas zeram `last_sentence_id` de quem estava nelas (a retomada volta ao início).
@@ -322,7 +327,8 @@ refresh_tokens (
 )
 
 user_settings (
-  user_id, repeats, speed, loop_playlist
+  user_id, repeats, speed, loop_playlist,
+  show_translation (default true), keep_screen_on (default false)
 )
 
 contexts (
@@ -347,6 +353,7 @@ playlists (
 
 sentences (
   id, playlist_id, position, text, text_hash, char_count,
+  translation_pt,                    -- tradução em português, opcional; fora da chave do áudio (trigger a normaliza)
   metadata,                          -- jsonb opcional vindo da pipeline (ignorado pelo app)
                                      -- text, text_hash e char_count são mantidos por trigger (seção 8.2)
   created_at, updated_at,
@@ -396,7 +403,7 @@ Convenções: tokens em cookies `httpOnly`, `Secure`, `SameSite=Lax`; erros de c
 | GET | `/catalog` | Árvore **contexto → playlists** publicadas, na ordem do administrador (id, slug, título, descrição, posição, nº de frases; o estado de download fica no cliente) |
 | GET | `/playlists/:id` | Playlist publicada com as frases e o estado do aluno |
 | GET | `/sentences/:id/audio` | Garante o áudio (lazy) e devolve URL e duração |
-| POST | `/playlists/:id/prepare` | Garante todos os áudios e devolve o **manifesto offline**: frases (id, posição, texto, `audioUrl`, `durationMs`) e a versão da playlist |
+| POST | `/playlists/:id/prepare` | Garante todos os áudios e devolve o **manifesto offline**: frases (id, posição, texto, `translationPt`, `audioUrl`, `durationMs`) e a versão da playlist |
 | PUT | `/playlists/:id/state` | Salva frase atual, voltas e tempo ouvido (com `client_updated_at`; vale o mais recente) |
 | GET/PUT | `/me/settings` | Configurações do player |
 
@@ -410,9 +417,10 @@ Convenções: tokens em cookies `httpOnly`, `Secure`, `SameSite=Lax`; erros de c
 | PUT | `/admin/playlists/:id` | Editar título, slug e descrição (só o que vier no corpo) |
 | DELETE | `/admin/playlists/:id` | Excluir; recusa (409) se tiver frases |
 | GET | `/admin/playlists` | Listar (filtro `?contextId=`) |
-| PATCH/DELETE | `/admin/sentences/:id` | Editar ou remover uma frase |
+| PATCH/DELETE | `/admin/sentences/:id` | Editar (`text` e/ou `translationPt`; `null` apaga a tradução) ou remover uma frase |
 | PUT | `/admin/playlists/:id/order` | Reordenar: recebe a lista completa de ids na nova ordem e renumera de 1 a n |
-| POST | `/admin/playlists/:id/sentences` | Adicionar frase manual (última posição) |
+| POST | `/admin/playlists/:id/sentences` | Adicionar frase manual (última posição), com `translationPt` opcional |
+| POST | `/admin/playlists/:id/translate` | Gera a tradução das frases sem tradução (`overwrite: true` refaz todas) com a API da Anthropic, em lotes de 40, e grava. Responde 503 sem `ANTHROPIC_API_KEY` |
 | POST | `/admin/playlists/:id/publish` | Publicar |
 | POST | `/admin/playlists/:id/unpublish` | Despublicar |
 | POST | `/admin/playlists/:id/archive` | Arquivar |
@@ -446,7 +454,7 @@ apps/web (Vite + React, PWA)          apps/admin (Vite + React, backoffice)
 - **Tema:** variáveis CSS (design tokens) para cores, com a paleta escura em `@media (prefers-color-scheme: dark)` e em `[data-theme="dark"]`. A escolha manual vai para o `localStorage`. O manifesto do PWA e a `theme-color` também precisam ter variante escura. Os tokens ficam compartilhados entre `web` e `admin`.
 - **Backoffice (`apps/admin`):** Vite + React + TypeScript, **sem service worker** (não precisa ser PWA nem funcionar offline). É um app à parte, com bundle e deploy próprios, então nada do backoffice pesa no app do aluno.
 - **API (`apps/api`):** Node + TypeScript com **Fastify**, validação com **zod**.
-- **MCP (`apps/mcp`):** servidor MCP por stdio (`@modelcontextprotocol/sdk`) que chama as rotas `/admin` da API. Não é implantado: roda na máquina de quem usa o Claude Code e fala com a API pela URL do Tailscale. A API só aceita sessão por cookie httpOnly, então ele reaproveita o `createApiClient` com um `fetch` que guarda os cookies e entra de novo se o refresh falhar. Variáveis: `REOUVIR_URL`, `REOUVIR_EMAIL` e `REOUVIR_PASSWORD` (de preferência um administrador dedicado). Tools: listar e criar contextos; listar, detalhar, criar e editar playlists; adicionar (uma ou várias), editar e remover frases; publicar. De propósito não expõe excluir contexto ou playlist, despublicar nem arquivar. Não há rota em lote para frases, então `add_sentences` faz uma chamada por frase; para lotes grandes o caminho continua sendo o `pipeline/src/write_db.py`.
+- **MCP (`apps/mcp`):** servidor MCP por stdio (`@modelcontextprotocol/sdk`) que chama as rotas `/admin` da API. Não é implantado: roda na máquina de quem usa o Claude Code e fala com a API pela URL do Tailscale. A API só aceita sessão por cookie httpOnly, então ele reaproveita o `createApiClient` com um `fetch` que guarda os cookies e entra de novo se o refresh falhar. Variáveis: `REOUVIR_URL`, `REOUVIR_EMAIL` e `REOUVIR_PASSWORD` (de preferência um administrador dedicado). Tools: listar e criar contextos; listar, detalhar, criar e editar playlists; adicionar (uma ou várias, com `translationPt` opcional), editar e remover frases; gerar a tradução das pendentes (`translate_playlist`); publicar. De propósito não expõe excluir contexto ou playlist, despublicar nem arquivar. Não há rota em lote para frases, então `add_sentences` faz uma chamada por frase; para lotes grandes o caminho continua sendo o `pipeline/src/write_db.py`.
 - **Código compartilhado:**
   - `packages/shared`: tipos, schemas zod dos contratos da API e regras usadas pelos dois lados, como a regra do silêncio (`calcularSilencioMs`) e o padding de 1,5 s.
   - `packages/api-client`: cliente HTTP tipado, usado pelo `web` e pelo `admin`.
@@ -459,13 +467,13 @@ apps/web (Vite + React, PWA)          apps/admin (Vite + React, backoffice)
   - O `refresh` e o `login` consultam `users.status`, então um usuário bloqueado não renova a sessão.
   - O front tenta `refresh` uma vez ao receber 401 e, se falhar, volta para a tela de acesso. O service worker do PWA não guarda respostas de `/api/auth`.
   - O papel `admin` nunca vem do cadastro: o primeiro administrador é criado por seed ou comando, usando o e-mail de `.env`. Biblioteca (por exemplo Better Auth) ou implementação própria com `jose` e `argon2`, desde que siga este contrato.
-  - O login com Google fica fora do MVP: exige uma URI de redirecionamento pública com HTTPS, e depois entra como provedor extra só por configuração.
+  - O login com Google fica fora do escopo: exige uma URI de redirecionamento pública com HTTPS, e depois entra como provedor extra só por configuração.
 - **Origem única:** em produção, os três ficam sob o mesmo domínio, por caminho: `/` para o app do aluno, `/admin` para o backoffice (`base: '/admin/'` no Vite) e `/api` para a API, via proxy reverso. Isso evita problemas de CORS e permite compartilhar o cookie de sessão. Em desenvolvimento, cada app roda em sua porta e o Vite faz proxy de `/api` para a API.
 - **Concorrência:** `UNIQUE(audio_key)` para o áudio. A troca das frases de uma playlist deve ser feita numa transação.
 
 ### Deploy local (Docker Compose + Tailscale)
 
-O MVP roda 100% local, em uma máquina que fica ligada (desktop, mini PC ou servidor caseiro), e é acessado pelo celular e pelo notebook através da VPN Tailscale.
+O sistema roda 100% local, em uma máquina que fica ligada (desktop, mini PC ou servidor caseiro), e é acessado pelo celular e pelo notebook através da VPN Tailscale.
 
 ```
 Celular / notebook (na tailnet)
@@ -604,7 +612,7 @@ Níveis CEFR e tópicos gramaticais **deixaram de fazer parte do sistema** (não
 | Sem HTTPS, o PWA não registra service worker no celular | Publicar o Caddy com `tailscale serve` e certificado do Tailscale (MagicDNS + HTTPS habilitados). |
 | Perda da pasta de áudio obriga a pagar o ElevenLabs de novo | Backup periódico da pasta de áudio, além do `pg_dump`. |
 | Cadastro aberto permite criar contas à vontade, e sem e-mail não há recuperação de senha | A rede é só a tailnet; limite de tentativas em `register`/`login`; redefinição pelo administrador; bloqueio de usuários. |
-| Máquina desligada deixa o app indisponível | Aceito no MVP; playlists já preparadas no celular tocam offline. |
+| Máquina desligada deixa o app indisponível | Risco aceito; playlists já preparadas no celular tocam offline. |
 
 ## 18. Premissas assumidas (validar)
 
@@ -615,8 +623,8 @@ Pontos em que escolhi um padrão. Todos são fáceis de mudar.
 3. **Playlists livres dentro de um contexto**, sem versões de conteúdo. Para trocar o conteúdo, regravam-se as frases (ou o administrador edita à mão), ou arquiva-se a playlist.
 4. **Tamanho da playlist livre.** Este sistema não impõe quantidade de frases.
 5. **Padrão de 2 repetições** por frase.
-6. **Uma voz americana** no MVP.
-7. **"Baixar playlist" entra no MVP**, porque correr com conexão instável é o caso de uso principal.
+6. **Uma voz americana.**
+7. **"Baixar playlist" faz parte do produto**, porque correr com conexão instável é o caso de uso principal.
 8. **Cadastro aberto** pela tela de acesso (e-mail e senha), com access token + refresh token. O administrador inicial vem de seed. O backoffice só bloqueia usuários e redefine senhas (senha temporária, sem e-mail).
 9. **Sem nível nem tópico.** O administrador decide quantas playlists cada contexto tem, o nome e a ordem de cada uma; adequação de gramática e de dificuldade fica com quem escreve as frases.
 10. **Sem SRS.** O progresso é medido por voltas completas e tempo ouvido.

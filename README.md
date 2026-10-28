@@ -30,7 +30,7 @@ pnpm seed                     # só o administrador de ADMIN_EMAIL / ADMIN_PASSW
 pnpm dev                      # api :3711, web :5273, admin :5274/admin/
 ```
 
-Sem `ELEVENLABS_API_KEY`, tudo funciona menos gerar áudio novo (a API responde 503 nessa rota).
+Sem `ELEVENLABS_API_KEY`, tudo funciona menos gerar áudio novo (a API responde 503 nessa rota). Sem `ANTHROPIC_API_KEY`, tudo funciona menos o botão "Traduzir pendentes" (503); a tradução também pode vir junto da frase (`translationPt`).
 
 Fluxo no backoffice (`http://localhost:5274/admin/`): crie um **Contexto** (com o detalhamento, se quiser) e, dentro dele, as **Playlists** (título, descrição e ordem). As frases chegam direto no banco por `pipeline/src/write_db.py --playlist <slug>` (seção 8 do documento; o ambiente local não carrega frases de exemplo); depois revise na tela da playlist e **publique**. Para testar sem isso, adicione frases à mão na tela da playlist. Depois entre como aluno em `http://localhost:5273`.
 
