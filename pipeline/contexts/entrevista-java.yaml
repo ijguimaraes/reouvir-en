@@ -1,0 +1,50 @@
+# Contexto de exemplo, todo em inglês. Estruturado para a pipeline: personagens, cenas (com situações)
+# e vocabulário alimentam o prompt e o filtro de léxico. `name`, `category`, `description` e `details`
+# espelham os campos do contexto no backoffice (o contexto em si é criado lá; a pipeline só lê este arquivo).
+
+slug: software-engineer-interview-java
+name: Software engineer interview (Java)
+category: Work
+description: Technical and behavioural interview for a Java developer position.
+details: >-
+  The learner is a candidate in a job interview for a Java backend developer position, with a
+  friendly interviewer. Situations: introducing yourself, talking about your experience and
+  your team, answering technical and behavioural questions, asking about the company, closing.
+characters:
+  - { name: Ana, role: "the interviewer, a friendly engineering manager" }
+  - { name: Carlos, role: "the candidate, a Java developer from Brazil" }
+  - { name: Tom, role: "a senior developer on the team who joins the interview" }
+scenes:
+  - id: introduction
+    desc: "greetings and introducing yourself to the interviewer"
+    situations: ["Ana greets Carlos at the door", "Carlos says his name and where he is from", "Ana says she is happy to see him", "Carlos says he is a little nervous but ready"]
+  - id: experience
+    desc: "talking about past jobs, projects and skills"
+    situations: ["Carlos says what he is good at", "Ana asks where he was before (places only)", "Carlos says he is happy at his job", "Tom says Carlos is very experienced"]
+  - id: technical
+    desc: "answering technical questions about code, tools and problems"
+    situations: ["Carlos says Java and Spring are good tools", "Tom says a server is slow or fast", "Carlos says he is sure about an answer", "Ana says an answer is right and clear"]
+  - id: teamwork
+    desc: "working with a team, a manager and colleagues"
+    situations: ["Carlos says his team is kind and friendly", "Tom says everybody is busy at work", "Carlos says he is happy with his manager", "Ana says the team is ready for a new person"]
+  - id: company
+    desc: "asking about the company, the office and the role"
+    situations: ["Carlos says the office is nice or big", "Ana says the company is in Lisbon or London", "Tom says the place is quiet", "Carlos says he is ready for the new job"]
+  - id: closing
+    desc: "thanking the interviewer and saying goodbye"
+    situations: ["Carlos says he is thankful and happy", "Ana says the interview is done", "Tom says goodbye to Carlos", "Ana says Carlos is very good"]
+# texto simples = liberado em qualquer nível; { word, from } = liberado a partir do nível indicado.
+# É a ÚNICA exceção ao filtro de vocabulário por nível: cada contexto traz o seu.
+vocabulary:
+  - Java
+  - Spring
+  - code
+  - project
+  - team
+  - manager
+  - office
+  - interview
+  - bug
+  - server
+  - { word: database, from: A2 }
+  - { word: deadline, from: B1 }

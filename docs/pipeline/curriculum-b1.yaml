@@ -1,0 +1,203 @@
+# Currículo do nível B1. Mesmas regras do curriculum-a1.yaml (ordem gramatical cumulativa, A1 → A2 → B1).
+# `introduces: []` = o tópico não traz feature nova; ele contrasta recursos já introduzidos.
+
+schema_version: 1
+
+level:
+  code: B1
+  name: B1
+  order: 3
+  sentence_words: { min: 8, max: 18 }
+  playlist_size: 100
+  candidates: 130
+
+topics:
+  - slug: present-perfect
+    name: Present Perfect (for, since, already, yet, ever)
+    order: 1
+    introduces: [pres_perfect, pp_adverb]
+    structures:
+      - { id: regular, ex: "I have visited three countries in my life.", rule: { feature: pres_perfect } }
+      - { id: irregular, ex: "She has seen that new film three times already.", rule: { tag: VBN, not_re: 'ed$', child: { lower: [have, has, "'ve", "'s"] } } }
+      - { id: negative, ex: "We haven't finished the project because of the problem.", rule: { all: [ { feature: pres_perfect }, { lower: "n't" } ] } }
+      - { id: question, ex: "Have you ever been to another country by plane?", rule: { all: [ { feature: pres_perfect }, { lower: [have, has], sent_start: true } ] } }
+      - { id: ever, ex: "Have you ever tried the food from Japan?", rule: { lower: ever } }
+      - { id: never, ex: "I have never seen such a beautiful place before.", rule: { all: [ { feature: pres_perfect }, { lower: never } ] } }
+      - { id: already, ex: "They have already left the office for today.", rule: { lower: already } }
+      - { id: yet, ex: "She hasn't called her mother yet this week.", rule: { lower: yet } }
+      - { id: just, ex: "I have just finished my homework, so I am free.", rule: { lower: just } }
+      - { id: for-duration, ex: "We have lived in this city for ten years.", rule: { all: [ { feature: pres_perfect }, { lower: for, next: { pos: [NUM, DET] } } ] } }
+      - { id: since, ex: "He has worked here since last September and he likes it.", rule: { lower: since } }
+      - { id: recently, ex: "I have recently started a new course at school.", rule: { lower: [recently, lately] } }
+      - { id: wh-question, ex: "How long have you studied English at this school?", rule: { all: [ { feature: wh_other }, { feature: pres_perfect } ] } }
+      - { id: been-to, ex: "I have been to the new museum twice.", rule: { lower: been, next: { lower: to } } }
+
+  - slug: present-perfect-vs-past-simple
+    name: Present Perfect vs. Past Simple
+    order: 2
+    introduces: []
+    structures:
+      - { id: unfinished-vs-finished, ex: "I saw that film last week, but she has not seen it.", rule: { all: [ { feature: past_simple }, { feature: pres_perfect } ] } }
+      - { id: since-clause, ex: "She has lived in this town since she was a child.", rule: { all: [ { feature: pres_perfect }, { lower: since } ] } }
+      - { id: past-with-when, ex: "She lived in this town when she was a child.", rule: { all: [ { feature: past_simple }, { lower: when } ] } }
+      - { id: result-now, ex: "I have lost my keys, so I cannot open the door.", rule: { all: [ { feature: pres_perfect }, { lower: so } ] } }
+      - { id: past-ago, ex: "We bought this house about three years ago, and we love it.", rule: { all: [ { feature: past_simple }, { lower: ago } ] } }
+      - { id: experience-then-detail, ex: "I have visited Spain, and I loved the food there.", rule: { all: [ { feature: pres_perfect }, { feature: past_simple } ] } }
+      - { id: today, ex: "I have drunk three coffees today, and I feel very tired.", rule: { all: [ { feature: pres_perfect }, { lower: today } ] } }
+      - { id: yesterday-vs-today, ex: "I didn't see her yesterday, but I have seen her today.", rule: { all: [ { lower: yesterday }, { feature: pres_perfect } ] } }
+
+  - slug: past-continuous-vs-past-simple
+    name: Past Continuous vs. Past Simple
+    order: 3
+    introduces: [past_continuous, while_clause]
+    structures:
+      - { id: was-were-ing, ex: "I was cooking dinner when my phone rang.", rule: { feature: past_continuous } }
+      - { id: negative, ex: "We weren't sleeping when the storm started last night.", rule: { all: [ { feature: past_continuous }, { lower: "n't" } ] } }
+      - { id: wh-question, ex: "What were you doing at nine o'clock last night?", rule: { all: [ { feature: past_continuous }, { feature: wh_be } ] } }
+      - { id: yes-no-question, ex: "Was she studying when you called her yesterday evening?", rule: { all: [ { feature: past_continuous }, { lower: [was, were], sent_start: true } ] } }
+      - { id: while, ex: "I was walking home while it was raining very hard.", rule: { feature: while_clause } }
+      - { id: interrupted, ex: "She was reading a book when the lights went out.", rule: { all: [ { feature: past_continuous }, { lower: when }, { feature: past_simple } ] } }
+      - { id: parallel, ex: "He was cooking while she was washing the dishes.", rule: { all: [ { feature: while_clause }, { feature: past_continuous } ] } }
+      - { id: background, ex: "It was raining and everybody was running to the bus stop.", rule: { all: [ { feature: past_continuous }, { lower: and } ] } }
+
+  - slug: used-to-be-used-to
+    name: Used to / be used to
+    order: 4
+    introduces: [used_to]
+    structures:
+      - { id: used-to, ex: "I used to play football every weekend with my cousins.", rule: { lower: used, tag: VBD, next: { lower: to } } }
+      - { id: didnt-use-to, ex: "She didn't use to like coffee, but now she loves it.", rule: { lower: use, next: { lower: to } } }
+      - { id: question, ex: "Did you use to live near the sea as a child?", rule: { all: [ { lower: did, sent_start: true }, { lower: use } ] } }
+      - { id: state, ex: "We used to have a big dog in the old house.", rule: { all: [ { feature: used_to }, { lemma: have } ] } }
+      - { id: contrast-now, ex: "I used to be shy, but now I talk to everyone.", rule: { all: [ { feature: used_to }, { lower: now } ] } }
+      - { id: be-used-to-noun, ex: "I am used to the noise because I live downtown.", rule: { lower: used, prev: { lemma: be }, next: { lower: to } } }
+      - { id: be-used-to-ing, ex: "He is used to getting up early every morning.", rule: { all: [ { lower: used, prev: { lemma: be } }, { tag: VBG, prev: { lower: to } } ] } }
+      - { id: get-used-to, ex: "It takes time to get used to a new city.", rule: { lower: used, prev: { lemma: get } } }
+      - { id: negative-be-used, ex: "I am not used to the cold weather here yet.", rule: { all: [ { lower: used, next: { lower: to } }, { lemma: be }, { lower: not } ] } }
+      - { id: with-when, ex: "When I was young, I used to climb trees all the time.", rule: { all: [ { feature: used_to }, { lower: when } ] } }
+
+  - slug: gerund-vs-infinitive
+    name: Gerund vs. infinitive
+    order: 5
+    deepens: verb-ing-or-to
+    introduces: [ger_prep, ger_subject]
+    structures:
+      - { id: gerund-subject, ex: "Swimming every morning is very good for your health.", rule: { feature: ger_subject } }
+      - { id: after-preposition, ex: "She is good at solving problems and explaining ideas to people.", rule: { feature: ger_prep } }
+      - { id: before-after-ing, ex: "Wash your hands before eating anything at the table.", rule: { tag: VBG, prev: { lower: [before, after] } } }
+      - { id: stop-ing, ex: "He stopped smoking last year because he wanted to be healthy.", rule: { lemma: stop, child: { tag: VBG } } }
+      - { id: stop-to, ex: "He stopped to buy some water on the way home.", rule: { lemma: stop, child: { tag: VB } } }
+      - { id: remember-to, ex: "I remembered to lock the door before leaving the house.", rule: { lemma: remember, child: { tag: VB } } }
+      - { id: try-ing, ex: "Try turning it off and on again, because it often works.", rule: { lemma: try, child: { tag: VBG } } }
+      - { id: verbs-plus-ing, ex: "She avoids eating late because it makes her feel tired.", rule: { lemma: [avoid, finish, keep, suggest, mind, practise, practice, consider, miss], child: { tag: VBG } } }
+      - { id: verbs-plus-to, ex: "We managed to arrive early because the road was empty.", rule: { lemma: [manage, afford, promise, refuse, learn, decide, agree, expect, offer], child: { tag: VB } } }
+      - { id: adjective-to, ex: "It is important to drink enough water every day.", rule: { dep: xcomp, tag: VB, head: { child: { pos: ADJ, dep: acomp } } } }
+
+  - slug: modals-of-possibility-and-deduction
+    name: Modals of possibility and deduction
+    order: 6
+    introduces: [modal_epistemic]
+    structures:
+      - { id: may, ex: "It may rain this afternoon, so take an umbrella with you.", rule: { lemma: may } }
+      - { id: might, ex: "She might be at home because her car is outside.", rule: { lemma: might } }
+      - { id: could, ex: "That could be a good solution to this big problem.", rule: { lemma: could } }
+      - { id: must-deduction, ex: "He must be tired because he worked all night.", rule: { all: [ { lemma: must }, { lower: be } ] } }
+      - { id: cant-deduction, ex: "That can't be Ana, because she is in Spain now.", rule: { all: [ { lemma: can, next: { lower: "n't" } }, { lower: be } ] } }
+      - { id: might-not, ex: "They might not come to the party tonight because of work.", rule: { all: [ { lemma: might }, { lower: [not, "n't"] } ] } }
+      - { id: continuous, ex: "She may be sleeping now, so please speak very quietly.", rule: { all: [ { feature: modal_epistemic }, { tag: VBG } ] } }
+      - { id: question, ex: "Could this be the right address for the party tonight?", rule: { lemma: could, sent_start: true } }
+      - { id: certainty-scale, ex: "It is probably true, but it could also be a mistake.", rule: { all: [ { feature: modal_epistemic }, { lower: but } ] } }
+
+  - slug: first-and-second-conditional
+    name: First and second conditional
+    order: 7
+    introduces: [if_clause, would]
+    structures:
+      - { id: first, ex: "If it rains tomorrow, we will stay at home and watch films.", rule: { all: [ { feature: if_clause }, { feature: will_future } ] } }
+      - { id: first-can, ex: "If you need help, you can call me at any time.", rule: { all: [ { feature: if_clause }, { feature: modal_can } ] } }
+      - { id: first-negative, ex: "If you don't study, you won't pass the exam next week.", rule: { all: [ { feature: if_clause }, { lemma: will, next: { lower: "n't" } } ] } }
+      - { id: first-if-last, ex: "We will go to the beach if the weather is nice.", rule: { all: [ { feature: if_clause }, { feature: will_future }, { lower: if, sent_start: false } ] } }
+      - { id: second, ex: "If I had more money, I would travel around the world.", rule: { all: [ { feature: if_clause }, { feature: would } ] } }
+      - { id: second-were, ex: "If I were you, I would talk to him about it.", rule: { all: [ { feature: if_clause }, { lower: were }, { feature: would } ] } }
+      - { id: wouldnt, ex: "She wouldn't be so tired if she slept earlier at night.", rule: { all: [ { lemma: would, next: { lower: "n't" } }, { feature: if_clause } ] } }
+      - { id: wh-second, ex: "What would you do if you won a million dollars?", rule: { all: [ { feature: wh_other }, { feature: would }, { feature: if_clause } ] } }
+      - { id: would-advice, ex: "I would take the train because it is cheaper and faster.", rule: { lemma: would } }
+      - { id: would-like, ex: "I would like a table for two near the window, please.", rule: { lemma: would, next: { lower: like } } }
+
+  - slug: passive-voice-present-and-past
+    name: Passive voice (present and past)
+    order: 8
+    introduces: [passive]
+    structures:
+      - { id: present, ex: "English is spoken in many countries around the world.", rule: { tag: VBN, child: { dep: auxpass, tag: [VBZ, VBP] } } }
+      - { id: past, ex: "This bridge was built more than a hundred years ago.", rule: { tag: VBN, child: { dep: auxpass, tag: VBD } } }
+      - { id: negative, ex: "These rooms are not cleaned on Sundays by the staff.", rule: { all: [ { feature: passive }, { lower: [not, "n't"] } ] } }
+      - { id: question, ex: "Is breakfast served in the hotel every morning?", rule: { all: [ { lemma: be, sent_start: true }, { tag: VBN } ] } }
+      - { id: agent, ex: "The song was written by a famous singer from Brazil.", rule: { lower: by, dep: agent } }
+      - { id: no-agent, ex: "My bag was stolen when I was at the station.", rule: { all: [ { feature: passive }, { not: { lower: by } } ] } }
+      - { id: plural, ex: "Many films are made in this studio every year.", rule: { all: [ { feature: passive }, { tag: NNS } ] } }
+      - { id: was-born, ex: "I was born in a small town near the sea.", rule: { lower: born } }
+      - { id: wh-passive, ex: "Where was this photo taken during your last summer holiday?", rule: { all: [ { feature: wh_be }, { feature: passive } ] } }
+
+  - slug: relative-clauses
+    name: Relative clauses (who, which, that, where, whose)
+    order: 9
+    introduces: [relative_clause]
+    structures:
+      - { id: who, ex: "The woman who lives next door is a very kind nurse.", rule: { lower: who } }
+      - { id: which, ex: "I bought a phone which has a very good camera.", rule: { lower: which } }
+      - { id: that, ex: "This is the book that I told you about yesterday.", rule: { lower: that, tag: WDT } }
+      - { id: where, ex: "That is the restaurant where we had dinner last week.", rule: { lower: where, head: { dep: relcl } } }
+      - { id: whose, ex: "I have a friend whose brother works at the airport.", rule: { lower: whose } }
+      - { id: contact-clause, ex: "The film we saw last night was really boring.", rule: { dep: relcl, no_child: { lower: [who, which, that, where, whose] } } }
+      - { id: who-be, ex: "People who are late must wait outside the room.", rule: { all: [ { lower: who }, { lemma: be } ] } }
+      - { id: in-question, ex: "Do you know the girl who is sitting over there?", rule: { all: [ { lower: who }, { feature: do_question } ] } }
+
+  - slug: reported-speech-basic
+    name: Reported speech (basic)
+    order: 10
+    introduces: [reported_verb]
+    structures:
+      - { id: said-that, ex: "She said that she was very tired after the long trip.", rule: { lemma: say, child: { dep: ccomp } } }
+      - { id: said-without-that, ex: "He said he didn't like the film at all.", rule: { all: [ { feature: reported_verb }, { not: { lower: that } } ] } }
+      - { id: told-object, ex: "My boss told me that the meeting was cancelled.", rule: { lemma: tell, child: { dep: [dobj, dative, obj] } } }
+      - { id: going-to-backshift, ex: "They said they were going to buy a new car.", rule: { all: [ { feature: reported_verb }, { feature: going_to } ] } }
+      - { id: will-would, ex: "He told us that he would call us the next day.", rule: { all: [ { feature: reported_verb }, { feature: would } ] } }
+      - { id: can-could, ex: "She said she could not come because she was ill.", rule: { all: [ { feature: reported_verb }, { lower: could } ] } }
+      - { id: time-change, ex: "He said that he had to leave the next day.", rule: { all: [ { feature: reported_verb }, { lower: next, next: { lower: day } } ] } }
+      - { id: said-to, ex: "He said to me that he was happy with it.", rule: { lemma: say, child: { lower: to } } }
+      - { id: negative, ex: "She said that she didn't know him at all.", rule: { all: [ { feature: reported_verb }, { lower: did, next: { lower: "n't" } } ] } }
+
+  - slug: common-phrasal-verbs
+    name: Common phrasal verbs
+    order: 11
+    introduces: [phrasal_verb]
+    structures:
+      - { id: separable-noun, ex: "She picked up the phone and called her mother.", rule: { dep: prt, head: { lemma: pick } } }
+      - { id: separable-pronoun, ex: "I picked it up and put it in my bag.", rule: { dep: prt, head: { child: { tag: PRP, dep: dobj } } } }
+      - { id: verb-preposition, ex: "We are looking for a cheap hotel near the beach.", rule: { lemma: look, child: { dep: prep, lower: for } } }
+      - { id: intransitive, ex: "The plane took off late because of the heavy rain.", rule: { dep: prt, head: { lemma: take } } }
+      - { id: give-up, ex: "He gave up smoking because it was bad for his health.", rule: { lemma: give, child: { dep: prt } } }
+      - { id: find-out, ex: "I need to find out the time of the next train.", rule: { dep: prt, head: { lemma: find } } }
+      - { id: get-on, ex: "My brother and I get on well with our neighbours.", rule: { lemma: get, child: { lower: "on" } } }
+      - { id: imperative-negative, ex: "Don't give up, because you are close to the end.", rule: { all: [ { feature: do_negative }, { dep: prt } ] } }
+      - { id: question, ex: "Can you help me fill in this form, please?", rule: { lemma: fill, child: { dep: prt } } }
+      - { id: past, ex: "They set up a small company about five years ago.", rule: { dep: prt, head: { lemma: set } } }
+
+  - slug: connectors-b1
+    name: Connectors (although, however, while, in order to)
+    order: 12
+    introduces: [connector_b1]
+    structures:
+      - { id: although, ex: "Although it was raining, we decided to walk to the station.", rule: { lower: although } }
+      - { id: though, ex: "He passed the exam, though he did not study much.", rule: { lower: though } }
+      - { id: however, ex: "The food was good; however, the service was very slow.", rule: { lower: however } }
+      - { id: despite, ex: "Despite the heavy traffic, she arrived at the office on time.", rule: { lower: despite } }
+      - { id: in-order-to, ex: "I use an app in order to learn new words every day.", rule: { lower: order, prev: { lower: in }, next: { lower: to } } }
+      - { id: while-contrast, ex: "Some people like cities, while others prefer the quiet countryside.", rule: { all: [ { lower: while }, { lower: others } ] } }
+      - { id: purpose-to, ex: "She went to the bank to ask about a new card.", rule: { tag: VB, dep: advcl, prev: { lower: to } } }
+      - { id: but-contrast, ex: "He studied a lot, but he still failed the final exam.", rule: { all: [ { lower: but }, { feature: past_simple } ] } }
+
+decisions:
+  - "Tópico com `introduces: []` (present-perfect-vs-past-simple) é uma revisão aprofundada: traz mais variantes das estruturas já ensinadas, sem gramática nova."
+  - "B1 reaproveita assuntos do A1/A2 com mais profundidade (gerúndio vs infinitivo aprofunda verbo + -ing/to) usando slugs próprios e `deepens`."

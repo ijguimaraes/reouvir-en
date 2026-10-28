@@ -1,0 +1,246 @@
+# Currículo do nível A2. Mesmas regras do curriculum-a1.yaml (ordem gramatical cumulativa, A1 → A2).
+# Tópicos marcados `added: true` não estão no seed do documento: são pré-requisitos pedagógicos.
+# `deepens` aponta o tópico anterior que este aprofunda (um mesmo assunto pode reaparecer em níveis acima).
+
+schema_version: 1
+
+level:
+  code: A2
+  name: A2
+  order: 2
+  sentence_words: { min: 4, max: 10 }
+  playlist_size: 100
+  candidates: 130
+
+topics:
+  - slug: object-pronouns
+    name: Object pronouns (me, you, him, her, it, us, them)
+    order: 1
+    introduces: [obj_pron]
+    structures:
+      - { id: me, ex: "She calls me on Sunday.", rule: { lower: me, dep: [dobj, pobj, iobj, dative] } }
+      - { id: you, ex: "I can see you at the door.", rule: { lower: you, dep: [dobj, pobj, iobj, dative] } }
+      - { id: him, ex: "They know him from school.", rule: { lower: him } }
+      - { id: her, ex: "I help her at home.", rule: { lower: her, dep: [dobj, pobj, iobj, dative] } }
+      - { id: it, ex: "We like it at home.", rule: { lower: it, dep: [dobj, pobj] } }
+      - { id: us, ex: "Ana calls us on Monday.", rule: { lower: us } }
+      - { id: them, ex: "I see them at school.", rule: { lower: them } }
+      - { id: after-preposition, ex: "This gift is for you.", rule: { feature: obj_pron, dep: pobj } }
+      - { id: imperative-with, ex: "Come with me, please.", rule: { lower: me, dep: pobj, head: { lower: with } } }
+      - { id: indirect-object, ex: "She gives me a book.", rule: { dep: [iobj, dative], tag: PRP } }
+      - { id: question, ex: "Do you know them?", rule: { all: [ { feature: do_question }, { feature: obj_pron } ] } }
+      - { id: negative, ex: "I don't know her.", rule: { all: [ { feature: do_negative }, { feature: obj_pron } ] } }
+
+  - slug: possessive-pronouns-and-genitive
+    name: Possessive pronouns (mine, yours...) and 's
+    order: 2
+    added: true
+    deepens: subject-pronouns-and-verb-to-be
+    introduces: [poss_pron, genitive_s]
+    structures:
+      - { id: mine, ex: "This bag is mine.", rule: { lower: mine } }
+      - { id: yours, ex: "Is this pen yours?", rule: { lower: yours } }
+      - { id: his-hers, ex: "The red car is hers.", rule: { lower: [hers, his], dep: attr } }
+      - { id: ours-theirs, ex: "These keys are ours.", rule: { lower: [ours, theirs] } }
+      - { id: genitive-singular, ex: "Maria's bag is on the table.", rule: { tag: POS } }
+      - { id: genitive-family, ex: "My sister's name is Ana.", rule: { tag: POS, head: { lemma: [sister, brother, mother, father, friend, wife, husband] } } }
+      - { id: genitive-plural, ex: "The kids' room is very small.", rule: { tag: POS, lower: "'" } }
+      - { id: whose, ex: "Whose bag is this?", rule: { lower: whose } }
+      - { id: adj-and-pronoun, ex: "Is this your pen or mine?", rule: { all: [ { feature: poss_adj }, { feature: poss_pron } ] } }
+      - { id: genitive-place, ex: "We are at Ana's house.", rule: { all: [ { tag: POS }, { lower: at } ] } }
+      - { id: of-mine, ex: "She is a friend of mine.", rule: { lower: mine, prev: { lower: of } } }
+
+  - slug: adverbs-of-frequency-and-manner
+    name: Adverbs of frequency and manner
+    order: 3
+    introduces: [freq_adverb, manner_adverb]
+    structures:
+      - { id: always, ex: "I always drink tea in the morning.", rule: { lower: always } }
+      - { id: usually, ex: "She usually works at home.", rule: { lower: usually } }
+      - { id: often, ex: "We often eat at school.", rule: { lower: often } }
+      - { id: sometimes, ex: "He sometimes plays football on Sunday.", rule: { lower: sometimes } }
+      - { id: never, ex: "They never watch TV at night.", rule: { lower: never } }
+      - { id: rarely, ex: "I rarely go out on Monday.", rule: { lower: [rarely, hardly, seldom] } }
+      - { id: after-be, ex: "She is always late for class.", rule: { lower: [always, usually, often, sometimes, never], head: { lemma: be } } }
+      - { id: every, ex: "I walk to school every day.", rule: { lower: every } }
+      - { id: once-twice, ex: "We play football twice a week.", rule: { lower: [once, twice] } }
+      - { id: manner-ly, ex: "He drives very slowly.", rule: { pos: ADV, re: 'ly$', not_lower: [usually, really, only, early] } }
+      - { id: manner-well-fast-hard, ex: "They work hard at school.", rule: { lower: [well, fast, hard], pos: ADV } }
+      - { id: question-often, ex: "Do you often cook at home?", rule: { all: [ { feature: do_question }, { lower: often } ] } }
+      - { id: negative-freq, ex: "I don't always eat breakfast.", rule: { all: [ { feature: do_negative }, { lower: always } ] } }
+
+  - slug: present-continuous
+    name: Present Continuous
+    order: 4
+    introduces: [pres_continuous]
+    structures:
+      - { id: i-am-ing, ex: "I am reading a book now.", rule: { tag: VBG, child: { lower: ["am", "'m"] } } }
+      - { id: are-ing, ex: "They are playing in the park.", rule: { tag: VBG, child: { lower: [are, "'re"] } } }
+      - { id: is-ing, ex: "She is cooking dinner now.", rule: { tag: VBG, child: { lower: [is, "'s"] } } }
+      - { id: negative, ex: "He isn't sleeping right now.", rule: { tag: VBG, child: [ { dep: neg }, { lemma: be, dep: aux } ] } }
+      - { id: question, ex: "Are you working today?", rule: { all: [ { feature: pres_continuous }, { lemma: be, sent_start: true } ] } }
+      - { id: doubling, ex: "They are running in the park.", rule: { tag: VBG, re: '(nn|mm|tt|pp|gg|rr|dd)ing$' } }
+      - { id: drop-e, ex: "She is writing an email now.", rule: { tag: VBG, lemma: [write, make, take, come, have, dance, ride, live, use, leave, drive, give, save] } }
+      - { id: future-arrangement, ex: "I am meeting my friend on Friday.", rule: { all: [ { feature: pres_continuous }, { feature: date_word } ] } }
+      - { id: at-the-moment, ex: "He is working at the moment.", rule: { lower: moment, prev: { lower: the } } }
+      - { id: wh-question, ex: "What is she doing now?", rule: { all: [ { feature: wh_be }, { feature: pres_continuous } ] } }
+      - { id: today-now, ex: "Today they are playing football.", rule: { all: [ { feature: pres_continuous }, { lower: today } ] } }
+
+  - slug: countable-uncountable
+    name: Countable and uncountable nouns (some, any, much, many)
+    order: 5
+    introduces: [quantifier]
+    structures:
+      - { id: some-plural, ex: "I have some friends in London.", rule: { lower: some } }
+      - { id: some-uncountable, ex: "We need some water.", rule: { lower: some, head: { lemma: [water, bread, rice, milk, tea, coffee, money, time, food, music] } } }
+      - { id: any-negative, ex: "I don't have any money.", rule: { lower: any } }
+      - { id: any-question, ex: "Do you have any brothers?", rule: { all: [ { lower: any }, { feature: do_question } ] } }
+      - { id: much, ex: "I don't drink much coffee.", rule: { lower: much } }
+      - { id: many, ex: "They don't have many friends here.", rule: { lower: many } }
+      - { id: a-lot-of, ex: "She eats a lot of fruit.", rule: { lower: lot, prev: { lower: a } } }
+      - { id: how-much, ex: "How much is this book?", rule: { all: [ { sent_start: true, lower: how }, { lower: much } ] } }
+      - { id: how-many, ex: "How many books are on the table?", rule: { all: [ { sent_start: true, lower: how }, { lower: many } ] } }
+      - { id: a-few-a-little, ex: "She has a few friends.", rule: { lower: [few, little], prev: { lower: a } } }
+      - { id: enough, ex: "There is enough food here.", rule: { lower: enough } }
+      - { id: mixed, ex: "I need an apple and some bread.", rule: { all: [ { lower: an }, { lower: some } ] } }
+
+  - slug: question-words
+    name: Question words (what, where, who, when, why, how, which)
+    order: 6
+    deepens: to-be-negative-questions-and-possessives
+    introduces: [wh_other]
+    structures:
+      - { id: what, ex: "What do you do on Sunday?", rule: { all: [ { feature: wh_other }, { lower: what } ] } }
+      - { id: where, ex: "Where does she live?", rule: { all: [ { feature: wh_other }, { lower: where } ] } }
+      - { id: who-subject, ex: "Who lives in this house?", rule: { all: [ { feature: wh_other }, { lower: who } ] } }
+      - { id: when, ex: "When do you get up?", rule: { all: [ { feature: wh_other }, { lower: when } ] } }
+      - { id: why, ex: "Why do you like this song?", rule: { all: [ { feature: wh_other }, { lower: why } ] } }
+      - { id: how, ex: "How do you go to school?", rule: { all: [ { feature: wh_other }, { lower: how } ] } }
+      - { id: which, ex: "Which bag do you want?", rule: { all: [ { feature: wh_other }, { lower: which } ] } }
+      - { id: what-time, ex: "What time do you wake up?", rule: { all: [ { feature: wh_other }, { lower: time, prev: { lower: what } } ] } }
+      - { id: how-often, ex: "How often do you play football?", rule: { all: [ { feature: wh_other }, { lower: often } ] } }
+      - { id: how-many, ex: "How many brothers do you have?", rule: { all: [ { feature: wh_other }, { lower: many } ] } }
+      - { id: how-long, ex: "How long does the class take?", rule: { all: [ { feature: wh_other }, { lower: long, prev: { lower: how } } ] } }
+      - { id: wh-can, ex: "What can you cook?", rule: { all: [ { feature: wh_other }, { feature: modal_can } ] } }
+
+  - slug: verb-ing-or-to
+    name: Verb + -ing / to
+    order: 7
+    introduces: [verb_xcomp]
+    structures:
+      - { id: like-ing, ex: "I like swimming in the sea.", rule: { tag: VBG, dep: xcomp, head: { lemma: [like, love, enjoy, hate, prefer] } } }
+      - { id: enjoy-ing, ex: "She enjoys cooking for friends.", rule: { tag: VBG, dep: xcomp, head: { lemma: enjoy } } }
+      - { id: hate-ing, ex: "He hates waiting for the bus.", rule: { tag: VBG, dep: xcomp, head: { lower: [hate, hates] } } }
+      - { id: want-to, ex: "I want to learn English.", rule: { tag: VB, dep: xcomp, head: { lemma: want } } }
+      - { id: need-to, ex: "We need to leave now.", rule: { tag: VB, dep: xcomp, head: { lemma: need } } }
+      - { id: hope-plan-to, ex: "They plan to visit Spain.", rule: { tag: VB, dep: xcomp, head: { lemma: [hope, plan, decide, try, learn] } } }
+      - { id: like-to, ex: "I like to read at night.", rule: { lemma: [like, love, hate, prefer], child: { dep: xcomp, tag: VB } } }
+      - { id: negative, ex: "I don't want to go home.", rule: { all: [ { feature: do_negative }, { feature: verb_xcomp } ] } }
+      - { id: question, ex: "Do you enjoy cooking?", rule: { all: [ { feature: do_question }, { feature: verb_xcomp } ] } }
+      - { id: go-ing, ex: "We go shopping on Saturday.", rule: { lemma: go, child: { tag: VBG } } }
+
+  - slug: future-going-to-and-will
+    name: Future with going to and will
+    order: 8
+    introduces: [going_to, will_future]
+    structures:
+      - { id: going-to, ex: "I am going to learn Spanish.", rule: { feature: going_to } }
+      - { id: going-to-negative, ex: "She isn't going to come today.", rule: { all: [ { feature: going_to }, { lower: "n't" } ] } }
+      - { id: going-to-question, ex: "Are you going to cook tonight?", rule: { all: [ { feature: going_to }, { lemma: be, sent_start: true } ] } }
+      - { id: will, ex: "I will call you tomorrow.", rule: { lower: will } }
+      - { id: contraction-ll, ex: "We'll see you on Friday.", rule: { lower: "'ll" } }
+      - { id: wont, ex: "He won't be late tonight.", rule: { lemma: will, next: { lower: "n't" } } }
+      - { id: will-question, ex: "Will you help me?", rule: { lemma: will, sent_start: true } }
+      - { id: future-time, ex: "She will travel next week.", rule: { all: [ { feature: will_future }, { lower: [tomorrow, tonight, next] } ] } }
+      - { id: prediction, ex: "It is going to rain today.", rule: { all: [ { feature: going_to }, { lower: it } ] } }
+      - { id: offer, ex: "I will help you with that.", rule: { all: [ { feature: will_future }, { feature: obj_pron } ] } }
+      - { id: wh-going-to, ex: "What are you going to do?", rule: { all: [ { feature: wh_be }, { feature: going_to } ] } }
+
+  - slug: have-to-must-should
+    name: Have to, must and should
+    order: 9
+    introduces: [modal_obligation, have_to]
+    structures:
+      - { id: have-to, ex: "I have to work on Saturday.", rule: { feature: have_to } }
+      - { id: has-to, ex: "She has to wake up early.", rule: { lower: has, next: { lower: to } } }
+      - { id: dont-have-to, ex: "You don't have to pay today.", rule: { all: [ { feature: do_negative }, { feature: have_to } ] } }
+      - { id: question-have-to, ex: "Do we have to go now?", rule: { all: [ { feature: do_question }, { feature: have_to } ] } }
+      - { id: must, ex: "You must wear a seat belt.", rule: { lemma: must } }
+      - { id: mustnt, ex: "You mustn't run here.", rule: { lemma: must, next: { lower: "n't" } } }
+      - { id: should, ex: "You should sleep early.", rule: { lemma: should } }
+      - { id: shouldnt, ex: "He shouldn't eat late at night.", rule: { lemma: should, next: { lower: "n't" } } }
+      - { id: should-question, ex: "Should I call him?", rule: { lemma: should, sent_start: true } }
+      - { id: wh-should, ex: "What should I do?", rule: { all: [ { feature: wh_other }, { lemma: should } ] } }
+      - { id: wh-have-to, ex: "When do we have to leave?", rule: { all: [ { feature: wh_other }, { feature: have_to } ] } }
+
+  - slug: past-of-to-be
+    name: Past of the verb to be (was / were)
+    order: 10
+    added: true
+    deepens: subject-pronouns-and-verb-to-be
+    introduces: [be_past]
+    structures:
+      - { id: was, ex: "I was at home yesterday.", rule: { lower: was } }
+      - { id: were, ex: "We were in London last week.", rule: { lower: were } }
+      - { id: negative, ex: "She wasn't at school today.", rule: { lemma: be, tag: VBD, child: { dep: neg } } }
+      - { id: was-question, ex: "Was the film good?", rule: { lower: was, sent_start: true } }
+      - { id: were-question, ex: "Were you tired last night?", rule: { lower: were, sent_start: true } }
+      - { id: wh-was-were, ex: "Where were you yesterday?", rule: { all: [ { feature: wh_be }, { lemma: be, tag: VBD } ] } }
+      - { id: there-was, ex: "There was a bank here.", rule: { all: [ { feature: there_be }, { lower: [was, were] } ] } }
+      - { id: short-answer, ex: "Yes, I was, my friend.", rule: { all: [ { sent_start: true, lower: ["yes", "no"] }, { lemma: be, tag: VBD } ] } }
+      - { id: profession, ex: "My father was a teacher.", rule: { all: [ { lower: was }, { lower: [a, an] } ] } }
+
+  - slug: past-simple
+    name: Past Simple (regular and irregular)
+    order: 11
+    introduces: [past_simple]
+    structures:
+      - { id: regular-ed, ex: "I walked to school yesterday.", rule: { tag: VBD, re: 'ed$', not_lemma: [be, do, have] } }
+      - { id: regular-d, ex: "She lived in Paris last year.", rule: { tag: VBD, lemma: [live, love, use, like, arrive, close, move, dance, hate] } }
+      - { id: regular-ied, ex: "She studied English last night.", rule: { tag: VBD, re: 'ied$' } }
+      - { id: regular-doubling, ex: "We stopped at the corner.", rule: { tag: VBD, re: '(pp|tt|nn|mm|gg|bb)ed$' } }
+      - { id: irregular-went, ex: "We went to the park.", rule: { tag: VBD, not_re: 'ed$', not_lemma: [be, do, have] } }
+      - { id: irregular-obj, ex: "I saw her yesterday.", rule: { tag: VBD, not_re: 'ed$', not_lemma: [be, do, have], child: { dep: dobj } } }
+      - { id: had, ex: "She had a headache.", rule: { lower: had, not_dep: [aux, auxpass] } }
+      - { id: negative, ex: "I didn't like the film.", rule: { lower: did, next: { lower: "n't" } } }
+      - { id: question, ex: "Did you watch the game?", rule: { lower: did, sent_start: true } }
+      - { id: short-answer, ex: "Yes, I did, my friend.", rule: { all: [ { sent_start: true, lower: ["yes", "no"] }, { lower: did } ] } }
+      - { id: wh-did, ex: "Where did you go yesterday?", rule: { all: [ { feature: wh_other }, { lower: did } ] } }
+      - { id: ago, ex: "They arrived two days ago.", rule: { all: [ { feature: past_simple }, { lower: ago } ] } }
+      - { id: two-verbs, ex: "She woke up and made tea.", rule: { all: [ { feature: past_simple }, { dep: conj, tag: VBD } ] } }
+
+  - slug: comparatives-and-superlatives
+    name: Comparatives and superlatives
+    order: 12
+    introduces: [comparative, superlative, as_as]
+    structures:
+      - { id: er-than, ex: "My bag is smaller than yours.", rule: { all: [ { tag: JJR }, { lower: than } ] } }
+      - { id: more-than, ex: "This book is more interesting than that one.", rule: { lower: more, next: { pos: ADJ } } }
+      - { id: better-worse, ex: "Today is better than yesterday.", rule: { lower: [better, worse] } }
+      - { id: ier, ex: "This exercise is easier than that.", rule: { tag: JJR, re: 'ier$' } }
+      - { id: est, ex: "He is the tallest boy in class.", rule: { tag: JJS, re: 'est$' } }
+      - { id: most, ex: "This is the most popular song.", rule: { lower: most, next: { pos: ADJ } } }
+      - { id: best-worst, ex: "She is the best cook in town.", rule: { lower: [best, worst] } }
+      - { id: as-as, ex: "He is as tall as his father.", rule: { feature: as_as } }
+      - { id: not-as-as, ex: "Your phone isn't as new as mine.", rule: { all: [ { feature: as_as }, { lower: "n't" } ] } }
+      - { id: question, ex: "Is this bag cheaper than that one?", rule: { all: [ { feature: comparative }, { feature: be_question } ] } }
+      - { id: adverb-comparative, ex: "She runs faster than me.", rule: { tag: RBR } }
+
+  - slug: simple-connectors
+    name: Simple connectors (and, but, because, so)
+    order: 13
+    introduces: [conj_simple, multi_clause]
+    structures:
+      - { id: because, ex: "I am tired because I worked late.", rule: { lower: because } }
+      - { id: so, ex: "It was cold, so we stayed home.", rule: { lower: so, pos: [CCONJ, SCONJ, ADV] } }
+      - { id: or, ex: "Do you want tea or coffee?", rule: { lower: or } }
+      - { id: and-but, ex: "I like tea, but she likes coffee.", rule: { lower: but } }
+      - { id: when, ex: "I call her when I arrive.", rule: { lower: when, pos: SCONJ } }
+      - { id: before, ex: "Wash your hands before you eat.", rule: { lower: before } }
+      - { id: after, ex: "We watched TV after we ate.", rule: { lower: after } }
+      - { id: then, ex: "First I cook, then I eat.", rule: { lower: then } }
+      - { id: because-past, ex: "She stayed home because she was ill.", rule: { all: [ { lower: because }, { feature: past_simple } ] } }
+
+decisions:
+  - "Tópicos que reaparecem em níveis acima entram com slug próprio e `deepens` (ex.: question words aprofunda o wh + be do A1)."
+  - "Adicionados por serem pré-requisito: possessivos 's/mine (aprofunda o tópico 1 do A1) e was/were (necessário para o Past Simple)."

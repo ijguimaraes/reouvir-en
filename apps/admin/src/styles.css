@@ -51,6 +51,7 @@ td input.text { width: 100%; }
 td.handle { color: var(--text-muted); width: 2rem; cursor: grab; }
 td.handle svg { display: block; }
 .row.nowrap { flex-wrap: nowrap; }
+.stack { display: grid; gap: var(--space-2); }
 .move { display: inline-flex; gap: var(--space-1); }
 .move button { min-width: var(--control-h); padding: 0; }
 tr.dragover td { border-top: 2px solid var(--accent); }

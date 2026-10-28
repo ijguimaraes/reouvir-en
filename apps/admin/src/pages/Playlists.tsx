@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import type { AdminPlaylistDetailDto, PlaylistStatsDto } from "@reouvir/shared";
 import { api } from "../api";
-import { Badge, errMsg, Status, STATUS_LABEL, TableWrap, useConfirm, useLoad } from "../ui";
+import { Badge, errMsg, Status, STATUS_LABEL, TableWrap, useConfirm, useLoad, useReorderableRows } from "../ui";
 
 export function PlaylistDetailPage() {
   const { id = "" } = useParams();
@@ -19,8 +19,6 @@ export function PlaylistDetailPage() {
   const { data, error, reload, setData } = useLoad(load);
   const [actionError, setActionError] = useState("");
   const [newText, setNewText] = useState("");
-  const [dragFrom, setDragFrom] = useState<number | null>(null);
-  const [dragOver, setDragOver] = useState<number | null>(null);
   const [edits, setEdits] = useState<Record<string, string>>({});
   const [confirm, confirmDialog] = useConfirm();
 
@@ -34,32 +32,26 @@ export function PlaylistDetailPage() {
     }
   }
 
-  if (!data) return <Status error={error} loading onRetry={reload} />;
-  const { detail, stats } = data;
-  const sentences = detail.sentences;
-
   async function reorder(ids: string[]) {
     setActionError("");
     try {
       const updated = await api.request<AdminPlaylistDetailDto>("PUT", `/admin/playlists/${id}/order`, { ids });
-      setData({ ...data!, detail: updated });
+      setData((cur) => (cur ? { ...cur, detail: updated } : cur));
     } catch (err) {
       setActionError(errMsg(err));
     }
   }
+  const { rowProps, posInputProps, move } = useReorderableRows(data?.detail.sentences.map((s) => s.id) ?? [], reorder);
 
-  function move(from: number, to: number) {
-    if (from === to || to < 0 || to >= sentences.length) return;
-    const ids = sentences.map((s) => s.id);
-    const [moved] = ids.splice(from, 1);
-    ids.splice(to, 0, moved!);
-    void reorder(ids);
-  }
+  if (!data) return <Status error={error} loading onRetry={reload} />;
+  const { detail, stats } = data;
+  const sentences = detail.sentences;
 
   return (
     <>
       <Link className="back" to={`/contexts/${detail.contextId}`}>← {detail.contextName}</Link>
-      <h2>{detail.contextName} / {detail.levelCode} / {detail.topicName}</h2>
+      <h2>{detail.contextName} / {detail.title}</h2>
+      {detail.description && <p className="muted">{detail.description}</p>}
       <div className="row">
         <Badge kind={detail.status}>{STATUS_LABEL[detail.status]}</Badge>
         <span className="muted">versão {detail.version}</span>
@@ -81,15 +73,7 @@ export function PlaylistDetailPage() {
           {sentences.map((s, i) => {
             const value = edits[s.id] ?? s.text;
             return (
-              <tr
-                key={s.id}
-                className={dragOver === i && dragFrom !== null ? "dragover" : undefined}
-                draggable
-                onDragStart={() => setDragFrom(i)}
-                onDragOver={(e) => { e.preventDefault(); setDragOver(i); }}
-                onDragEnd={() => { setDragFrom(null); setDragOver(null); }}
-                onDrop={() => { if (dragFrom !== null) move(dragFrom, i); setDragFrom(null); setDragOver(null); }}
-              >
+              <tr key={s.id} {...rowProps(i)}>
                 <td className="handle" aria-hidden="true">
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="5" cy="3" r="1.4" /><circle cx="11" cy="3" r="1.4" /><circle cx="5" cy="8" r="1.4" /><circle cx="11" cy="8" r="1.4" /><circle cx="5" cy="13" r="1.4" /><circle cx="11" cy="13" r="1.4" /></svg>
                 </td>
@@ -108,13 +92,7 @@ export function PlaylistDetailPage() {
                       <button type="button" aria-label={`Subir a frase ${s.position}`} disabled={i === 0} onClick={() => move(i, i - 1)}>↑</button>
                       <button type="button" aria-label={`Descer a frase ${s.position}`} disabled={i === sentences.length - 1} onClick={() => move(i, i + 1)}>↓</button>
                     </span>
-                    <input
-                      className="pos" type="number" min={1} max={sentences.length} placeholder={String(i + 1)}
-                      aria-label={`Mover a frase ${s.position} para a posição (Enter confirma)`}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") move(i, Number((e.target as HTMLInputElement).value) - 1);
-                      }}
-                    />
+                    <input {...posInputProps(i)} aria-label={`Mover a frase ${s.position} para a posição (Enter confirma)`} />
                   </div>
                 </td>
                 <td>

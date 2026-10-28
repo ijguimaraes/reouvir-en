@@ -1,0 +1,233 @@
+# Currículo do nível B2. Mesmas regras do curriculum-a1.yaml (ordem gramatical cumulativa, A1 → A2 → B1 → B2).
+# Assuntos de níveis abaixo reaparecem aqui com mais profundidade (slug próprio + `deepens`).
+
+schema_version: 1
+
+level:
+  code: B2
+  name: B2
+  order: 4
+  sentence_words: { min: 8, max: 18 }
+  playlist_size: 100
+  candidates: 130
+
+topics:
+  - slug: present-perfect-continuous
+    name: Present Perfect Continuous
+    order: 1
+    deepens: present-perfect
+    introduces: [pres_perf_cont]
+    structures:
+      - { id: have-been-ing, ex: "I have been waiting for the bus for almost an hour.", rule: { feature: pres_perf_cont } }
+      - { id: has-been-ing, ex: "She has been working at this company since last spring.", rule: { all: [ { feature: pres_perf_cont }, { lower: has } ] } }
+      - { id: negative, ex: "They haven't been sleeping well because of the loud noise outside.", rule: { all: [ { feature: pres_perf_cont }, { lower: "n't" } ] } }
+      - { id: question, ex: "Have you been learning English for a long time?", rule: { all: [ { feature: pres_perf_cont }, { lower: [have, has], sent_start: true } ] } }
+      - { id: how-long, ex: "How long have you been living in this small town?", rule: { all: [ { feature: pres_perf_cont }, { lower: long, prev: { lower: how } } ] } }
+      - { id: visible-result, ex: "You look tired because you have been working too hard.", rule: { all: [ { feature: pres_perf_cont }, { lower: because } ] } }
+      - { id: vs-simple, ex: "I have been reading this book, but I haven't finished it.", rule: { all: [ { feature: pres_perf_cont }, { feature: pres_perfect, } ] } }
+      - { id: since, ex: "He has been feeling much better since last week.", rule: { all: [ { feature: pres_perf_cont }, { lower: since } ] } }
+      - { id: all-day, ex: "It has been raining all day, so we stayed inside.", rule: { all: [ { feature: pres_perf_cont }, { lower: all } ] } }
+
+  - slug: past-perfect-and-past-perfect-continuous
+    name: Past Perfect and Past Perfect Continuous
+    order: 2
+    introduces: [past_perfect, past_perf_cont]
+    structures:
+      - { id: affirmative, ex: "When we arrived, the film had already started.", rule: { feature: past_perfect } }
+      - { id: negative, ex: "She hadn't eaten anything before the long journey began.", rule: { all: [ { feature: past_perfect }, { lower: "n't" } ] } }
+      - { id: question, ex: "Had you finished your homework before your friends came?", rule: { lower: had, sent_start: true } }
+      - { id: after, ex: "After they had left, I cleaned the whole kitchen.", rule: { all: [ { feature: past_perfect }, { lower: after } ] } }
+      - { id: by-the-time, ex: "By the time he called, I had already gone to bed.", rule: { all: [ { feature: past_perfect }, { lower: time, prev: { lower: the } } ] } }
+      - { id: with-past-simple, ex: "I realised that I had forgotten my keys at home.", rule: { all: [ { feature: past_perfect }, { feature: past_simple } ] } }
+      - { id: continuous, ex: "She was tired because she had been working all night.", rule: { feature: past_perf_cont } }
+      - { id: continuous-wh, ex: "How long had they been waiting when the bus finally came?", rule: { all: [ { feature: past_perf_cont }, { feature: wh_other } ] } }
+      - { id: never-before, ex: "He had never seen snow before he moved to Canada.", rule: { all: [ { feature: past_perfect }, { lower: never } ] } }
+
+  - slug: third-and-mixed-conditionals
+    name: Third conditional and mixed conditionals
+    order: 3
+    deepens: first-and-second-conditional
+    introduces: [would_have]
+    structures:
+      - { id: third, ex: "If I had known about the problem, I would have helped you.", rule: { all: [ { feature: if_clause }, { feature: would_have } ] } }
+      - { id: third-negative, ex: "If she hadn't missed the bus, she wouldn't have been late.", rule: { all: [ { feature: would_have }, { lower: "n't" } ] } }
+      - { id: third-wh, ex: "What would you have done if you had lost your passport?", rule: { all: [ { feature: wh_other }, { feature: would_have } ] } }
+      - { id: third-if-last, ex: "We would have won the match if we had played better.", rule: { all: [ { feature: would_have }, { lower: if, sent_start: false } ] } }
+      - { id: mixed-past-present, ex: "If I had taken that job, I would be rich now.", rule: { all: [ { feature: past_perfect }, { feature: would }, { not: { feature: would_have } } ] } }
+      - { id: mixed-present-past, ex: "If I were more organised, I would have finished the report yesterday.", rule: { all: [ { lower: were }, { feature: would_have } ] } }
+      - { id: regret, ex: "I would have called you, but I lost my phone.", rule: { all: [ { feature: would_have }, { lower: but } ] } }
+      - { id: contraction, ex: "If they had left earlier, they'd have arrived on time.", rule: { all: [ { feature: past_perfect }, { lower: "'d" } ] } }
+
+  - slug: wish-if-only
+    name: Wish and if only
+    order: 4
+    introduces: [wish]
+    structures:
+      - { id: wish-past, ex: "I wish I had a bigger house near the beach.", rule: { lemma: wish } }
+      - { id: wish-were, ex: "I wish I were taller, but I am not.", rule: { all: [ { feature: wish }, { lower: were } ] } }
+      - { id: wish-past-perfect, ex: "She wishes she had studied medicine at university.", rule: { all: [ { feature: wish }, { feature: past_perfect } ] } }
+      - { id: if-only-past, ex: "If only I had more time to relax, I would be happier.", rule: { lower: only, prev: { lower: if } } }
+      - { id: if-only-past-perfect, ex: "If only we had left earlier, we would not be late now.", rule: { all: [ { lower: only, prev: { lower: if } }, { feature: past_perfect } ] } }
+      - { id: wish-would, ex: "I wish you would stop making so much noise at night.", rule: { all: [ { feature: wish }, { feature: would } ] } }
+      - { id: wish-could, ex: "I wish I could speak French as well as you.", rule: { all: [ { feature: wish }, { lemma: could } ] } }
+      - { id: wish-negative, ex: "I wish I didn't have to work on Saturdays.", rule: { all: [ { feature: wish }, { feature: have_to } ] } }
+      - { id: hope-vs-wish, ex: "I hope you can come, but I wish you could stay longer.", rule: { all: [ { feature: wish }, { lemma: hope } ] } }
+
+  - slug: past-modals
+    name: Past modals (should have, could have, must have...)
+    order: 5
+    deepens: modals-of-possibility-and-deduction
+    introduces: [modal_perfect]
+    structures:
+      - { id: should-have, ex: "You should have told me about the problem earlier.", rule: { tag: VBN, child: [ { lemma: should }, { lemma: have } ] } }
+      - { id: shouldnt-have, ex: "He shouldn't have left the window open during the storm.", rule: { all: [ { lemma: should, next: { lower: "n't" } }, { lemma: have, dep: aux } ] } }
+      - { id: could-have, ex: "We could have taken a taxi, but we walked instead.", rule: { tag: VBN, child: [ { lemma: could }, { lemma: have } ] } }
+      - { id: might-have, ex: "She might have forgotten the meeting because she was busy.", rule: { tag: VBN, child: [ { lemma: might }, { lemma: have } ] } }
+      - { id: must-have, ex: "They must have left early because the house is empty.", rule: { tag: VBN, child: [ { lemma: must }, { lemma: have } ] } }
+      - { id: cant-have, ex: "He can't have seen us, because he was not there.", rule: { all: [ { lemma: can, next: { lower: "n't" } }, { lemma: have, dep: aux } ] } }
+      - { id: may-have, ex: "The package may have arrived while we were out.", rule: { tag: VBN, child: [ { lemma: may }, { lemma: have } ] } }
+      - { id: would-have, ex: "I would have gone to the party, but I was ill.", rule: { feature: would_have } }
+      - { id: question, ex: "Could they have made a mistake with the dates?", rule: { all: [ { lemma: could, sent_start: true }, { lemma: have } ] } }
+
+  - slug: passive-voice-advanced
+    name: Passive voice (advanced)
+    order: 6
+    deepens: passive-voice-present-and-past
+    introduces: [passive_complex, causative]
+    structures:
+      - { id: perfect, ex: "The new road has been built by a local company.", rule: { tag: VBN, child: [ { dep: auxpass, lower: been }, { lemma: have, dep: aux } ] } }
+      - { id: modal, ex: "All passengers must be checked before they board the plane.", rule: { tag: VBN, child: [ { dep: auxpass, lower: be }, { tag: MD } ] } }
+      - { id: future, ex: "The results will be announced on Friday afternoon.", rule: { tag: VBN, child: [ { dep: auxpass }, { lemma: will } ] } }
+      - { id: continuous, ex: "The bridge is being repaired, so the road is closed.", rule: { tag: VBN, child: { dep: auxpass, lower: being } } }
+      - { id: past-perfect, ex: "The documents had been signed before the lawyer arrived.", rule: { tag: VBN, child: [ { dep: auxpass, lower: been }, { lemma: have, tag: VBD } ] } }
+      - { id: reporting, ex: "It is said that the old castle is haunted.", rule: { lower: said, tag: VBN, child: { dep: auxpass } } }
+      - { id: believed-to, ex: "He is believed to be abroad at the moment.", rule: { lemma: [believe, think, know, expect, report, consider], tag: VBN, child: { dep: auxpass } } }
+      - { id: causative-have, ex: "I had my car repaired last week at the garage.", rule: { all: [ { feature: causative }, { lemma: have } ] } }
+      - { id: causative-get, ex: "She got her hair cut at the new salon.", rule: { all: [ { feature: causative }, { lemma: get } ] } }
+      - { id: passive-infinitive, ex: "He was asked to leave the meeting room immediately.", rule: { tag: VBN, child: [ { dep: auxpass }, { dep: xcomp } ] } }
+
+  - slug: reported-speech-full
+    name: Reported speech (full)
+    order: 7
+    deepens: reported-speech-basic
+    introduces: [reported_question, reported_command, reported_verb_adv]
+    structures:
+      - { id: ask-if, ex: "She asked me if I had finished the report.", rule: { feature: reported_question } }
+      - { id: ask-whether, ex: "He asked whether the train had already left the station.", rule: { lower: whether } }
+      - { id: ask-wh, ex: "They asked me where I had bought my jacket.", rule: { all: [ { feature: reported_question }, { lower: [where, what, when, why, how, who] } ] } }
+      - { id: tell-to, ex: "My manager told me to finish the report today.", rule: { lemma: tell, child: [ { dep: xcomp }, { dep: [dobj, obj] } ] } }
+      - { id: ask-to, ex: "She asked him to close the window, please.", rule: { lemma: ask, child: [ { dep: xcomp }, { dep: [dobj, obj] } ] } }
+      - { id: told-not-to, ex: "The doctor told him not to eat sweets.", rule: { all: [ { feature: reported_command }, { lower: not } ] } }
+      - { id: suggest-ing, ex: "He suggested going to the cinema after the class.", rule: { lemma: suggest, child: { tag: VBG } } }
+      - { id: admit-deny, ex: "She admitted that she had lost the money.", rule: { lemma: [admit, deny] } }
+      - { id: promise-to, ex: "He promised to call me as soon as he arrived.", rule: { lemma: promise } }
+      - { id: warn, ex: "They warned us that the roads were dangerous.", rule: { lemma: warn } }
+      - { id: backshift-past-perfect, ex: "He said that he had already seen the film.", rule: { all: [ { feature: reported_verb }, { feature: past_perfect } ] } }
+
+  - slug: non-defining-relative-clauses
+    name: Non-defining relative clauses
+    order: 8
+    deepens: relative-clauses
+    introduces: [relcl_nondef]
+    structures:
+      - { id: who, ex: "My brother, who lives in Canada, is visiting us next month.", rule: { lower: who, prev: { lower: "," } } }
+      - { id: which, ex: "The hotel, which was built long ago, is very expensive.", rule: { lower: which, prev: { lower: "," } } }
+      - { id: whose, ex: "Maria, whose son is a doctor, works at the school.", rule: { lower: whose, prev: { lower: "," } } }
+      - { id: where, ex: "We visited Rome, where my grandparents were born.", rule: { lower: where, prev: { lower: "," } } }
+      - { id: which-clause, ex: "He passed the test, which surprised everybody in the class.", rule: { lower: which, prev: { lower: "," }, dep: nsubj } }
+      - { id: preposition-which, ex: "The company, for which she works, is based in Chicago.", rule: { lower: which, prev: { pos: ADP } } }
+      - { id: whom, ex: "My teacher, whom I respect a lot, is retiring soon.", rule: { lower: whom } }
+      - { id: of-whom, ex: "Many of the students, most of whom were young, left early.", rule: { lower: whom, prev: { lower: of } } }
+
+  - slug: future-continuous-and-future-perfect
+    name: Future Continuous and Future Perfect
+    order: 9
+    introduces: [future_adv]
+    structures:
+      - { id: continuous, ex: "This time next week, I will be lying on a beach.", rule: { tag: VBG, child: [ { lemma: will }, { lower: be } ] } }
+      - { id: continuous-question, ex: "Will you be using the car this evening?", rule: { all: [ { tag: VBG, child: [ { lemma: will }, { lower: be } ] }, { lemma: will, sent_start: true } ] } }
+      - { id: continuous-negative, ex: "She won't be working tomorrow because it is a holiday.", rule: { all: [ { tag: VBG, child: [ { lemma: will }, { lower: be } ] }, { lower: "n't" } ] } }
+      - { id: perfect, ex: "By next year, I will have finished my degree.", rule: { tag: VBN, child: [ { lemma: will }, { lower: have } ] } }
+      - { id: perfect-negative, ex: "They won't have arrived by seven o'clock tonight.", rule: { all: [ { tag: VBN, child: [ { lemma: will }, { lower: have } ] }, { lower: "n't" } ] } }
+      - { id: perfect-question, ex: "Will you have finished the project by the end of the month?", rule: { all: [ { tag: VBN, child: [ { lemma: will }, { lower: have } ] }, { lemma: will, sent_start: true } ] } }
+      - { id: by-the-time, ex: "By the time you read this, we will have left.", rule: { all: [ { feature: future_adv }, { lower: time, prev: { lower: the } } ] } }
+      - { id: for-duration, ex: "Next month, I will have worked here for five years.", rule: { all: [ { feature: future_adv }, { lower: for } ] } }
+      - { id: at-this-time, ex: "At this time tomorrow, we will be flying to Paris.", rule: { all: [ { feature: future_adv }, { lower: tomorrow } ] } }
+
+  - slug: inversion-for-emphasis
+    name: Inversion for emphasis
+    order: 10
+    introduces: [inversion_neg, inversion_cond]
+    structures:
+      - { id: never, ex: "Never have I seen such a beautiful sunset in my life.", rule: { sent_start: true, lower: never } }
+      - { id: rarely, ex: "Rarely does he complain about his heavy workload at the office.", rule: { sent_start: true, lower: [rarely, seldom] } }
+      - { id: hardly, ex: "Hardly had we arrived when it started to rain.", rule: { sent_start: true, lower: hardly } }
+      - { id: no-sooner, ex: "No sooner had she sat down than the phone rang.", rule: { lower: sooner, prev: { lower: "no" } } }
+      - { id: not-only, ex: "Not only did he forget the tickets, but he also lost his bag.", rule: { lower: only, prev: { lower: not } } }
+      - { id: only-after, ex: "Only after the meeting did I understand the real problem.", rule: { sent_start: true, lower: only } }
+      - { id: little, ex: "Little did they know that the shop was closed.", rule: { sent_start: true, lower: little } }
+      - { id: conditional-had, ex: "Had I known about the delay, I would have taken a taxi.", rule: { all: [ { feature: inversion_cond }, { sent_start: true, lower: had } ] } }
+      - { id: conditional-should, ex: "Should you need any help, please call me at once.", rule: { all: [ { feature: inversion_cond }, { sent_start: true, lower: should } ] } }
+      - { id: conditional-were, ex: "Were I in your position, I would accept the offer.", rule: { all: [ { feature: inversion_cond }, { sent_start: true, lower: were } ] } }
+
+  - slug: formal-connectors
+    name: Formal connectors
+    order: 11
+    deepens: connectors-b1
+    introduces: [connector_formal]
+    structures:
+      - { id: moreover, ex: "The plan is cheap; moreover, it is easy to put into practice.", rule: { lower: moreover } }
+      - { id: furthermore, ex: "The room is large; furthermore, it has a beautiful view of the sea.", rule: { lower: furthermore } }
+      - { id: nevertheless, ex: "The weather was awful; nevertheless, we enjoyed the trip very much.", rule: { lower: nevertheless } }
+      - { id: nonetheless, ex: "The test was difficult; nonetheless, most students passed it easily.", rule: { lower: nonetheless } }
+      - { id: therefore, ex: "The roads were closed; therefore, many people could not get to work.", rule: { lower: therefore } }
+      - { id: consequently, ex: "He did not study; consequently, he failed the final exam.", rule: { lower: consequently } }
+      - { id: thus-hence, ex: "The company grew quickly; thus, it needed more space and staff.", rule: { lower: [thus, hence] } }
+      - { id: whereas, ex: "Some people prefer the city, whereas others love the countryside.", rule: { lower: whereas } }
+      - { id: unless, ex: "You will not be admitted unless you show a valid ticket.", rule: { lower: unless } }
+      - { id: provided, ex: "You can borrow the car provided that you drive carefully.", rule: { lower: provided } }
+      - { id: in-spite-of, ex: "In spite of the rain, the match started on time.", rule: { lower: spite, prev: { lower: in } } }
+      - { id: on-the-other-hand, ex: "The job is well paid; on the other hand, it is very stressful.", rule: { lower: hand, prev: { lower: other } } }
+      - { id: as-a-result, ex: "The factory closed; as a result, hundreds of workers lost their jobs.", rule: { lower: result, prev: { lower: a } } }
+      - { id: in-addition, ex: "In addition, the hotel offers free breakfast to all of its guests.", rule: { lower: addition, prev: { lower: in } } }
+
+  - slug: advanced-phrasal-verbs-and-collocations
+    name: Advanced phrasal verbs and collocations
+    order: 12
+    deepens: common-phrasal-verbs
+    introduces: [phrasal_3part, collocation]
+    structures:
+      - { id: look-forward-to, ex: "I am looking forward to meeting you at the conference next week.", rule: { lemma: look, child: { lower: forward } } }
+      - { id: put-up-with, ex: "I can't put up with the noise from the street any longer.", rule: { lemma: put, child: { lower: up } } }
+      - { id: come-up-with, ex: "She came up with a clever idea to save time.", rule: { lemma: come, child: { lower: up } } }
+      - { id: get-away-with, ex: "He tried to get away with it, but they caught him.", rule: { lemma: get, child: { lower: away } } }
+      - { id: run-out-of, ex: "We have run out of milk, so I will go to the shop.", rule: { lemma: run, child: { lower: out } } }
+      - { id: separable-object, ex: "Could you sort the problem out before the meeting starts?", rule: { dep: prt, head: { lemma: sort } } }
+      - { id: make-a-decision, ex: "We need to make a decision about the new project by Friday.", rule: { lemma: make, child: { dep: dobj, lemma: decision } } }
+      - { id: take-advantage, ex: "You should take advantage of the free classes at the library.", rule: { lemma: take, child: { dep: dobj, lemma: advantage } } }
+      - { id: reach-a-conclusion, ex: "After a long discussion, they reached a conclusion about the budget.", rule: { lemma: reach, child: { dep: dobj, lemma: conclusion } } }
+      - { id: draw-attention, ex: "The new advert drew attention to the importance of recycling.", rule: { lemma: draw, child: { dep: dobj, lemma: attention } } }
+      - { id: run-a-risk, ex: "If you drive without a licence, you run a serious risk.", rule: { lemma: run, child: { dep: dobj, lemma: risk } } }
+      - { id: meet-a-deadline, ex: "We worked all weekend to meet the deadline for the report.", rule: { lemma: meet, child: { dep: dobj, lemma: deadline } } }
+      - { id: pay-attention, ex: "Please pay attention to the instructions before you start the exam.", rule: { lemma: pay, child: { dep: dobj, lemma: attention } } }
+      - { id: break-a-promise, ex: "He broke his promise, and nobody trusted him after that.", rule: { lemma: break, child: { dep: dobj, lemma: promise } } }
+
+  - slug: formal-vs-informal-register
+    name: Formal vs. informal register
+    order: 13
+    introduces: [shall, formal_marker, informal_marker]
+    structures:
+      - { id: formal-request, ex: "I would be grateful if you could send me the documents.", rule: { lemma: grateful } }
+      - { id: shall, ex: "Shall we begin the meeting now, ladies and gentlemen?", rule: { feature: shall } }
+      - { id: formal-regret, ex: "I regret to inform you that your application was unsuccessful.", rule: { lemma: regret } }
+      - { id: polite-would-you-mind, ex: "Would you mind closing the window? It is rather cold.", rule: { all: [ { lower: would, sent_start: true }, { lower: mind } ] } }
+      - { id: informal-hey, ex: "Hey, are you coming to the party tonight? It will be awesome.", rule: { lower: [hey, awesome, cool] } }
+      - { id: informal-i-mean, ex: "Well, I mean, it is kind of hard to explain.", rule: { lower: mean, prev: { lower: i } } }
+      - { id: informal-gonna, ex: "We are gonna meet at the cafe around seven tonight.", rule: { lower: gon } }
+      - { id: formal-impersonal, ex: "It is requested that all visitors register at the front desk.", rule: { lemma: request } }
+      - { id: formal-verbs, ex: "We will commence the course on Monday and purchase the books.", rule: { lemma: [commence, purchase, require, assist] } }
+      - { id: formal-kindly, ex: "Kindly confirm your attendance by replying to this email as soon as possible.", rule: { lower: kindly } }
+      - { id: full-forms, ex: "I cannot attend because I do not have enough time.", rule: { lower: not, prev: { lemma: [do, can, will, be, have] } } }
+
+decisions:
+  - "B2 aprofunda assuntos de B1 e A2 (modais, passiva, discurso indireto, relativas, conectores, phrasal verbs) com slugs próprios e `deepens`."

@@ -20,7 +20,7 @@ export function DashboardPage() {
       <div className="cards">
         <div className="card"><b>{data.playlists.published}</b>playlists publicadas</div>
         <div className="card"><b>{data.playlists.draft}</b>rascunhos com frases</div>
-        <div className="card"><b>{data.playlists.empty}</b>playlists vazias</div>
+        <div className="card"><b>{data.playlists.empty}</b>playlists sem frases</div>
         <div className="card"><b>{data.playlists.archived}</b>arquivadas</div>
         <div className="card"><b>{data.students}</b>alunos</div>
         <div className="card"><b>{data.audios.ready}</b>áudios gerados</div>

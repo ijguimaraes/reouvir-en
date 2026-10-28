@@ -1,0 +1,234 @@
+# Contexto "Entrevista de engenheiro de software Java". O slug é o mesmo de contexts.slug no banco.
+#
+# `details`: o texto que vale vem do BANCO (tabela contexts, campo editável no backoffice); build_prompt.py o lê
+# pelo slug. O `details` abaixo é só o plano B (sem conexão, contexto ou texto, ou com --offline).
+# Cenas, personagens e vocabulário só existem aqui.
+#
+# vocabulary: palavra única (lema ou forma minúscula). Texto simples = liberado em qualquer nível;
+# { word, from } = liberado a partir do nível indicado. Liberado significa só "sem aviso de vocabulário":
+# a gramática do tópico continua mandando (ex.: no A1 inicial não há plural nem artigos).
+
+slug: entrevista-engenheiro-software-java
+name: Java software engineer interview
+category: Career
+description: A job interview for a mid-level Java backend engineer at a fictional fintech company.
+details: >-
+  A job interview for a mid-level Java backend engineer position at Brightwave Financial, a fictional
+  mid-size fintech company that builds payment and invoicing software. The interview happens by video
+  call, with a possible on-site final round. The candidate's previous employers are also fictional
+  (Northlake Systems, Cedar Logistics, Pinecrest Software). Stages: greetings and small talk;
+  self-introduction; past experience; technical questions (Java, Spring Boot, REST APIs, SQL and
+  JPA/Hibernate, microservices, unit testing with JUnit, concurrency, Maven/Gradle, Git, CI/CD);
+  behavioral questions (teamwork, conflict, deadlines, mistakes, learning from feedback); a short
+  system design discussion; the candidate's own questions; closing (next steps, salary expectations,
+  availability, thanks). Include sentences spoken by both the interviewer side and the candidate.
+  Communicative functions: introducing yourself, describing experience and achievements, explaining
+  technical concepts simply, justifying decisions, admitting you don't know something, asking for
+  clarification, negotiating, scheduling, thanking. Tone: professional, polite, natural spoken English
+  with normal contractions. Most sentences should use general interview and career language; Java and
+  software engineering vocabulary should appear regularly but should not dominate. Each sentence must
+  make sense on its own when heard without a screen. Do not read code or symbols aloud. Do not use real
+  companies or real people.
+
+characters:
+  - { name: Daniel, role: "the candidate, a Java backend developer" }
+  - { name: Emily, role: "the HR recruiter at Brightwave Financial" }
+  - { name: Marcus, role: "the tech lead who asks the technical questions" }
+  - { name: Priya, role: "the engineering manager" }
+  - { name: Kenji, role: "a senior developer on the team" }
+  - { name: Sofia, role: "a QA engineer on the team" }
+
+scenes:
+  - id: greetings
+    desc: "greetings, small talk and the start of the video call"
+    situations:
+      - "Emily greets Daniel at the start of the video call"
+      - "Daniel says he is ready and that the sound is good"
+      - "Marcus says he is happy to meet Daniel"
+      - "Daniel says where he is from and where he is now"
+  - id: experience
+    desc: "introducing yourself and talking about past jobs, projects and skills"
+    situations:
+      - "Daniel says his name, his job and his city"
+      - "Daniel talks about a project at Northlake Systems or Cedar Logistics"
+      - "Emily asks how long Daniel works with Java"
+      - "Priya says Daniel has good experience with servers and data"
+  - id: java-skills
+    desc: "technical questions about Java, Spring and everyday tools"
+    situations:
+      - "Marcus asks if Daniel knows Java and Spring"
+      - "Daniel says he writes code and tests every day"
+      - "Daniel says Maven, Git and Docker are useful tools"
+      - "Kenji asks how Daniel fixes a bug in Java code"
+  - id: backend-design
+    desc: "technical questions about APIs, databases, microservices and a short system design talk"
+    situations:
+      - "Marcus asks about a REST API and a database"
+      - "Daniel explains how a service saves data in SQL"
+      - "Kenji asks how Daniel makes a server fast and safe"
+      - "Daniel says he does not know a tool but wants to learn it"
+  - id: problem-solving
+    desc: "debugging, testing and solving a problem during the interview"
+    situations:
+      - "Sofia asks how Daniel tests a new feature"
+      - "Daniel says he reads the error first and then looks for the bug"
+      - "Marcus asks Daniel to explain his idea again"
+      - "Daniel asks Marcus a question to understand the problem"
+  - id: teamwork
+    desc: "behavioral questions about teamwork, conflict, deadlines, mistakes and feedback"
+    situations:
+      - "Priya asks about a hard deadline and how Daniel helps the team"
+      - "Daniel talks about a mistake and what he learns from it"
+      - "Priya asks how Daniel works with a difficult colleague"
+      - "Daniel says feedback and code review make the team better"
+  - id: company-role
+    desc: "the candidate asks about the company, the team, the office and the role"
+    situations:
+      - "Daniel asks what the team does at Brightwave"
+      - "Emily says the office is in Lisbon or London and the team is also remote"
+      - "Daniel asks about the tools and the first project"
+      - "Priya says the role is for a mid-level backend developer"
+  - id: offer-closing
+    desc: "salary, availability, next steps, thanks and goodbye"
+    situations:
+      - "Emily asks when Daniel can start"
+      - "Daniel asks about the salary and the benefits"
+      - "Emily says the next step is a call with Priya"
+      - "Daniel says thank you and says goodbye"
+
+vocabulary:
+  # --- Liberadas desde o A1: ambiente de trabalho e entrevista
+  - interview
+  - interviewer
+  - job
+  - work
+  - company
+  - office
+  - team
+  - manager
+  - boss
+  - meeting
+  - call
+  - desk
+  - email
+  - salary
+  - recruiter
+  - developer
+  - engineer
+  - project
+  - task
+  - tool
+  - problem
+  - question
+  - answer
+  - idea
+  - plan
+  # --- Liberadas desde o A1: tecnologia (nomes de ferramentas, como marcas)
+  - Java
+  - Spring
+  - Maven
+  - Gradle
+  - Git
+  - Docker
+  - SQL
+  - API
+  - code
+  - bug
+  - server
+  - app
+  - test
+  - data
+  - laptop
+  - computer
+  - program
+  - system
+  - screen
+  # --- A partir do A2
+  - { word: candidate, from: A2 }
+  - { word: offer, from: A2 }
+  - { word: contract, from: A2 }
+  - { word: resume, from: A2 }
+  - { word: degree, from: A2 }
+  - { word: skill, from: A2 }
+  - { word: experience, from: A2 }
+  - { word: schedule, from: A2 }
+  - { word: remote, from: A2 }
+  - { word: junior, from: A2 }
+  - { word: senior, from: A2 }
+  - { word: lead, from: A2 }
+  - { word: mentor, from: A2 }
+  - { word: feedback, from: A2 }
+  - { word: mistake, from: A2 }
+  - { word: goal, from: A2 }
+  - { word: challenge, from: A2 }
+  - { word: teamwork, from: A2 }
+  - { word: strength, from: A2 }
+  - { word: benefit, from: A2 }
+  - { word: vacation, from: A2 }
+  - { word: report, from: A2 }
+  - { word: review, from: A2 }
+  - { word: update, from: A2 }
+  - { word: feature, from: A2 }
+  - { word: release, from: A2 }
+  - { word: client, from: A2 }
+  - { word: customer, from: A2 }
+  - { word: user, from: A2 }
+  - { word: error, from: A2 }
+  - { word: fix, from: A2 }
+  - { word: software, from: A2 }
+  - { word: database, from: A2 }
+  - { word: cloud, from: A2 }
+  - { word: network, from: A2 }
+  - { word: password, from: A2 }
+  - { word: payment, from: A2 }
+  - { word: account, from: A2 }
+  - { word: bank, from: A2 }
+  - { word: REST, from: A2 }
+  - { word: JVM, from: A2 }
+  - { word: JPA, from: A2 }
+  - { word: Hibernate, from: A2 }
+  - { word: JUnit, from: A2 }
+  # --- A partir do B1
+  - { word: deadline, from: B1 }
+  - { word: weakness, from: B1 }
+  - { word: achievement, from: B1 }
+  - { word: conflict, from: B1 }
+  - { word: availability, from: B1 }
+  - { word: responsibility, from: B1 }
+  - { word: requirement, from: B1 }
+  - { word: negotiate, from: B1 }
+  - { word: framework, from: B1 }
+  - { word: library, from: B1 }
+  - { word: backend, from: B1 }
+  - { word: frontend, from: B1 }
+  - { word: deploy, from: B1 }
+  - { word: debug, from: B1 }
+  - { word: refactor, from: B1 }
+  - { word: repository, from: B1 }
+  - { word: branch, from: B1 }
+  - { word: commit, from: B1 }
+  - { word: merge, from: B1 }
+  - { word: pipeline, from: B1 }
+  - { word: container, from: B1 }
+  - { word: thread, from: B1 }
+  - { word: endpoint, from: B1 }
+  - { word: microservice, from: B1 }
+  - { word: performance, from: B1 }
+  - { word: security, from: B1 }
+  - { word: architecture, from: B1 }
+  - { word: exception, from: B1 }
+  - { word: interface, from: B1 }
+  - { word: collection, from: B1 }
+  - { word: stream, from: B1 }
+  - { word: class, from: B1 }
+  - { word: method, from: B1 }
+  - { word: object, from: B1 }
+  - { word: concurrency, from: B1 }
+  # --- A partir do B2
+  - { word: scalability, from: B2 }
+  - { word: latency, from: B2 }
+  - { word: transaction, from: B2 }
+  - { word: dependency, from: B2 }
+  - { word: optimize, from: B2 }
+  - { word: abstraction, from: B2 }
+  - { word: polymorphism, from: B2 }

@@ -13,21 +13,12 @@ export function registerCatalogAdminRoutes(app: FastifyInstance, deps: { pool: P
   const notFound = () => new AppError(404, "Não encontrado", "not_found");
   const slugTaken = { unique: "Já existe um contexto com esse slug" };
 
-  // Níveis e tópicos são fixos (seed): só leitura.
-  app.get("/admin/levels", opts, () => repo.listLevels());
-  app.get("/admin/topics", opts, () => repo.listTopics());
-
   app.get("/admin/contexts", opts, () => repo.listContexts());
 
-  /** Criar um contexto já gera as playlists vazias dele (uma por tópico). */
+  /** Um contexto novo nasce sem playlists: o administrador as cria (rotas em playlists.routes.ts). */
   app.post("/admin/contexts", opts, async (req, reply) => {
     const body = contextInputSchema.parse(req.body);
-    const ctx = await withTransaction(pool, async (client) => {
-      const tx = new CatalogRepository(client);
-      const created = await tx.createContext(body);
-      await tx.ensurePlaylists(created.id);
-      return created;
-    }).catch((e) => mapPgError(e, slugTaken));
+    const ctx = await repo.createContext(body).catch((e) => mapPgError(e, slugTaken));
     return reply.code(201).send(ctx);
   });
 

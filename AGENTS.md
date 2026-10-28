@@ -1,6 +1,6 @@
 # Reouvir EN
 
-PWA de **treino de escuta em inglês** (não é um curso). O aluno ouve playlists de frases, definidas por `contexto / nível CEFR / tópico gramatical` (ex.: `Entrevista de engenheiro de software Java / A1 / Verbo to be`). O aluno escolhe primeiro o **contexto** e depois o nível e o tópico; um mesmo contexto serve a todos os níveis e tópicos. O app é no estilo de um player de música, para uso mãos livres (corrida, spinning). Slogan: *Hear it again.*
+PWA de **treino de escuta em inglês** (não é um curso). O aluno ouve playlists de frases dentro de um **contexto** (ex.: `Entrevista de engenheiro de software Java / Apresentação e small talk`). O aluno escolhe o contexto e depois a playlist; o administrador cria, nomeia e ordena as playlists livremente, sem nível nem tópico fixos. O app é no estilo de um player de música, para uso mãos livres (corrida, spinning). Slogan: *Hear it again.*
 
 Responder ao usuário sempre em **português** (com acentuação correta). Identificadores de código e termos técnicos ficam em inglês.
 
@@ -18,17 +18,18 @@ Regras de design system e layout ficam em `.agents/skills/` (Markdown puro, vale
 - **Fase 1 (Fundação) validada:** typecheck, testes (unitários e de integração contra Postgres real), migrações, seed do admin e build.
 - Fases 3 a 8 implementadas em seguida (ver `README.md` para o que foi validado e o que depende de teste manual).
 - **Fase 2 (spike do player) depende de teste manual** em iPhone/Android com a tela bloqueada e a regra de silêncio. Nenhum agente consegue validar isso.
-- Para rodar: `cp .env.example .env`, `pnpm install`, `pnpm db:up`, `pnpm db:migrate`, `pnpm seed:admin`, `pnpm dev`. **O banco nasce vazio:** não há seed de níveis, tópicos, contextos nem frases (só o admin). Testes de integração usam `DATABASE_URL_TEST`.
+- Para rodar: `cp .env.example .env`, `pnpm install`, `pnpm db:up`, `pnpm db:migrate`, `pnpm seed`, `pnpm dev`. **O seed cria só o administrador.** Não há seed de contextos, playlists nem frases: contextos e playlists nascem no backoffice e as frases são gravadas no banco por `pipeline/src/write_db.py`. Testes de integração usam `DATABASE_URL_TEST`.
 
 ## Decisões já tomadas
 
-- **Conteúdo curado:** o catálogo (níveis, tópicos, contextos) é gerido no backoffice. Os alunos só veem playlists publicadas.
-- **As frases NÃO são geradas aqui, e não há importação por arquivo.** Uma pipeline externa grava **níveis, tópicos e frases direto no Postgres**. O backoffice só lê níveis e tópicos, revisa frases (editar, remover, reordenar, adicionar) e publica. Triggers do banco garantem a integridade de quem escreve direto: normalizam `text` e derivam `text_hash`/`char_count`, sobem `playlists.version` e criam a playlist vazia de cada tópico novo em todos os contextos (seção 8 do documento).
-- **Contextos** são o único cadastro editável (criar, editar, excluir). Campos: nome, slug, categoria, descrição (curta, exibida ao aluno) e **detalhamento** (texto livre só para o admin, nunca exposto ao aluno). Criar um contexto gera uma playlist vazia por tópico; excluir apaga as vazias e recusa se alguma tiver frases.
+- **Conteúdo curado:** contextos e playlists são geridos no backoffice. Os alunos só veem playlists publicadas. **Não existem níveis nem tópicos gramaticais** (foram removidos; o histórico está no git).
+- **As frases NÃO são geradas aqui, e não há importação por arquivo.** Elas são escritas fora do sistema (numa conversa com o Claude, seguindo o que o administrador definir para cada playlist) e gravadas **direto no Postgres** por `pipeline/src/write_db.py`, que localiza a playlist por `(slug do contexto, slug da playlist)` e exige que ela exista. O backoffice cria as playlists, revisa frases (editar, remover, reordenar, adicionar) e publica. Triggers do banco garantem a integridade de quem escreve direto: normalizam `text`, derivam `text_hash`/`char_count` e sobem `playlists.version` (seção 8 do documento). As ferramentas de currículo da pipeline (`build_prompt.py`, `select_final.py`, `curriculum-*.yaml`...) ficaram como **legado opcional**.
+- **Contextos** (criar, editar, excluir): nome, slug, categoria, descrição (curta, exibida ao aluno) e **detalhamento** (texto livre só para o admin, nunca exposto ao aluno). Criar um contexto **não gera playlists**; excluir apaga as playlists vazias e recusa se alguma tiver frases.
+- **Playlists** (dentro de um contexto): título, slug (único no contexto), descrição e posição, criadas, editadas, reordenadas e excluídas (só vazias) no backoffice. Renomear não sobe a `version`, que acompanha só as frases.
 - **Áudio já gerado é patrimônio (custa crédito do ElevenLabs): não apague nem limpe órfãos.** O painel não tem limpeza; só o CLI `cleanup:audio` (prévia por padrão). A chave usa texto normalizado + voz + modelo + configurações, então trocar a voz ou o modelo invalida o reaproveitamento (os áudios antigos viram órfãos).
 - **Só o áudio é lazy:** gerado no ElevenLabs na primeira escuta, guardado e reaproveitado por todos. Chave: `sha256(texto normalizado | voice_id | model_id | voice_settings)`. Single-flight com `UNIQUE(audio_key)`.
-- **Playlist** única por `(tópico, contexto)`, ordem fixa, ~100 frases (definido pela pipeline). Reordenar no backoffice renumera tudo de 1 a n; remover deixa lacuna; adicionar vai para o fim.
-- **Ordem do currículo:** `(ordem do nível, ordem do tópico dentro do nível)`, vinda do catálogo (gravado pela pipeline). É a ordem em que o aluno vê os tópicos.
+- **Frases da playlist:** ordem fixa e tamanho livre. Reordenar no backoffice renumera tudo de 1 a n; remover deixa lacuna; adicionar vai para o fim.
+- **Ordem das playlists:** `position` dentro do contexto, definida pelo administrador (renumerada de 1 a n ao reordenar ou excluir). É a ordem em que o aluno as vê.
 - **Offline:** o aluno baixa a playlist inteira (IndexedDB + Cache Storage) e ela toca localmente; o progresso (`last_sentence_id`, voltas, tempo) sincroniza na primeira rede.
 - **Regra do silêncio (fixa, não configurável):** `silêncio = duração do áudio ÷ velocidade + 1,5 s`, depois de cada audição, inclusive a última repetição antes da próxima frase. Ex.: 10 s a 0,75x → 14,8 s. A regra vive em `packages/shared`.
 - **Configurações do aluno:** só repetições seguidas (padrão 2), velocidade (0,75x/1x) e loop.

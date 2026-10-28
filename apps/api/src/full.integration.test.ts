@@ -53,18 +53,7 @@ describe.skipIf(!url)("admin + aluno (integração)", () => {
   }
 
   beforeEach(async () => {
-    await pool.query("TRUNCATE users, levels, contexts, audios CASCADE");
-    // níveis e tópicos são fixos (vêm do seed): aqui entram direto no banco
-    await pool.query(`INSERT INTO levels (code, name, sort_order) VALUES ('A1','A1',1), ('A2','A2',2)`);
-    await pool.query(
-      `INSERT INTO grammar_topics (level_id, slug, name, sort_order, active)
-       SELECT l.id, v.slug, v.name, v.ord, v.active
-         FROM (VALUES ('A1','verbo-to-be','Verbo to be',1,true),
-                      ('A1','pronomes-pessoais-e-possessivos','Pronomes pessoais e possessivos',2,true),
-                      ('A2','past-simple','Past Simple',1,true),
-                      ('A2','topico-inativo','Tópico inativo',2,false)) AS v(lvl, slug, name, ord, active)
-         JOIN levels l ON l.code = v.lvl`,
-    );
+    await pool.query("TRUNCATE users, contexts, audios CASCADE");
     tts.calls = 0;
     const hash = await hashPassword("senha-boa-123");
     await pool.query("INSERT INTO users (email, name, password_hash, role) VALUES ('admin@t.com','Admin',$1,'admin')", [hash]);
@@ -79,8 +68,8 @@ describe.skipIf(!url)("admin + aluno (integração)", () => {
 
   // ---------- catálogo ----------
   it("aluno não acessa o backoffice; anônimo recebe 401", async () => {
-    expect((await call("GET", "/admin/levels", student)).statusCode).toBe(403);
-    expect((await app.inject({ method: "GET", url: "/api/admin/levels" })).statusCode).toBe(401);
+    expect((await call("GET", "/admin/contexts", student)).statusCode).toBe(403);
+    expect((await app.inject({ method: "GET", url: "/api/admin/contexts" })).statusCode).toBe(401);
   });
 
   async function makeContext(slug = "entrevista-java") {
@@ -88,32 +77,105 @@ describe.skipIf(!url)("admin + aluno (integração)", () => {
     expect(res.statusCode).toBe(201);
     return res.json() as { id: string };
   }
+  type PlaylistRow = {
+    id: string; slug: string; title: string; description: string; position: number;
+    status: string; sentenceCount: number; version: number;
+  };
   async function playlistsOf(contextId: string) {
-    return (await call("GET", `/admin/playlists?contextId=${contextId}`, admin)).json() as {
-      id: string; topicSlug: string; levelCode: string; status: string; sentenceCount: number; version: number; topicName: string;
-    }[];
+    return (await call("GET", `/admin/playlists?contextId=${contextId}`, admin)).json() as PlaylistRow[];
   }
-  const playlistOf = async (contextId: string, slug = "verbo-to-be") => (await playlistsOf(contextId)).find((p) => p.topicSlug === slug)!;
+  async function makePlaylist(contextId: string, title = "Verbo to be", extra: Record<string, unknown> = {}) {
+    const res = await call("POST", `/admin/contexts/${contextId}/playlists`, admin, { title, ...extra });
+    expect(res.statusCode).toBe(201);
+    return res.json() as PlaylistRow;
+  }
+  /** A playlist do contexto com esse slug; se ainda não existe, é criada (com o título igual ao slug). */
+  const playlistOf = async (contextId: string, slug = "verbo-to-be") =>
+    (await playlistsOf(contextId)).find((p) => p.slug === slug) ?? makePlaylist(contextId, slug);
 
-  it("níveis e tópicos são somente leitura", async () => {
-    expect((await call("GET", "/admin/levels", admin)).json()).toHaveLength(2);
-    expect((await call("GET", "/admin/topics", admin)).json()).toHaveLength(4);
-    for (const [method, url] of [["POST", "/admin/levels"], ["PUT", "/admin/levels/x"], ["DELETE", "/admin/levels/x"], ["POST", "/admin/topics"], ["DELETE", "/admin/topics/x"]] as const) {
-      expect((await call(method, url, admin, {})).statusCode).toBe(404);
-    }
+  it("níveis e tópicos não existem mais", async () => {
+    expect((await call("GET", "/admin/levels", admin)).statusCode).toBe(404);
+    expect((await call("GET", "/admin/topics", admin)).statusCode).toBe(404);
+    const { rows } = await pool.query("SELECT to_regclass('levels') AS l, to_regclass('grammar_topics') AS t");
+    expect(rows[0]).toEqual({ l: null, t: null });
   });
 
-  it("criar um contexto gera uma playlist vazia por tópico ativo, em ordem de currículo", async () => {
+  it("um contexto novo nasce sem playlists, e o slug do contexto é único", async () => {
     const ctx = await makeContext();
-    const lists = await playlistsOf(ctx.id);
-    expect(lists.map((p) => p.topicSlug)).toEqual(["verbo-to-be", "pronomes-pessoais-e-possessivos", "past-simple"]);
-    expect(lists.every((p) => p.status === "draft" && p.sentenceCount === 0)).toBe(true);
+    expect(await playlistsOf(ctx.id)).toEqual([]);
     expect((await call("POST", "/admin/contexts", admin, { slug: "entrevista-java", name: "x", category: "y" })).statusCode).toBe(409);
-    expect((await call("GET", "/admin/playlists", admin)).json()).toHaveLength(3); // o 409 não deixou playlists sobrando
+    expect((await call("GET", "/admin/playlists", admin)).json()).toHaveLength(0);
+  });
+
+  it("playlists livres: criar gera o slug do título, vai para o fim e o slug é único no contexto", async () => {
+    const a = await makeContext("ctx-a");
+    const b = await makeContext("ctx-b");
+    const first = await makePlaylist(a.id, "Verbo to be");
+    expect(first).toMatchObject({ slug: "verbo-to-be", title: "Verbo to be", description: "", position: 1, status: "draft", sentenceCount: 0 });
+    const second = await makePlaylist(a.id, "Verbo to be", { description: "Segunda versão" });
+    expect(second).toMatchObject({ slug: "verbo-to-be-2", position: 2, description: "Segunda versão" });
+    expect((await makePlaylist(a.id, "Café & Chá!")).slug).toBe("cafe-cha");
+
+    expect((await call("POST", `/admin/contexts/${a.id}/playlists`, admin, { title: "Outra", slug: "verbo-to-be" })).statusCode).toBe(409);
+    expect((await makePlaylist(b.id, "Verbo to be", { slug: "verbo-to-be" })).position).toBe(1); // outro contexto: pode repetir
+    expect((await call("POST", `/admin/contexts/${a.id}/playlists`, admin, { title: "" })).statusCode).toBe(400);
+    expect((await call("POST", "/admin/contexts/00000000-0000-0000-0000-000000000000/playlists", admin, { title: "x" })).statusCode).toBe(404);
+  });
+
+  it("playlists livres: editar muda só o que vem no corpo e não sobe a versão", async () => {
+    const ctx = await makeContext();
+    const pl = await makePlaylist(ctx.id, "Primeira", { description: "Descrição original" });
+    const other = await makePlaylist(ctx.id, "Segunda");
+
+    const renamed = await call("PUT", `/admin/playlists/${pl.id}`, admin, { title: "Primeira renomeada" });
+    expect(renamed.json()).toMatchObject({ title: "Primeira renomeada", slug: "primeira", description: "Descrição original", version: pl.version });
+    const described = await call("PUT", `/admin/playlists/${pl.id}`, admin, { description: "" });
+    expect(described.json()).toMatchObject({ title: "Primeira renomeada", description: "" });
+    expect((await call("PUT", `/admin/playlists/${pl.id}`, admin, { slug: "novo-slug" })).json().slug).toBe("novo-slug");
+
+    expect((await call("PUT", `/admin/playlists/${pl.id}`, admin, { slug: other.slug })).statusCode).toBe(409);
+    expect((await call("PUT", `/admin/playlists/${pl.id}`, admin, { slug: "Slug Inválido" })).statusCode).toBe(400);
+    expect((await call("PUT", "/admin/playlists/00000000-0000-0000-0000-000000000000", admin, { title: "x" })).statusCode).toBe(404);
+  });
+
+  it("playlists livres: reordenar renumera de 1 a n e a lista recusa ids que não batem", async () => {
+    const ctx = await makeContext();
+    const [a, b, c] = [await makePlaylist(ctx.id, "A"), await makePlaylist(ctx.id, "B"), await makePlaylist(ctx.id, "C")];
+    expect((await playlistsOf(ctx.id)).map((p) => p.slug)).toEqual(["a", "b", "c"]);
+
+    const res = await call("PUT", `/admin/contexts/${ctx.id}/playlists/order`, admin, { ids: [c!.id, a!.id, b!.id] });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().map((p: PlaylistRow) => [p.slug, p.position])).toEqual([["c", 1], ["a", 2], ["b", 3]]);
+
+    const bad = (ids: string[]) => call("PUT", `/admin/contexts/${ctx.id}/playlists/order`, admin, { ids });
+    expect((await bad([a!.id, b!.id])).statusCode).toBe(400);
+    expect((await bad([a!.id, a!.id, b!.id])).statusCode).toBe(400);
+    expect((await bad([a!.id, b!.id, "00000000-0000-0000-0000-000000000000"])).statusCode).toBe(400);
+    expect((await playlistsOf(ctx.id)).map((p) => p.slug)).toEqual(["c", "a", "b"]); // nada mudou
+    // uma playlist de outro contexto não entra na ordem
+    const other = await makeContext("ctx-b");
+    const foreign = await makePlaylist(other.id, "Z");
+    expect((await bad([a!.id, b!.id, foreign.id])).statusCode).toBe(400);
+  });
+
+  it("playlists livres: excluir só playlist vazia e fecha a lacuna de posição", async () => {
+    const ctx = await makeContext();
+    const [a, b, c] = [await makePlaylist(ctx.id, "A"), await makePlaylist(ctx.id, "B"), await makePlaylist(ctx.id, "C")];
+    await call("POST", `/admin/playlists/${b!.id}/sentences`, admin, { text: "Hello there my friend." });
+
+    const refused = await call("DELETE", `/admin/playlists/${b!.id}`, admin);
+    expect(refused.statusCode).toBe(409);
+    expect(refused.json().error.code).toBe("has_sentences");
+
+    expect((await call("DELETE", `/admin/playlists/${a!.id}`, admin)).statusCode).toBe(204);
+    expect((await playlistsOf(ctx.id)).map((p) => [p.slug, p.position])).toEqual([["b", 1], ["c", 2]]);
+    expect((await call("DELETE", `/admin/playlists/${a!.id}`, admin)).statusCode).toBe(404);
+    expect(c!.id).toBeTruthy();
   });
 
   it("excluir contexto apaga as playlists vazias, mas recusa se alguma tiver frases", async () => {
     const empty = await makeContext("vazio");
+    await makePlaylist(empty.id, "Vazia");
     expect((await call("DELETE", `/admin/contexts/${empty.id}`, admin)).statusCode).toBe(204);
     expect((await pool.query("SELECT 1 FROM playlists")).rowCount).toBe(0);
 
@@ -122,16 +184,8 @@ describe.skipIf(!url)("admin + aluno (integração)", () => {
     await call("POST", `/admin/playlists/${pl.id}/sentences`, admin, { text: "Hello there my friend." });
     const res = await call("DELETE", `/admin/contexts/${used.id}`, admin);
     expect(res.statusCode).toBe(409);
-    expect((await call("GET", "/admin/playlists", admin)).json()).toHaveLength(3); // nada foi apagado
+    expect((await call("GET", "/admin/playlists", admin)).json()).toHaveLength(1); // nada foi apagado
     expect((await call("DELETE", "/admin/contexts/00000000-0000-0000-0000-000000000000", admin)).statusCode).toBe(404);
-  });
-
-  it("ensurePlaylists gera as playlists que faltam sem duplicar", async () => {
-    const ctx = await makeContext();
-    await pool.query("DELETE FROM playlists WHERE context_id = $1", [ctx.id]);
-    const { CatalogRepository } = await import("./modules/catalog/catalog.repository");
-    expect(await new CatalogRepository(pool).ensurePlaylists()).toBe(3);
-    expect(await new CatalogRepository(pool).ensurePlaylists()).toBe(0);
   });
 
   it("usuários: bloquear revoga sessão, não bloqueia a si mesmo, reset exige troca", async () => {
@@ -164,7 +218,7 @@ describe.skipIf(!url)("admin + aluno (integração)", () => {
       [playlistId, texts],
     );
   }
-  /** Contexto novo com a playlist "verbo-to-be" preenchida pela "pipeline" (rascunho). */
+  /** Contexto novo com a playlist "verbo-to-be" (criada no backoffice) preenchida pela "pipeline" (rascunho). */
   async function importedPlaylist() {
     const ctx = await makeContext();
     const pl = await playlistOf(ctx.id);
@@ -194,22 +248,6 @@ describe.skipIf(!url)("admin + aluno (integração)", () => {
     expect(catalog).not.toContain("Novo detalhamento");
 
     expect((await call("DELETE", `/admin/contexts/${bare.json().id}`, admin)).statusCode).toBe(204);
-  });
-
-  it("pipeline: tópico inserido direto no banco ganha playlist vazia em todos os contextos", async () => {
-    const a = await makeContext("ctx-a");
-    const b = await makeContext("ctx-b");
-    await pool.query(
-      `INSERT INTO grammar_topics (level_id, slug, name, sort_order)
-       SELECT id, 'topico-novo', 'Tópico novo', 9 FROM levels WHERE code = 'A1'`,
-    );
-    for (const ctx of [a, b]) {
-      const found = (await playlistsOf(ctx.id)).find((p) => p.topicSlug === "topico-novo");
-      expect(found).toMatchObject({ status: "draft", sentenceCount: 0 });
-    }
-    // reativar um tópico inativo também gera as playlists que faltam
-    await pool.query("UPDATE grammar_topics SET active = true WHERE slug = 'topico-inativo'");
-    expect((await playlistsOf(a.id)).map((p) => p.topicSlug)).toContain("topico-inativo");
   });
 
   it("pipeline: o banco normaliza o texto e deriva text_hash e char_count", async () => {
@@ -289,6 +327,25 @@ describe.skipIf(!url)("admin + aluno (integração)", () => {
     expect((await call("PUT", `/admin/playlists/${pl.id}/order`, admin, { ids: ids.slice(1) })).statusCode).toBe(400);
   });
 
+  it("o catálogo do aluno segue a ordem das playlists definida pelo administrador", async () => {
+    const ctx = await makeContext();
+    const ids: string[] = [];
+    for (const title of ["Primeira", "Segunda", "Terceira"]) {
+      const pl = await makePlaylist(ctx.id, title, { description: `Sobre ${title}` });
+      await call("POST", `/admin/playlists/${pl.id}/sentences`, admin, { text: `Hello from ${title} playlist.` });
+      await call("POST", `/admin/playlists/${pl.id}/publish`, admin);
+      ids.push(pl.id);
+    }
+    const titles = async () => (await call("GET", "/catalog", student)).json().contexts[0].playlists.map((p: { title: string }) => p.title);
+    expect(await titles()).toEqual(["Primeira", "Segunda", "Terceira"]);
+    await call("PUT", `/admin/contexts/${ctx.id}/playlists/order`, admin, { ids: [ids[2], ids[0], ids[1]] });
+    expect(await titles()).toEqual(["Terceira", "Primeira", "Segunda"]);
+
+    const detail = (await call("GET", `/playlists/${ids[0]}`, student)).json();
+    expect(detail).toMatchObject({ title: "Primeira", description: "Sobre Primeira", contextName: "Entrevista Java" });
+    expect(detail).not.toHaveProperty("levelCode");
+  });
+
   it("publicar exige frases; aluno só vê publicadas de itens ativos", async () => {
     const ctx = await makeContext();
     const pl = await playlistOf(ctx.id);
@@ -296,9 +353,11 @@ describe.skipIf(!url)("admin + aluno (integração)", () => {
     await call("POST", `/admin/playlists/${pl.id}/sentences`, admin, { text: "Hello there my friend." });
     await call("POST", `/admin/playlists/${pl.id}/publish`, admin);
 
-    let cat = (await call("GET", "/catalog", student)).json();
-    expect(cat.contexts[0].levels[0].topics[0].playlistId).toBe(pl.id);
-    expect(cat.contexts[0].levels[0].topics).toHaveLength(1); // as playlists vazias não aparecem
+    const empty = await makePlaylist(ctx.id, "Vazia");
+    const cat = (await call("GET", "/catalog", student)).json();
+    expect(cat.contexts[0].playlists).toHaveLength(1); // rascunhos e playlists vazias não aparecem
+    expect(cat.contexts[0].playlists[0]).toMatchObject({ id: pl.id, slug: "verbo-to-be", title: "verbo-to-be", sentenceCount: 1 });
+    expect((await call("GET", `/playlists/${empty.id}`, student)).statusCode).toBe(404);
 
     await call("PUT", `/admin/contexts/${ctx.id}`, admin, { slug: "entrevista-java", name: "Entrevista Java", category: "Trabalho", active: false });
     expect((await call("GET", "/catalog", student)).json().contexts).toHaveLength(0);
@@ -360,6 +419,7 @@ describe.skipIf(!url)("admin + aluno (integração)", () => {
     expect(m.sentences.every((s: { audioUrl: string; durationMs: number }) => s.audioUrl && s.durationMs > 0)).toBe(true);
     expect(tts.calls).toBe(m.sentences.length);
     expect(m.version).toBe(2); // o INSERT das frases conta como mudança de conteúdo
+    expect(m).toMatchObject({ title: "verbo-to-be", contextName: "Entrevista Java" });
   });
 
   it("estado do aluno: salva, o mais recente vence, e o reimport zera a retomada", async () => {
@@ -384,7 +444,7 @@ describe.skipIf(!url)("admin + aluno (integração)", () => {
     await call("GET", `/sentences/${s1.id}/audio`, student);
     await call("PATCH", `/admin/sentences/${s0.id}`, admin, { text: "Now this text is different." });
 
-    expect((await call("GET", "/admin/overview", admin)).json()).toMatchObject({ playlists: { published: 1, empty: 2 }, audios: { ready: 2, orphans: 1 } });
+    expect((await call("GET", "/admin/overview", admin)).json()).toMatchObject({ playlists: { published: 1, empty: 0 }, audios: { ready: 2, orphans: 1 } });
     // o painel não tem mais como apagar áudios: o endpoint de limpeza não existe
     expect((await call("POST", "/admin/audios/cleanup-orphans?dry_run=false", admin)).statusCode).toBe(404);
     expect((await pool.query("SELECT 1 FROM audios")).rowCount).toBe(2);

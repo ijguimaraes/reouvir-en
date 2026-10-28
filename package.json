@@ -14,7 +14,8 @@
     "db:rollback": "dbmate --migrations-dir apps/api/src/db/migrations --no-dump-schema rollback",
     "db:status": "dbmate --migrations-dir apps/api/src/db/migrations --no-dump-schema status",
     "db:new": "dbmate --migrations-dir apps/api/src/db/migrations new",
-    "seed:admin": "pnpm --filter @reouvir/api seed:admin"
+    "seed:admin": "pnpm --filter @reouvir/api seed:admin",
+    "seed": "pnpm seed:admin"
   },
   "devDependencies": {
     "dbmate": "^2.22.0",

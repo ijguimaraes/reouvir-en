@@ -26,13 +26,13 @@ cp .env.example .env          # ajuste SESSION_SECRET, ADMIN_*, ELEVENLABS_API_K
 pnpm install
 pnpm db:up                    # Postgres em container
 pnpm db:migrate               # dbmate up
-pnpm seed:admin               # só o administrador de ADMIN_EMAIL / ADMIN_PASSWORD (o banco nasce sem catálogo)
+pnpm seed                     # só o administrador de ADMIN_EMAIL / ADMIN_PASSWORD (o banco nasce sem contextos, playlists e frases)
 pnpm dev                      # api :3711, web :5273, admin :5274/admin/
 ```
 
 Sem `ELEVENLABS_API_KEY`, tudo funciona menos gerar áudio novo (a API responde 503 nessa rota).
 
-Fluxo no backoffice (`http://localhost:5274/admin/`): crie um **Contexto** (com o detalhamento, se quiser); as playlists vazias dos tópicos nascem junto. Níveis, tópicos e frases chegam pela pipeline, direto no banco (o ambiente local não carrega nenhum dado de exemplo) (seção 8 do documento); depois revise no tópico e **publique**. Para testar sem a pipeline, adicione frases à mão na tela do tópico. Depois entre como aluno em `http://localhost:5273`.
+Fluxo no backoffice (`http://localhost:5274/admin/`): crie um **Contexto** (com o detalhamento, se quiser) e, dentro dele, as **Playlists** (título, descrição e ordem). As frases chegam direto no banco por `pipeline/src/write_db.py --playlist <slug>` (seção 8 do documento; o ambiente local não carrega frases de exemplo); depois revise na tela da playlist e **publique**. Para testar sem isso, adicione frases à mão na tela da playlist. Depois entre como aluno em `http://localhost:5273`.
 
 ## Testes
 

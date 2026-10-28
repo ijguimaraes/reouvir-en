@@ -50,11 +50,8 @@ a.item { min-height: var(--tap-min); transition: background-color var(--dur-fast
 a.item:active { background: var(--surface-2); }
 .card .row { justify-content: flex-end; }
 
-details { margin: var(--space-2) 0; }
-summary {
-  display: flex; align-items: center; min-height: var(--tap-min); padding: 0 var(--space-1);
-  font-weight: 600; cursor: pointer;
-}
+/* descrição curta da playlist, sob o título */
+a.item .item-desc { display: block; font-size: var(--text-label); color: var(--text-muted); font-weight: 400; }
 
 /* ---------- player ---------- */
 .now {
