@@ -45,7 +45,10 @@ export function registerStudentRoutes(
     const withAudio = await Promise.all(
       sentences.map(async (s) => {
         const a = await deps.audio.lookup(s.text);
-        return { id: s.id, position: s.position, text: s.text, audioUrl: a?.url, durationMs: a?.durationMs };
+        return {
+          id: s.id, position: s.position, text: s.text, translationPt: s.translation_pt ?? undefined,
+          audioUrl: a?.url, durationMs: a?.durationMs,
+        };
       }),
     );
     return {
@@ -70,7 +73,10 @@ export function registerStudentRoutes(
     const audios = await mapPool(sentences, 4, (s) => deps.audio.ensure(s.text, req.authUser!.id));
     return {
       playlistId: p.id, version: p.version, contextName: p.context_name, title: p.title, description: p.description,
-      sentences: sentences.map((s, i) => ({ id: s.id, position: s.position, text: s.text, audioUrl: audios[i]!.url, durationMs: audios[i]!.durationMs })),
+      sentences: sentences.map((s, i) => ({
+        id: s.id, position: s.position, text: s.text, translationPt: s.translation_pt ?? undefined,
+        audioUrl: audios[i]!.url, durationMs: audios[i]!.durationMs,
+      })),
     };
   });
 

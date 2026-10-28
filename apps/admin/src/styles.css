@@ -48,6 +48,7 @@ tbody tr:last-child td { border-bottom: 0; }
 td .pos { width: 4.5rem; }
 td.text-cell { width: 100%; min-width: 16rem; }
 td input.text { width: 100%; }
+td input.text.pt { margin-top: var(--space-1); }
 td.handle { color: var(--text-muted); width: 2rem; cursor: grab; }
 td.handle svg { display: block; }
 .row.nowrap { flex-wrap: nowrap; }

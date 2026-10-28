@@ -32,12 +32,14 @@ Regras de design system e layout ficam em `.agents/skills/` (Markdown puro, vale
 - **Ordem das playlists:** `position` dentro do contexto, definida pelo administrador (renumerada de 1 a n ao reordenar ou excluir). É a ordem em que o aluno as vê.
 - **Offline:** o aluno baixa a playlist inteira (IndexedDB + Cache Storage) e ela toca localmente; o progresso (`last_sentence_id`, voltas, tempo) sincroniza na primeira rede.
 - **Regra do silêncio (fixa, não configurável):** `silêncio = duração do áudio ÷ velocidade + 1,5 s`, depois de cada audição, inclusive a última repetição antes da próxima frase. Ex.: 10 s a 0,75x → 14,8 s. A regra vive em `packages/shared`.
-- **Configurações do aluno:** só repetições seguidas (padrão 2), velocidade (0,75x/1x) e loop.
+- **Configurações do aluno:** repetições seguidas (padrão 2), velocidade (0,75x/1x), loop, mostrar a tradução e manter a tela ligada.
 - **Tema claro e escuro** nos dois apps (segue o sistema, com alternância manual), feito com variáveis CSS.
-- **Sem tradução, sem SRS, sem texto livre de contexto** no MVP.
+- **Tradução em português:** `sentences.translation_pt` (nullable), fora da chave do áudio. Entra junto da frase (`translationPt` na API/MCP, `translation_pt` no `write_db.py`) ou é gerada pelo botão "Traduzir pendentes" (`POST /admin/playlists/:id/translate`, API da Anthropic, `ANTHROPIC_API_KEY`). Editar a tradução sobe `playlists.version` (o download offline atualiza) e nunca invalida áudio. O aluno liga/desliga em `show_translation`.
+- **Manter a tela ligada** (`keep_screen_on`, padrão desligado): Screen Wake Lock enquanto toca; depende de teste manual no iPhone.
+- **Sem SRS e sem texto livre de contexto.**
 - **Stack:** monorepo **pnpm** com `apps/web` (Vite + React, PWA), `apps/admin` (Vite + React, backoffice, sem service worker, servido em `/admin`), `apps/api` (Node + TypeScript + Fastify + zod), `apps/mcp` (servidor MCP stdio que expõe as rotas `/admin` da API; roda na máquina de quem usa o Claude Code, não faz parte do deploy), `packages/shared` e `packages/api-client`.
 - **Banco:** Postgres com **SQL nativo, sem ORM** (driver `pg`, repositórios `*.repository.ts`). Migrações em `.sql` com **dbmate** (`-- migrate:up` / `-- migrate:down`). Sem fila de jobs. Testes com Vitest, e os de repositório rodam contra Postgres real.
-- **Auth:** e-mail e senha na API, com **access token (JWT 15 min) + refresh token rotativo** em cookies httpOnly. Telas de entrar e criar conta (cadastro aberto, papel `student`). O backoffice só bloqueia usuários e redefine senhas (senha temporária). **Google fica fora do MVP.**
+- **Auth:** e-mail e senha na API, com **access token (JWT 15 min) + refresh token rotativo** em cookies httpOnly. Telas de entrar e criar conta (cadastro aberto, papel `student`). O backoffice só bloqueia usuários e redefine senhas (senha temporária). **Google fica fora do escopo.**
 - **Storage:** disco local atrás de uma interface com driver `local` (driver `s3` só no futuro). Sem bucket e sem CDN.
 - **Deploy 100% local:** Docker Compose (`postgres`, `migrate`, `api`, `caddy`) numa máquina ligada, acessado pela VPN **Tailscale**. Origem única por caminho: `/` (web), `/admin` (admin), `/api` (API), `/audio` (MP3). **HTTPS é obrigatório** para o PWA (service worker), via MagicDNS + `tailscale serve`.
 - **Next.js foi descartado:** não há necessidade de SEO nem de SSR.

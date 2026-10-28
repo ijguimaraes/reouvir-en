@@ -4,7 +4,7 @@ import type { Queryable } from "../../db/pool";
 export interface PublishedPlaylistRow {
   id: string; version: number; context_name: string; title: string; description: string;
 }
-export interface PublishedSentenceRow { id: string; position: number; text: string }
+export interface PublishedSentenceRow { id: string; position: number; text: string; translation_pt: string | null }
 
 export class StudentRepository {
   constructor(private db: Queryable) {}
@@ -49,7 +49,7 @@ export class StudentRepository {
 
   async sentences(playlistId: string): Promise<PublishedSentenceRow[]> {
     const { rows } = await this.db.query<PublishedSentenceRow>(
-      "SELECT id, position, text FROM sentences WHERE playlist_id = $1 ORDER BY position",
+      "SELECT id, position, text, translation_pt FROM sentences WHERE playlist_id = $1 ORDER BY position",
       [playlistId],
     );
     return rows;
@@ -93,19 +93,29 @@ export class StudentRepository {
   }
 
   async getSettings(userId: string): Promise<PlayerSettings> {
-    const { rows } = await this.db.query<{ repeats: number; speed: string; loop_playlist: boolean }>(
-      "SELECT repeats, speed::text, loop_playlist FROM user_settings WHERE user_id = $1",
+    const { rows } = await this.db.query<{
+      repeats: number; speed: string; loop_playlist: boolean; show_translation: boolean; keep_screen_on: boolean;
+    }>(
+      "SELECT repeats, speed::text, loop_playlist, show_translation, keep_screen_on FROM user_settings WHERE user_id = $1",
       [userId],
     );
     const r = rows[0];
-    return r ? { repeats: r.repeats, speed: Number(r.speed) === 0.75 ? 0.75 : 1, loop: r.loop_playlist } : { repeats: 2, speed: 1, loop: true };
+    return r
+      ? {
+          repeats: r.repeats, speed: Number(r.speed) === 0.75 ? 0.75 : 1, loop: r.loop_playlist,
+          showTranslation: r.show_translation, keepScreenOn: r.keep_screen_on,
+        }
+      : { repeats: 2, speed: 1, loop: true, showTranslation: true, keepScreenOn: false };
   }
 
   async saveSettings(userId: string, s: PlayerSettings): Promise<void> {
     await this.db.query(
-      `INSERT INTO user_settings (user_id, repeats, speed, loop_playlist) VALUES ($1,$2,$3,$4)
-       ON CONFLICT (user_id) DO UPDATE SET repeats = EXCLUDED.repeats, speed = EXCLUDED.speed, loop_playlist = EXCLUDED.loop_playlist`,
-      [userId, s.repeats, s.speed, s.loop],
+      `INSERT INTO user_settings (user_id, repeats, speed, loop_playlist, show_translation, keep_screen_on)
+       VALUES ($1,$2,$3,$4,$5,$6)
+       ON CONFLICT (user_id) DO UPDATE SET repeats = EXCLUDED.repeats, speed = EXCLUDED.speed,
+         loop_playlist = EXCLUDED.loop_playlist, show_translation = EXCLUDED.show_translation,
+         keep_screen_on = EXCLUDED.keep_screen_on`,
+      [userId, s.repeats, s.speed, s.loop, s.showTranslation, s.keepScreenOn],
     );
   }
 }

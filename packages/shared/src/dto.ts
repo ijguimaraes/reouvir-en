@@ -27,7 +27,7 @@ export interface AdminPlaylistDto {
   sentenceCount: number; audioReady: number;
 }
 
-export interface SentenceDto { id: string; position: number; text: string; audioReady: boolean; metadata: Record<string, unknown> | null }
+export interface SentenceDto { id: string; position: number; text: string; translationPt: string | null; audioReady: boolean; metadata: Record<string, unknown> | null }
 
 export interface AdminPlaylistDetailDto extends AdminPlaylistDto { sentences: SentenceDto[] }
 
@@ -43,7 +43,7 @@ export interface CatalogDto {
   }[];
 }
 
-export interface PlayerSentenceDto { id: string; position: number; text: string; audioUrl?: string; durationMs?: number }
+export interface PlayerSentenceDto { id: string; position: number; text: string; translationPt?: string; audioUrl?: string; durationMs?: number }
 
 export interface StudentPlaylistDto {
   id: string; version: number; contextName: string; title: string; description: string;
@@ -55,5 +55,5 @@ export interface AudioInfoDto { url: string; durationMs: number }
 
 export interface OfflineManifestDto {
   playlistId: string; version: number; contextName: string; title: string; description: string;
-  sentences: { id: string; position: number; text: string; audioUrl: string; durationMs: number }[];
+  sentences: { id: string; position: number; text: string; translationPt?: string; audioUrl: string; durationMs: number }[];
 }

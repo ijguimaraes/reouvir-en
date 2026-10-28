@@ -1,26 +1,34 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Pool } from "pg";
+import { z } from "zod";
 import {
   checkSentenceText,
   normalizeText,
   playlistInputSchema,
   playlistUpdateSchema,
   reorderSchema,
-  sentenceTextSchema,
+  sentenceInputSchema,
+  sentenceUpdateSchema,
   slugify,
 } from "@reouvir/shared";
 import { withTransaction } from "../../db/pool";
 import { AppError } from "../../errors";
 import { mapPgError, paramId, type Guard } from "../../http";
 import { textHash, type TtsIdentity } from "../audio/audio-key";
+import type { Translator } from "../translation/translator";
 import { PlaylistsRepository } from "./playlists.repository";
+
+/** Frases por chamada ao tradutor: playlists grandes viram vários lotes. */
+const TRANSLATE_BATCH = 40;
+
+const translateBodySchema = z.object({ overwrite: z.boolean().default(false) });
 
 
 export function registerPlaylistAdminRoutes(
   app: FastifyInstance,
-  deps: { pool: Pool; guards: Guard[]; tts: TtsIdentity },
+  deps: { pool: Pool; guards: Guard[]; tts: TtsIdentity; translator: Translator },
 ): void {
-  const { pool, tts } = deps;
+  const { pool, tts, translator } = deps;
   const opts = { preHandler: deps.guards };
   const repo = new PlaylistsRepository(pool, tts);
   const notFound = () => new AppError(404, "Não encontrado", "not_found");
@@ -32,6 +40,9 @@ export function registerPlaylistAdminRoutes(
     if (errors.length) throw new AppError(400, `Frase inválida: ${errors.join(", ")}`, "invalid_sentence");
     return { text, hash: textHash(text) };
   }
+
+  /** Tradução normalizada (aspas e espaços); vazio ou ausente vira null. Aceita acento e dígito, ao contrário do inglês. */
+  const cleanTranslation = (raw: string | null | undefined): string | null => (raw ? normalizeText(raw) || null : null);
 
   const slugTaken = { unique: "Já existe uma playlist com esse slug neste contexto" };
 
@@ -102,25 +113,50 @@ export function registerPlaylistAdminRoutes(
 
   app.post("/admin/playlists/:id/sentences", opts, async (req, reply) => {
     const id = paramId(req);
-    const { text, hash } = cleanText(sentenceTextSchema.parse(req.body).text);
+    const body = sentenceInputSchema.parse(req.body);
+    const { text, hash } = cleanText(body.text);
     if (!(await repo.getStatus(id))) throw notFound();
     await withTransaction(pool, async (client) => {
       const tx = new PlaylistsRepository(client, tts);
-      await tx.addSentence(id, text, hash);
+      await tx.addSentence(id, text, hash, cleanTranslation(body.translationPt));
     }).catch((e) => mapPgError(e, { unique: "Já existe essa frase na playlist" }));
     return reply.code(201).send(await repo.get(id));
   });
 
+  /** Edita o texto, a tradução ou os dois. Só o que vier no corpo muda; `translationPt: null` apaga a tradução. */
   app.patch("/admin/sentences/:id", opts, async (req) => {
     const id = paramId(req);
-    const { text, hash } = cleanText(sentenceTextSchema.parse(req.body).text);
+    const body = sentenceUpdateSchema.parse(req.body);
+    const clean = body.text === undefined ? null : cleanText(body.text);
     const sentence = await repo.getSentence(id);
     if (!sentence) throw notFound();
     await withTransaction(pool, async (client) => {
       const tx = new PlaylistsRepository(client, tts);
-      await tx.updateSentenceText(id, text, hash);
+      if (clean) await tx.updateSentenceText(id, clean.text, clean.hash);
+      if (body.translationPt !== undefined) await tx.updateSentenceTranslation(id, cleanTranslation(body.translationPt));
     }).catch((e) => mapPgError(e, { unique: "Já existe essa frase na playlist" }));
     return repo.get(sentence.playlist_id);
+  });
+
+  /**
+   * Gera a tradução das frases que ainda não têm (ou de todas, com `overwrite`) e grava na playlist.
+   * Lotes sequenciais; se um lote falha, os anteriores já ficaram gravados e a chamada pode ser repetida.
+   */
+  app.post("/admin/playlists/:id/translate", opts, async (req) => {
+    const id = paramId(req);
+    const { overwrite } = translateBodySchema.parse(req.body ?? {});
+    const playlist = await repo.get(id);
+    if (!playlist) throw notFound();
+    const pending = await repo.sentencesToTranslate(id, overwrite);
+    let translated = 0;
+    for (let i = 0; i < pending.length; i += TRANSLATE_BATCH) {
+      const batch = pending.slice(i, i + TRANSLATE_BATCH);
+      const out = await translator.translate({
+        context: playlist.contextName, playlist: playlist.title, sentences: batch.map((s) => s.text),
+      });
+      translated += await repo.saveTranslations(batch.map((s) => s.id), out.map((t) => normalizeText(t)), overwrite);
+    }
+    return { translated, skipped: pending.length - translated, playlist: await repo.get(id) };
   });
 
   app.delete("/admin/sentences/:id", opts, async (req, reply) => {

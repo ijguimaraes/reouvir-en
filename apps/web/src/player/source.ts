@@ -3,7 +3,7 @@ import { api } from "../api";
 import type { ItemAudio } from "./engine";
 
 export interface PlaybackSource {
-  items: { id: string; text: string }[];
+  items: { id: string; text: string; translationPt?: string }[];
   resolve(index: number): Promise<ItemAudio>;
   /** Garante os áudios das próximas frases (janela de prefetch). */
   prefetch(fromIndex: number): void;
@@ -14,7 +14,7 @@ export const PREFETCH_AHEAD = 3;
 /** Playlist baixada: tudo vem do manifesto local, sem chamar o back-end. */
 export function offlineSource(m: OfflineManifestDto): PlaybackSource {
   return {
-    items: m.sentences.map((s) => ({ id: s.id, text: s.text })),
+    items: m.sentences.map((s) => ({ id: s.id, text: s.text, translationPt: s.translationPt })),
     resolve: async (i) => ({ url: m.sentences[i]!.audioUrl, durationMs: m.sentences[i]!.durationMs }),
     prefetch: () => undefined,
   };
@@ -36,7 +36,7 @@ export function onlineSource(p: StudentPlaylistDto): PlaybackSource {
     return pr;
   };
   return {
-    items: p.sentences.map((s) => ({ id: s.id, text: s.text })),
+    items: p.sentences.map((s) => ({ id: s.id, text: s.text, translationPt: s.translationPt })),
     resolve,
     prefetch: (from) => {
       for (let k = 1; k <= PREFETCH_AHEAD && from + k < p.sentences.length; k++) resolve(from + k).catch(() => undefined);

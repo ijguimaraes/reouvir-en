@@ -5,6 +5,7 @@ import { saveState } from "../offline/sync";
 import { bindMediaSession, HtmlAudioDriver } from "../player/driver";
 import { PlayerEngine, type EngineState } from "../player/engine";
 import type { PlaybackSource } from "../player/source";
+import { useWakeLock, wakeLockSupported } from "../player/wakelock";
 import { IconNext, IconPause, IconPlay, IconPrev } from "./Icons";
 
 export interface PlayerInit {
@@ -104,6 +105,8 @@ export function Player({ init }: { init: PlayerInit }) {
     return () => clearInterval(id);
   }, [state.phase, state.paused]);
 
+  useWakeLock(settings.keepScreenOn && !state.paused);
+
   const engine = engineRef.current;
   const live = engine?.state ?? state;
   const current = source.items[state.index];
@@ -127,6 +130,9 @@ export function Player({ init }: { init: PlayerInit }) {
   return (
     <section>
       <div className="now" lang="en">{current?.text}</div>
+      {settings.showTranslation && (
+        <p className="now-pt" lang="pt-BR">{current?.translationPt}</p>
+      )}
 
       <div className="dock">
         <div className={`status ${state.paused ? "" : state.phase}`} role="status">{label}</div>
@@ -161,6 +167,19 @@ export function Player({ init }: { init: PlayerInit }) {
         Repetir a playlist (loop)
         <input type="checkbox" role="switch" checked={settings.loop} onChange={(e) => change({ loop: e.target.checked })} />
       </label>
+      <label className="toggle">
+        Mostrar a tradução
+        <input type="checkbox" role="switch" checked={settings.showTranslation} onChange={(e) => change({ showTranslation: e.target.checked })} />
+      </label>
+      <label className="toggle">
+        Manter a tela ligada
+        <input
+          type="checkbox" role="switch" checked={settings.keepScreenOn && wakeLockSupported} disabled={!wakeLockSupported}
+          aria-describedby={wakeLockSupported ? undefined : "wake-lock-note"}
+          onChange={(e) => change({ keepScreenOn: e.target.checked })}
+        />
+      </label>
+      {!wakeLockSupported && <p className="muted" id="wake-lock-note">Este navegador não permite manter a tela ligada.</p>}
       <p className="muted">O silêncio entre audições é automático: duração do áudio ÷ velocidade + 1,5 s.</p>
 
       <h3 className="section-title">Progresso</h3>
@@ -172,7 +191,11 @@ export function Player({ init }: { init: PlayerInit }) {
         {source.items.map((s, i) => (
           <li key={s.id}>
             <button type="button" aria-current={i === state.index ? "true" : undefined} onClick={() => engine?.seek(i)}>
-              <span>{i + 1}</span>{s.text}
+              <span className="n">{i + 1}</span>
+              <span className="txt">
+                {s.text}
+                {settings.showTranslation && s.translationPt && <span className="pt" lang="pt-BR">{s.translationPt}</span>}
+              </span>
             </button>
           </li>
         ))}

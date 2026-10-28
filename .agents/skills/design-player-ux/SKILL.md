@@ -21,11 +21,11 @@ O app é um player de música para treinar escuta. O aluno corre, pedala, às ve
 ## Hierarquia da tela do player (de cima para baixo)
 
 1. Contexto · nível · tópico (pequeno, `meta`)
-2. **Frase atual** (`display`, ao centro, quebra balanceada)
+2. **Frase atual** (`display`, ao centro, quebra balanceada) e, logo abaixo, a **tradução** em português (`title`, cor `--text-muted`, opcional; reserva altura para o layout não pular)
 3. Estado: tocando / silêncio / pausado, mais repetição (ex.: "2 de 2")
 4. Progresso da playlist
 5. Controles (play, anterior, próxima)
-6. Configurações rápidas: repetições, velocidade (0,75x/1x), loop
+6. Configurações rápidas: repetições, velocidade (0,75x/1x), loop, tradução, tela ligada
 7. Lista de frases (secundária, recolhida)
 
 ## Navegação do aluno
@@ -37,7 +37,7 @@ Contexto → nível → tópico → playlist. Mostre sempre onde está e permita
 - Sol: contraste alto, evitar cinzas claros; tema escuro como opção real (à noite, na esteira).
 - Suor/luva: alvos grandes e sem exigir precisão.
 - Fones: volume e pausa não dependem da tela.
-- Bateria: sem animação contínua, sem manter a tela acesa à força.
+- Bateria: sem animação contínua, sem manter a tela acesa à força: "Manter a tela ligada" é uma opção do aluno, desligada por padrão.
 
 ## Evitar
 

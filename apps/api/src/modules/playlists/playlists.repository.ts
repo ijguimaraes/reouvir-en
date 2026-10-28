@@ -16,7 +16,7 @@ interface PlaylistRow {
 
 export interface SentenceRow {
   id: string; playlist_id: string; position: number; text: string; text_hash: string;
-  char_count: number; metadata: Record<string, unknown> | null;
+  char_count: number; translation_pt: string | null; metadata: Record<string, unknown> | null;
 }
 
 const toDto = (r: PlaylistRow): AdminPlaylistDto => ({
@@ -65,7 +65,7 @@ export class PlaylistsRepository {
       [id, ...this.ttsParams],
     );
     const list: SentenceDto[] = sentences.rows.map((s) => ({
-      id: s.id, position: s.position, text: s.text, audioReady: s.audio_ready, metadata: s.metadata,
+      id: s.id, position: s.position, text: s.text, translationPt: s.translation_pt, audioReady: s.audio_ready, metadata: s.metadata,
     }));
     return { ...toDto(rows[0]), sentences: list };
   }
@@ -178,17 +178,42 @@ export class PlaylistsRepository {
     );
   }
 
+  /** Grava (ou apaga, com null) só a tradução; não toca no texto nem na chave do áudio. */
+  async updateSentenceTranslation(id: string, translationPt: string | null): Promise<void> {
+    await this.db.query("UPDATE sentences SET translation_pt = $2, updated_at = now() WHERE id = $1", [id, translationPt]);
+  }
+
+  /** Frases ainda sem tradução, na ordem da playlist (ou todas, com `all`). */
+  async sentencesToTranslate(playlistId: string, all: boolean): Promise<{ id: string; text: string }[]> {
+    const { rows } = await this.db.query<{ id: string; text: string }>(
+      `SELECT id, text FROM sentences WHERE playlist_id = $1 ${all ? "" : "AND translation_pt IS NULL"} ORDER BY position`,
+      [playlistId],
+    );
+    return rows;
+  }
+
+  /** Um UPDATE só, para a versão da playlist subir uma vez. Sem `all`, não sobrescreve tradução editada no meio do caminho. */
+  async saveTranslations(ids: string[], translations: string[], all: boolean): Promise<number> {
+    const { rowCount } = await this.db.query(
+      `UPDATE sentences s SET translation_pt = v.t, updated_at = now()
+         FROM unnest($1::uuid[], $2::text[]) AS v(id, t)
+        WHERE s.id = v.id ${all ? "" : "AND s.translation_pt IS NULL"}`,
+      [ids, translations],
+    );
+    return rowCount ?? 0;
+  }
+
   async deleteSentence(id: string): Promise<void> {
     await this.db.query("DELETE FROM sentences WHERE id = $1", [id]);
   }
 
   /** Última posição + 1; remover frases deixa lacunas, então usa MAX e não COUNT. */
-  async addSentence(playlistId: string, text: string, hash: string): Promise<string> {
+  async addSentence(playlistId: string, text: string, hash: string, translationPt: string | null): Promise<string> {
     const { rows } = await this.db.query<{ id: string }>(
-      `INSERT INTO sentences (playlist_id, position, text, text_hash, char_count)
-       VALUES ($1, (SELECT COALESCE(MAX(position), 0) + 1 FROM sentences WHERE playlist_id = $1), $2, $3, $4)
+      `INSERT INTO sentences (playlist_id, position, text, text_hash, char_count, translation_pt)
+       VALUES ($1, (SELECT COALESCE(MAX(position), 0) + 1 FROM sentences WHERE playlist_id = $1), $2, $3, $4, $5)
        RETURNING id`,
-      [playlistId, text, hash, text.length],
+      [playlistId, text, hash, text.length, translationPt],
     );
     return rows[0]!.id;
   }

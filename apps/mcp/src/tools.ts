@@ -1,7 +1,13 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { ApiError } from "@reouvir/api-client";
-import { contextInputSchema, playlistInputSchema, playlistUpdateSchema, sentenceTextSchema } from "@reouvir/shared";
+import {
+  contextInputSchema,
+  playlistInputSchema,
+  playlistUpdateSchema,
+  sentenceInputSchema,
+  sentenceUpdateSchema,
+} from "@reouvir/shared";
 import type { AdminSession } from "./session";
 
 const id = z.string().uuid();
@@ -54,34 +60,45 @@ export function registerTools(server: McpServer, api: AdminSession): void {
 
   server.tool(
     "add_sentence",
-    "Adiciona uma frase ao fim da playlist.",
-    { playlistId: id, ...sentenceTextSchema.shape },
-    ({ playlistId, text }) => run(() => api.request("POST", `/admin/playlists/${playlistId}/sentences`, { text })),
+    "Adiciona uma frase ao fim da playlist. `translationPt` (opcional) é a tradução para português.",
+    { playlistId: id, ...sentenceInputSchema.shape },
+    ({ playlistId, ...body }) => run(() => api.request("POST", `/admin/playlists/${playlistId}/sentences`, body)),
   );
 
   server.tool(
     "add_sentences",
-    "Adiciona várias frases ao fim da playlist, na ordem dada, uma chamada por frase. Continua após falhas (ex.: frase repetida) e relata cada uma.",
-    { playlistId: id, texts: z.array(sentenceTextSchema.shape.text).min(1).max(500) },
-    ({ playlistId, texts }) =>
+    "Adiciona várias frases ao fim da playlist, na ordem dada, uma chamada por frase. Cada item traz `text` e, opcionalmente, `translationPt`. Continua após falhas (ex.: frase repetida) e relata cada uma.",
+    { playlistId: id, sentences: z.array(sentenceInputSchema).min(1).max(500) },
+    ({ playlistId, sentences }) =>
       run(async () => {
         const failed: { index: number; text: string; error: string }[] = [];
-        for (const [index, text] of texts.entries()) {
+        for (const [index, sentence] of sentences.entries()) {
           try {
-            await api.request("POST", `/admin/playlists/${playlistId}/sentences`, { text });
+            await api.request("POST", `/admin/playlists/${playlistId}/sentences`, sentence);
           } catch (err) {
-            failed.push({ index, text, error: err instanceof ApiError ? `${err.status}: ${err.message}` : String(err) });
+            failed.push({ index, text: sentence.text, error: err instanceof ApiError ? `${err.status}: ${err.message}` : String(err) });
           }
         }
-        return { added: texts.length - failed.length, failed };
+        return { added: sentences.length - failed.length, failed };
       }),
   );
 
   server.tool(
     "update_sentence",
-    "Edita o texto de uma frase.",
-    { sentenceId: id, ...sentenceTextSchema.shape },
-    ({ sentenceId, text }) => run(() => api.request("PATCH", `/admin/sentences/${sentenceId}`, { text })),
+    "Edita o texto e/ou a tradução de uma frase; só o que for enviado muda. `translationPt: null` apaga a tradução.",
+    { sentenceId: id, text: sentenceUpdateSchema.innerType().shape.text, translationPt: sentenceUpdateSchema.innerType().shape.translationPt },
+    ({ sentenceId, ...body }) => run(() => api.request("PATCH", `/admin/sentences/${sentenceId}`, body)),
+  );
+
+  server.tool(
+    "translate_playlist",
+    "Gera a tradução para português das frases da playlist que ainda não têm (ou de todas, com `overwrite`) e grava. Usa a API da Anthropic no servidor.",
+    { playlistId: id, overwrite: z.boolean().default(false) },
+    ({ playlistId, overwrite }) =>
+      run(async () => {
+        const r = await api.request<{ translated: number; skipped: number }>("POST", `/admin/playlists/${playlistId}/translate`, { overwrite });
+        return { translated: r.translated, skipped: r.skipped };
+      }),
   );
 
   server.tool("delete_sentence", "Remove uma frase (deixa lacuna na numeração).", { sentenceId: id }, ({ sentenceId }) =>

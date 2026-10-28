@@ -10,6 +10,7 @@ import { AppError } from "./errors";
 import { makeTtsIdentity } from "./modules/audio/audio-key";
 import { AudioService } from "./modules/audio/audio.service";
 import { ElevenLabsTts, type TtsProvider } from "./modules/audio/tts";
+import { AnthropicTranslator, type Translator } from "./modules/translation/translator";
 import { registerCatalogAdminRoutes } from "./modules/catalog/catalog.routes";
 import { registerPlaylistAdminRoutes } from "./modules/playlists/playlists.routes";
 import { registerOverviewAdminRoutes } from "./modules/playlists/overview.routes";
@@ -27,9 +28,11 @@ export interface AppDeps {
   /** Injetáveis para testes; por padrão: disco local e ElevenLabs. */
   storage?: Storage;
   tts?: TtsProvider;
+  /** Tradutor das frases; por padrão, a API da Anthropic. */
+  translator?: Translator;
 }
 
-export async function buildApp({ config, pool, storage, tts }: AppDeps): Promise<FastifyInstance> {
+export async function buildApp({ config, pool, storage, tts, translator }: AppDeps): Promise<FastifyInstance> {
   // Atrás do Caddy/tailscale serve: confiar no X-Forwarded-For para o IP real.
   const app = Fastify({ logger: config.NODE_ENV !== "test", trustProxy: true });
 
@@ -89,7 +92,10 @@ export async function buildApp({ config, pool, storage, tts }: AppDeps): Promise
       registerAuthRoutes(api, { config, service: authService, authenticate });
       registerCatalogAdminRoutes(api, { pool, guards: adminGuards });
       registerUsersAdminRoutes(api, { pool, guards: adminGuards });
-      registerPlaylistAdminRoutes(api, { pool, guards: adminGuards, tts: identity });
+      registerPlaylistAdminRoutes(api, { pool, guards: adminGuards,
+        tts: identity,
+        translator: translator ?? new AnthropicTranslator(config.ANTHROPIC_API_KEY, config.TRANSLATION_MODEL),
+      });
       registerOverviewAdminRoutes(api, { pool, guards: adminGuards });
       registerStudentRoutes(api, { pool, guards, audio });
     },
