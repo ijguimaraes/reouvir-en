@@ -140,16 +140,16 @@ export function ContextDetailPage() {
                     ) : (
                       <>
                         <button type="button" onClick={() => startEdit(p)}>Editar</button>
-                        {p.sentenceCount === 0 && (
-                          <button type="button" className="danger" onClick={async () => {
-                            const ok = await confirm({
-                              title: `Excluir a playlist “${p.title}”?`,
-                              body: "Ela está vazia e some do contexto; as outras playlists sobem uma posição.",
-                              confirmLabel: "Excluir", danger: true,
-                            });
-                            if (ok) void run(() => api.request("DELETE", `/admin/playlists/${p.id}`));
-                          }}>Excluir</button>
-                        )}
+                        <button type="button" className="danger" onClick={async () => {
+                          const ok = await confirm({
+                            title: `Excluir a playlist “${p.title}”?`,
+                            body: p.sentenceCount === 0
+                              ? "Ela está vazia e some do contexto; as outras playlists sobem uma posição."
+                              : `As ${p.sentenceCount} frases saem junto, com as traduções e o progresso dos alunos nesta playlist. Isso não tem volta. Os áudios já gerados são mantidos e voltam a ser usados se o mesmo texto for gravado de novo, com a mesma voz e o mesmo modelo.`,
+                            confirmLabel: "Excluir", danger: true,
+                          });
+                          if (ok) void run(() => api.request("DELETE", `/admin/playlists/${p.id}`));
+                        }}>Excluir</button>
                       </>
                     )}
                   </td>
@@ -161,7 +161,7 @@ export function ContextDetailPage() {
       )}
       {playlists.length > 0 && (
         <p className="muted">
-          Arraste as linhas, use os botões de subir e descer, ou digite a posição de destino e tecle Enter. Só playlists sem frases podem ser excluídas; as outras podem ser arquivadas na tela da playlist.
+          Arraste as linhas, use os botões de subir e descer, ou digite a posição de destino e tecle Enter. Excluir uma playlist com frases apaga as frases e as traduções, mas mantém os áudios; para só tirá-la do ar sem perder nada, arquive-a na tela da playlist.
         </p>
       )}
 

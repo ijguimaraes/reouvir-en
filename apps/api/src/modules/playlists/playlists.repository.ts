@@ -132,15 +132,17 @@ export class PlaylistsRepository {
     return rows[0]?.context_id ?? null;
   }
 
-  /** Exclui só playlist vazia (quem tem frases deve ser arquivada). Fecha a lacuna de posição. Use numa transação. */
-  async delete(id: string): Promise<"deleted" | "not_found" | "has_sentences"> {
-    const { rows } = await this.db.query<{ context_id: string; n: number }>(
-      `SELECT p.context_id, (SELECT count(*)::int FROM sentences s WHERE s.playlist_id = p.id) AS n
-         FROM playlists p WHERE p.id = $1 FOR UPDATE`,
+  /**
+   * Exclui a playlist, com ou sem frases. As frases (e a tradução) saem junto, por ON DELETE CASCADE,
+   * assim como o progresso e as contagens dos alunos. `audios` não tem FK para elas e não é tocado.
+   * Fecha a lacuna de posição. Use numa transação.
+   */
+  async delete(id: string): Promise<"deleted" | "not_found"> {
+    const { rows } = await this.db.query<{ context_id: string }>(
+      "SELECT context_id FROM playlists WHERE id = $1 FOR UPDATE",
       [id],
     );
     if (!rows[0]) return "not_found";
-    if (rows[0].n > 0) return "has_sentences";
     await this.db.query("DELETE FROM playlists WHERE id = $1", [id]);
     await this.db.query(
       `UPDATE playlists p SET position = o.pos

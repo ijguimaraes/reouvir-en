@@ -169,19 +169,35 @@ describe.skipIf(!url)("admin + aluno (integração)", () => {
     expect((await bad([a!.id, b!.id, foreign.id])).statusCode).toBe(400);
   });
 
-  it("playlists livres: excluir só playlist vazia e fecha a lacuna de posição", async () => {
+  it("playlists livres: excluir (vazia ou com frases) fecha a lacuna de posição", async () => {
     const ctx = await makeContext();
-    const [a, b, c] = [await makePlaylist(ctx.id, "A"), await makePlaylist(ctx.id, "B"), await makePlaylist(ctx.id, "C")];
+    const [a, b] = [await makePlaylist(ctx.id, "A"), await makePlaylist(ctx.id, "B")];
+    await makePlaylist(ctx.id, "C");
     await call("POST", `/admin/playlists/${b!.id}/sentences`, admin, { text: "Hello there my friend." });
-
-    const refused = await call("DELETE", `/admin/playlists/${b!.id}`, admin);
-    expect(refused.statusCode).toBe(409);
-    expect(refused.json().error.code).toBe("has_sentences");
 
     expect((await call("DELETE", `/admin/playlists/${a!.id}`, admin)).statusCode).toBe(204);
     expect((await playlistsOf(ctx.id)).map((p) => [p.slug, p.position])).toEqual([["b", 1], ["c", 2]]);
     expect((await call("DELETE", `/admin/playlists/${a!.id}`, admin)).statusCode).toBe(404);
-    expect(c!.id).toBeTruthy();
+
+    expect((await call("DELETE", `/admin/playlists/${b!.id}`, admin)).statusCode).toBe(204);
+    expect((await playlistsOf(ctx.id)).map((p) => [p.slug, p.position])).toEqual([["c", 1]]);
+    expect((await pool.query("SELECT 1 FROM sentences WHERE playlist_id = $1", [b!.id])).rowCount).toBe(0);
+  });
+
+  it("excluir playlist com frases apaga as frases e mantém os áudios", async () => {
+    const ctx = await makeContext();
+    const pl = await makePlaylist(ctx.id, "Com áudio");
+    await call("POST", `/admin/playlists/${pl.id}/sentences`, admin, { text: "Hello there my friend." });
+    const { rows } = await pool.query<{ text_hash: string }>("SELECT text_hash FROM sentences WHERE playlist_id = $1", [pl.id]);
+    await pool.query(
+      `INSERT INTO audios (audio_key, text_hash, voice_id, model_id, settings_hash, char_count, status)
+       VALUES ('k-keep', $1, 'v', 'm', 's', 22, 'ready')`,
+      [rows[0]!.text_hash],
+    );
+
+    expect((await call("DELETE", `/admin/playlists/${pl.id}`, admin)).statusCode).toBe(204);
+    expect((await pool.query("SELECT 1 FROM sentences WHERE playlist_id = $1", [pl.id])).rowCount).toBe(0);
+    expect((await pool.query("SELECT 1 FROM audios WHERE audio_key = 'k-keep'")).rowCount).toBe(1);
   });
 
   it("excluir contexto apaga as playlists vazias, mas recusa se alguma tiver frases", async () => {

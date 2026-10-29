@@ -84,13 +84,10 @@ export function registerPlaylistAdminRoutes(
     return repo.get(id);
   });
 
-  /** Só playlist vazia; com frases, arquive. */
+  /** Exclui a playlist e as frases dela; o áudio já gerado é mantido. */
   app.delete("/admin/playlists/:id", opts, async (req, reply) => {
     const result = await withTransaction(pool, (client) => new PlaylistsRepository(client, tts).delete(paramId(req)));
     if (result === "not_found") throw notFound();
-    if (result === "has_sentences") {
-      throw new AppError(409, "A playlist tem frases. Arquive-a em vez de excluir.", "has_sentences");
-    }
     return reply.code(204).send();
   });
 
