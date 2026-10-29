@@ -58,7 +58,7 @@ O sistema tem dois apps de front-end, independentes, e uma API:
 
 **Backoffice (administrador)**
 - **Contextos:** cadastro com criar, editar e excluir, incluindo um campo de **detalhamento** livre.
-- **Playlists:** criar, renomear, descrever, **reordenar** e excluir (só as vazias) dentro de cada contexto.
+- **Playlists:** criar, renomear, descrever, **reordenar** e excluir dentro de cada contexto.
 - **Usuários:** listar, **bloquear/desbloquear** e **redefinir a senha**.
 - **Revisão das frases** por playlist: editar (texto e tradução), remover, reordenar e adicionar à mão.
 - **Tradução:** botão "Traduzir pendentes", que gera com a API da Anthropic a tradução das frases que ainda não têm; cada tradução pode ser editada. A frase também pode ser criada já com `translationPt`.
@@ -103,7 +103,7 @@ draft (vazia ou preenchida) ──(publicar)──► published
 ### Tamanho e ordem
 
 - **Tamanho:** livre; quem monta a playlist decide quantas frases ela tem (a regra do silêncio dá a duração: ver seção 6).
-- **Ordem das playlists no contexto:** cada uma tem uma `position` (1 a n). **Criar** põe a nova no fim, **reordenar** (arrastar ou digitar a posição) envia a lista completa de ids e o servidor renumera tudo de 1 a n numa transação, e **excluir** fecha a lacuna. Só se exclui playlist **vazia**; a que tem frases pode ser arquivada.
+- **Ordem das playlists no contexto:** cada uma tem uma `position` (1 a n). **Criar** põe a nova no fim, **reordenar** (arrastar ou digitar a posição) envia a lista completa de ids e o servidor renumera tudo de 1 a n numa transação, e **excluir** fecha a lacuna. Excluir uma playlist **com frases** apaga as frases, as traduções e o progresso dos alunos nela (`ON DELETE CASCADE`); `audios` não tem FK para elas e é mantido (reaproveitado se o mesmo texto voltar, com a mesma voz e o mesmo modelo, e candidato a órfão no `cleanup:audio`). Para tirar do ar sem perder nada, arquive.
 - **Ordem no backoffice:** a lista já vem ordenada por `position`.
   - **Remover** uma frase só deixa uma **lacuna** (as posições das outras não mudam).
   - **Criar** uma frase a coloca na **última posição** (`MAX(position) + 1`).
@@ -423,7 +423,7 @@ Convenções: tokens em cookies `httpOnly`, `Secure`, `SameSite=Lax`; erros de c
 | POST | `/admin/contexts/:id/playlists` | Criar playlist no fim do contexto (`title`, `description`, `slug` opcional) |
 | PUT | `/admin/contexts/:id/playlists/order` | Reordenar as playlists: recebe a lista completa de ids e renumera de 1 a n |
 | PUT | `/admin/playlists/:id` | Editar título, slug e descrição (só o que vier no corpo) |
-| DELETE | `/admin/playlists/:id` | Excluir; recusa (409) se tiver frases |
+| DELETE | `/admin/playlists/:id` | Excluir, com ou sem frases (as frases saem junto; o áudio fica) |
 | GET | `/admin/playlists` | Listar (filtro `?contextId=`) |
 | PATCH/DELETE | `/admin/sentences/:id` | Editar (`text` e/ou `translationPt`; `null` apaga a tradução) ou remover uma frase |
 | PUT | `/admin/playlists/:id/order` | Reordenar: recebe a lista completa de ids na nova ordem e renumera de 1 a n |
