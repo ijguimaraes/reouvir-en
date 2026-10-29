@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { PlayerSettings } from "@reouvir/shared";
 import { persistSettings } from "../offline/settings";
 import { times } from "../format";
@@ -24,7 +24,7 @@ export interface PlayerInit {
 
 const fmt = (s: number) => `${Math.floor(s / 3600) ? Math.floor(s / 3600) + " h " : ""}${Math.floor((s % 3600) / 60)} min`;
 
-export function Player({ init }: { init: PlayerInit }) {
+export function Player({ init, head }: { init: PlayerInit; head?: ReactNode }) {
   const { source } = init;
   const [state, setState] = useState<EngineState>({
     index: init.startIndex, repetition: 0, phase: "stopped", paused: true, silenceMs: 0, silenceRemainingMs: 0, loops: 0,
@@ -141,7 +141,9 @@ export function Player({ init }: { init: PlayerInit }) {
   const listened = init.baseListenedSeconds + Math.round((engine?.getListenedMs() ?? 0) / 1000);
 
   return (
-    <section>
+    <section className="player">
+      <div className="stage">
+      {head}
       <div className="now" lang="en">{current?.text}</div>
       {settings.showTranslation && (
         <p className="now-pt" lang="pt-BR">{current?.translationPt}</p>
@@ -162,7 +164,9 @@ export function Player({ init }: { init: PlayerInit }) {
           Frase {state.index + 1} de {source.items.length} · ouvida {times(current ? (counts[current.id] ?? 0) : 0)}
         </p>
       </div>
+      </div>
 
+      <div className="panel">
       <h3 className="section-title">Configurações</h3>
       <label className="toggle">
         Repetições seguidas
@@ -221,6 +225,7 @@ export function Player({ init }: { init: PlayerInit }) {
           </li>
         ))}
       </ol>
+      </div>
     </section>
   );
 }

@@ -93,38 +93,44 @@ export function PlaylistPage({ playlistId }: { playlistId: string }) {
   const { title, manifest, online } = loaded;
   return (
     <main className="has-dock">
-      <h2>{title.title}</h2>
-      <p className="muted">{title.context}</p>
-      {title.description && <p className="muted">{title.description}</p>}
+      <Player
+        key={`${playlistId}:${manifest?.version ?? "online"}`}
+        init={{ ...loaded.init, settings: loaded.settings }}
+        head={
+          <>
+            <h2>{title.title}</h2>
+            <p className="muted">{title.context}</p>
+            {title.description && <p className="muted">{title.description}</p>}
 
-      <div className="card">
-        <span>
-          {manifest ? <span className="badge offline">disponível offline</span> : <span className="muted">Só online</span>}
-          {updateAvailable && <span className="muted"> · há versão nova</span>}
-        </span>
-        <span className="row">
-          {online && (!manifest || updateAvailable) && !progress && (
-            <button onClick={download}>{manifest ? "Atualizar download" : "Baixar playlist"}</button>
-          )}
-          {manifest && !progress && (
-            <button className="link" onClick={async () => { await removeDownload(playlistId); setRev((r) => r + 1); }}>Remover download</button>
-          )}
-        </span>
-      </div>
-      {progress && (
-        <>
-          <div
-            className="bar" role="progressbar" aria-label="Download da playlist"
-            aria-valuemin={0} aria-valuemax={progress[1]} aria-valuenow={progress[0]}
-          >
-            <i style={{ width: `${(progress[0] / progress[1]) * 100}%` }} />
-          </div>
-          <p className="muted num" role="status">Baixando {progress[0]} de {progress[1]}… (os áudios novos são gerados agora)</p>
-        </>
-      )}
-      {downloadError && <p className="error" role="alert">{downloadError}</p>}
-
-      <Player key={`${playlistId}:${manifest?.version ?? "online"}`} init={{ ...loaded.init, settings: loaded.settings }} />
+            <div className="card">
+              <span>
+                {manifest ? <span className="badge offline">disponível offline</span> : <span className="muted">Só online</span>}
+                {updateAvailable && <span className="muted"> · há versão nova</span>}
+              </span>
+              <span className="row">
+                {online && (!manifest || updateAvailable) && !progress && (
+                  <button onClick={download}>{manifest ? "Atualizar download" : "Baixar playlist"}</button>
+                )}
+                {manifest && !progress && (
+                  <button className="link" onClick={async () => { await removeDownload(playlistId); setRev((r) => r + 1); }}>Remover download</button>
+                )}
+              </span>
+            </div>
+            {progress && (
+              <>
+                <div
+                  className="bar" role="progressbar" aria-label="Download da playlist"
+                  aria-valuemin={0} aria-valuemax={progress[1]} aria-valuenow={progress[0]}
+                >
+                  <i style={{ width: `${(progress[0] / progress[1]) * 100}%` }} />
+                </div>
+                <p className="muted num" role="status">Baixando {progress[0]} de {progress[1]}… (os áudios novos são gerados agora)</p>
+              </>
+            )}
+            {downloadError && <p className="error" role="alert">{downloadError}</p>}
+          </>
+        }
+      />
     </main>
   );
 }

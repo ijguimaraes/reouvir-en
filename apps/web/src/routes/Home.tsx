@@ -28,12 +28,14 @@ export function Home() {
       {downloads.data && downloads.data.length > 0 && (
         <>
           <h2 className="section-title">Baixadas (tocam offline)</h2>
-          {downloads.data.map((m) => (
-            <Link className="item" key={m.playlistId} to={`/p/${m.playlistId}`}>
-              <span>{m.contextName} · {manifestTitle(m)}</span>
-              <span className="badge offline">offline</span>
-            </Link>
-          ))}
+          <div className="list">
+            {downloads.data.map((m) => (
+              <Link className="item" key={m.playlistId} to={`/p/${m.playlistId}`}>
+                <span>{m.contextName} · {manifestTitle(m)}</span>
+                <span className="badge offline">offline</span>
+              </Link>
+            ))}
+          </div>
         </>
       )}
       <h2>O que você quer ouvir?</h2>
@@ -48,12 +50,14 @@ export function Home() {
       {[...byCategory].map(([category, contexts]) => (
         <section key={category}>
           <h3 className="section-title">{category}</h3>
-          {contexts.map((c) => (
-            <Link className="item" key={c.id} to={`/c/${c.id}`}>
-              <span>{c.name}</span>
-              <span className="muted num">{c.playlists.length} playlists</span>
-            </Link>
-          ))}
+          <div className="list">
+            {contexts.map((c) => (
+              <Link className="item" key={c.id} to={`/c/${c.id}`}>
+                <span>{c.name}</span>
+                <span className="muted num">{c.playlists.length} playlists</span>
+              </Link>
+            ))}
+          </div>
         </section>
       ))}
     </main>
@@ -74,6 +78,7 @@ export function ContextPage({ contextId }: { contextId: string }) {
     <main>
       <h2>{ctx.name}</h2>
       {ctx.description && <p className="muted">{ctx.description}</p>}
+      <div className="list">
       {ctx.playlists.map((pl) => (
         <Link className="item" key={pl.id} to={`/p/${pl.id}`}>
           <span>
@@ -87,6 +92,7 @@ export function ContextPage({ contextId }: { contextId: string }) {
           </span>
         </Link>
       ))}
+      </div>
     </main>
   );
 }

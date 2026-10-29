@@ -1,22 +1,25 @@
 @import "@reouvir/shared/theme.css";
 @import "@reouvir/shared/base.css";
 
-:root { --control-h: var(--tap-min); }
+:root { --control-h: var(--tap-min); --page-w: 30rem; }
+/* largura da página por conteúdo: celular, tablet, desktop (duas colunas no player) */
+@media (min-width: 48rem) { :root { --page-w: 42rem; } }
+@media (min-width: 64rem) { :root { --page-w: 72rem; } }
 
 a { color: inherit; }
 
 /* ---------- estrutura ---------- */
 main {
-  max-width: 30rem; margin: 0 auto;
+  max-width: var(--page-w); margin: 0 auto;
   padding: var(--space-4) max(var(--space-4), env(safe-area-inset-right))
     calc(var(--space-7) + env(safe-area-inset-bottom)) max(var(--space-4), env(safe-area-inset-left));
 }
-main.auth { padding-top: max(var(--space-6), 10dvh); }
+main.auth { max-width: 30rem; padding-top: max(var(--space-6), 10dvh); }
 main.has-dock { padding-bottom: calc(11rem + env(safe-area-inset-bottom)); }
 @media (max-height: 30rem) { main.has-dock { padding-bottom: var(--space-7); } }
 
 header.top {
-  display: flex; align-items: center; gap: var(--space-1); max-width: 30rem; margin: 0 auto;
+  display: flex; align-items: center; gap: var(--space-1); max-width: var(--page-w); margin: 0 auto;
   padding: var(--space-2) max(var(--space-4), env(safe-area-inset-right)) var(--space-2) max(var(--space-4), env(safe-area-inset-left));
   padding-top: max(var(--space-2), env(safe-area-inset-top));
 }
@@ -50,25 +53,29 @@ a.item { min-height: var(--tap-min); transition: background-color var(--dur-fast
 a.item:active { background: var(--surface-2); }
 .card .row { justify-content: flex-end; }
 
+/* listas de contextos e playlists: uma coluna no celular, várias onde couber */
+.list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr)); gap: var(--space-3); margin: var(--space-2) 0; }
+.list > a.item { margin: 0; }
+
 /* descrição curta da playlist, sob o título */
 a.item .item-desc { display: block; font-size: var(--text-label); color: var(--text-muted); font-weight: 400; }
 
 /* ---------- player ---------- */
 .now {
-  font-size: var(--text-display); line-height: 1.3; text-align: center; text-wrap: balance;
+  font-size: clamp(var(--text-display), 1rem + 1.8vw, 2.5rem); line-height: 1.3; text-align: center; text-wrap: balance;
   overflow-wrap: anywhere; min-height: 7rem; display: flex; align-items: center; justify-content: center;
   margin: var(--space-4) 0 var(--space-2);
 }
 /* tradução logo abaixo da frase; a altura mínima evita o layout pular entre frases com e sem tradução */
 .now-pt {
-  font-size: var(--text-title); line-height: 1.35; text-align: center; text-wrap: balance; overflow-wrap: anywhere;
+  font-size: clamp(var(--text-title), 0.8rem + 1vw, 1.5rem); line-height: 1.35; text-align: center; text-wrap: balance; overflow-wrap: anywhere;
   color: var(--text-muted); min-height: 3.5rem; margin: 0 0 var(--space-4);
 }
 
 /* barra fixa na parte de baixo: os controles ficam na zona do polegar */
 .dock {
   position: fixed; inset-inline: 0; bottom: 0; z-index: var(--z-sticky);
-  max-width: 30rem; width: 100%; margin: 0 auto;
+  max-width: var(--page-w); width: 100%; margin: 0 auto;
   padding: var(--space-3) max(var(--space-4), env(safe-area-inset-right))
     max(var(--space-3), env(safe-area-inset-bottom)) max(var(--space-4), env(safe-area-inset-left));
   background: var(--bg); border-top: 1px solid var(--border);
@@ -124,6 +131,18 @@ ol.sentences button .n { color: var(--text-muted); min-width: 1.75rem; font-vari
 ol.sentences button[aria-current="true"] .n { color: var(--accent); }
 ol.sentences button .plays { margin-left: auto; padding-left: var(--space-2); color: var(--text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 ol.sentences button .pt { display: block; margin-top: var(--space-1); font-weight: 400; color: var(--text-muted); }
+
+/* desktop: palco (frase e controles) fixo à esquerda, ajustes e frases à direita */
+@media (min-width: 64rem) {
+  main.has-dock { padding-bottom: var(--space-7); }
+  .player { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: var(--space-7); align-items: start; }
+  .stage { position: sticky; top: var(--space-4); }
+  .now { min-height: 12rem; margin-top: var(--space-6); }
+  .now-pt { min-height: 5rem; }
+  .dock { position: static; max-width: none; padding-inline: 0; border-top: 0; }
+  .panel .section-title:first-child { margin-top: 0; }
+  ol.sentences { max-height: min(32rem, 60dvh); }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .bar i { transition: none; }
