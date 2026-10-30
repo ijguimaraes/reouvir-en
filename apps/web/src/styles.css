@@ -58,6 +58,9 @@ a.item:active { background: var(--surface-2); }
 .list > a.item { margin: 0; }
 
 /* descrição curta da playlist, sob o título */
+/* número da playlist no contexto: a ordem em que o aluno deve seguir */
+a.item .item-main { display: flex; align-items: baseline; gap: var(--space-3); min-width: 0; }
+a.item .item-n { flex: none; min-width: 1.5rem; font-weight: 600; color: var(--accent); text-align: right; }
 a.item .item-desc { display: block; font-size: var(--text-label); color: var(--text-muted); font-weight: 400; }
 
 /* ---------- player ---------- */
