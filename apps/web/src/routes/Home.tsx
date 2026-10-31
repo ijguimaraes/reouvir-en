@@ -79,11 +79,15 @@ export function ContextPage({ contextId }: { contextId: string }) {
       <h2>{ctx.name}</h2>
       {ctx.description && <p className="muted">{ctx.description}</p>}
       <div className="list">
-      {ctx.playlists.map((pl) => (
+      {ctx.playlists.map((pl, i) => (
         <Link className="item" key={pl.id} to={`/p/${pl.id}`}>
-          <span>
-            {pl.title}
-            {pl.description && <span className="item-desc">{pl.description}</span>}
+          <span className="item-main">
+            <span className="item-n num" aria-hidden="true">{i + 1}</span>
+            <span>
+              <span className="sr-only">Playlist {i + 1}: </span>
+              {pl.title}
+              {pl.description && <span className="item-desc">{pl.description}</span>}
+            </span>
           </span>
           <span className="row">
             {pl.loopsCompleted > 0 && <span className="muted num">ouvida {times(pl.loopsCompleted)}</span>}
